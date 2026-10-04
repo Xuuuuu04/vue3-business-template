@@ -69,6 +69,49 @@ try {
       page.getByRole("button", { name: "上传文件", exact: true }),
     ).toHaveCount(0);
     results.push("只读账号看不到上传操作");
+    // 使用浏览器返回事件进入地址，保留当前页面的内存登录状态。
+    await page.evaluate(() => {
+      history.pushState({}, "", "/files/upload");
+      dispatchEvent(new PopStateEvent("popstate"));
+    });
+    await expect(
+      page.getByRole("heading", { name: "当前账号没有这项权限", exact: true }),
+    ).toBeVisible();
+    results.push("只读账号直接进入上传地址也被拒绝");
+    await page.goto(frontend + "/files/upload");
+    await expect(
+      page.getByRole("heading", { name: "登录账号", exact: true }),
+    ).toBeVisible();
+    results.push("刷新后登录状态失效，受限页面要求重新登录");
+    const granted = await fetch(frontend + "/api/v1/access/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        org_code: org,
+        username: reader,
+        password,
+        otp_code: "",
+      }),
+    });
+    expect(granted.ok).toBe(true);
+    const credentials = (await granted.json()) as { access_token: string };
+    const body = new FormData();
+    body.append("upload", new File(["abc"], "permission-test.txt"));
+    const forbidden = await fetch(
+      frontend + "/api/v1/files/" + encodeURIComponent(org),
+      {
+        method: "POST",
+        headers: { Authorization: "Bearer " + credentials.access_token },
+        body,
+      },
+    );
+    expect(forbidden.status).toBe(403);
+    results.push("后台拒绝只读账号强行上传");
+    const foreign = await fetch(frontend + "/api/v1/files/another-team", {
+      headers: { Authorization: "Bearer " + credentials.access_token },
+    });
+    expect(foreign.status).toBe(403);
+    results.push("后台拒绝访问其他组织文件");
   }
   mkdirSync("var/checks", { recursive: true });
   writeFileSync(
@@ -77,6 +120,7 @@ try {
       {
         fingerprint: fingerprint(),
         checkedAt: new Date().toISOString(),
+        status: "通过",
         service: "真实 HTTP 后台；环境和存储以实际启动配置为准",
         results,
       },
@@ -85,6 +129,24 @@ try {
     ) + "\n",
   );
   console.log(results.join("\n"));
+} catch (error) {
+  mkdirSync("var/checks", { recursive: true });
+  writeFileSync(
+    "var/checks/backend.json",
+    JSON.stringify(
+      {
+        fingerprint: fingerprint(),
+        checkedAt: new Date().toISOString(),
+        status: "失败",
+        service: "真实 HTTP 后台",
+        results,
+        error: String(error),
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+  throw error;
 } finally {
   await browser.close();
 }

@@ -19,6 +19,15 @@ export function createTask<I extends object, O>(
   mode: "latest" | "submit",
   transport?: Transport,
 ) {
+  const writing = action.steps.some((step) =>
+    step.uses.some((id) =>
+      endpoints.some(
+        (endpoint) => endpoint.id === id && endpoint.method !== "GET",
+      ),
+    ),
+  );
+  if (writing && mode === "latest")
+    throw new Error("写入动作必须采用 submit，不能取消并覆盖先前提交");
   const state = shallowRef<TaskState<O>>({ status: "idle" });
   let controller: AbortController | undefined;
   let version = 0;
@@ -55,13 +64,10 @@ export function createTask<I extends object, O>(
       };
     }
   }
-  /** 未知写入只允许由页面查询并人工确认处理，不能直接变成可重试。 */
-  function acknowledgeUnknown() {
-    if (state.value.status === "unknown") state.value = { status: "idle" };
-  }
   function dispose() {
     version++;
-    controller?.abort();
+    // 已提交的写入继续取得真实结果，只停止向离开的页面更新。
+    if (!writing) controller?.abort();
   }
-  return { state: readonly(state), run, dispose, acknowledgeUnknown };
+  return { state: readonly(state), run, dispose };
 }

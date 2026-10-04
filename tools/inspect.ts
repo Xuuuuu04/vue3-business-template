@@ -33,7 +33,9 @@ export function sourceIndex(root = process.cwd()): Record<string, Source> {
     function visit(node: ts.Node) {
       if (
         ts.isCallExpression(node) &&
-        node.expression.getText(source) === "defineStep" &&
+        ["defineStep", "defineCondition"].includes(
+          node.expression.getText(source),
+        ) &&
         node.arguments[0] &&
         ts.isObjectLiteralExpression(node.arguments[0])
       ) {
@@ -151,16 +153,15 @@ export function inspectModule(
       );
       function inspect(node: ts.Node) {
         if (
-          ts.isImportDeclaration(node) &&
+          (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
+          node.moduleSpecifier &&
           ts.isStringLiteral(node.moduleSpecifier)
         ) {
           const spec = node.moduleSpecifier.text;
-          if (
-            spec.startsWith("@/shared/") &&
-            !["@/shared/public", "@/shared/ui/public"].includes(spec)
-          )
-            errors.push(`${name}：不能导入共用内部文件 ${spec}`);
-          else if (spec.startsWith("@/modules/")) {
+          if (spec.startsWith("@/shared/")) {
+            if (!["@/shared/public", "@/shared/ui/public"].includes(spec))
+              errors.push(`${name}：不能导入共用内部文件 ${spec}`);
+          } else if (spec.startsWith("@/modules/")) {
             const other = spec.split("/")[2];
             if (
               other !== module.name &&
@@ -172,13 +173,28 @@ export function inspectModule(
             const target = resolve(dirname(file), spec);
             if (!target.startsWith(dir + "/"))
               errors.push(`${name}：相对导入越过业务包范围`);
+          } else if (spec.startsWith("@/")) {
+            errors.push(`${name}：业务包不能导入应用内部 ${spec}`);
           } else if (
             !spec.startsWith("@/") &&
             !["vue", "vue-router", "vitest"].includes(spec)
           )
             errors.push(`${name}：业务包不能自行引入依赖 ${spec}`);
+          if (
+            spec === "vue" &&
+            !name.startsWith("pages/") &&
+            name !== "state.ts" &&
+            !name.startsWith("tests/")
+          )
+            errors.push(`${name}：Vue 状态只允许在 state.ts 或页面中使用`);
+          if (spec === "@/shared/ui/public" && !name.startsWith("pages/"))
+            errors.push(`${name}：UI 组件只在页面中使用`);
           if (spec === "vue-router" && !name.startsWith("pages/"))
             errors.push(`${name}：路由操作只能在页面中`);
+          if (name === "module.ts" && spec !== "@/shared/public")
+            errors.push(
+              `${name}：模块登记只能导入共用入口，业务代码必须按需加载`,
+            );
         }
         if (
           ts.isIdentifier(node) &&
@@ -196,7 +212,12 @@ export function inspectModule(
         if (
           ts.isCallExpression(node) &&
           node.expression.kind === ts.SyntaxKind.ImportKeyword &&
-          name !== "module.ts"
+          (name !== "module.ts" ||
+            !node.arguments[0] ||
+            !ts.isStringLiteral(node.arguments[0]) ||
+            !/^\.\/(?:pages\/[a-zA-Z0-9_]+\.vue|flow|api)$/.test(
+              node.arguments[0].text,
+            ))
         )
           errors.push(`${name}：动态加载只在模块清单中声明`);
         ts.forEachChild(node, inspect);

@@ -1,7 +1,7 @@
 /** 图由实际登记内容导出；前端页面和命令行使用相同的数据结构。 */
 import type { BusinessModule } from "./definitions";
 import { sourceOf } from "@/shared/records/store";
-export function describe(modules: BusinessModule[]) {
+export function describe(modules: BusinessModule[], lookup = sourceOf) {
   return modules.map((module) => ({
     name: module.name,
     title: module.title,
@@ -48,9 +48,14 @@ export function describe(modules: BusinessModule[]) {
         writes: step.writes,
         uses: step.uses,
         when: step.when
-          ? { id: step.when.id, title: step.when.title, reads: step.when.reads }
+          ? {
+              id: step.when.id,
+              title: step.when.title,
+              reads: step.when.reads,
+              source: lookup(step.when.id),
+            }
           : undefined,
-        source: sourceOf(step.id),
+        source: lookup(step.id),
       })),
     })),
   }));

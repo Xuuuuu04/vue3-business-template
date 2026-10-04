@@ -82,6 +82,9 @@ export async function sendRequest<T>(
     record.backendRun = reply.headers.get("X-Run-ID") ?? undefined;
     record.requestId = reply.headers.get("X-Request-ID") ?? requestId;
     if (!reply.ok) {
+      const uncertain =
+        endpoint.method !== "GET" &&
+        (reply.status >= 500 || [408, 499].includes(reply.status));
       const body = (await reply.json().catch(() => ({}))) as Record<
         string,
         unknown
@@ -91,6 +94,7 @@ export async function sendRequest<T>(
         typeof body.message === "string"
           ? body.message.slice(0, 300)
           : `请求失败（${reply.status}）`,
+        uncertain,
       );
     }
     const body: unknown =

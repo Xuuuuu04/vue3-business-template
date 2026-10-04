@@ -1,21 +1,51 @@
 /** 同一套结构检查在开发启动、打包、本机交付与 CI 中执行。 */
 import { mkdirSync, writeFileSync } from "node:fs";
-import { modules } from "../src/app/catalog";
+import {
+  validateEnabledModules,
+  loadBusinessModules,
+} from "../src/shared/modules/definitions";
+import { modules as registeredModules } from "../src/app/catalog";
 import { inspectProject, sourceIndex } from "./inspect";
 import { verifyLock } from "./framework-lock";
 import { fingerprint, run } from "./lib";
 import { exportDocs } from "./export-docs";
+const modules = await loadBusinessModules(registeredModules);
+validateEnabledModules(
+  modules,
+  new Set((process.env.VITE_DISABLED_MODULES || "").split(",").filter(Boolean)),
+);
 const structural = process.argv.includes("--structure");
 const moduleIndex = process.argv.indexOf("--module");
 const moduleName = moduleIndex >= 0 ? process.argv[moduleIndex + 1] : undefined;
+if (!structural) {
+  mkdirSync("var/checks", { recursive: true });
+  writeFileSync(
+    "var/checks/latest.json",
+    JSON.stringify(
+      {
+        fingerprint: fingerprint(),
+        scope: moduleName || "全部框架和业务包",
+        checkedAt: new Date().toISOString(),
+        status: "本轮尚未通过",
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+}
 const errors = [...inspectProject(process.cwd(), modules), ...verifyLock()];
 const index = sourceIndex();
+for (const [id, source] of Object.entries(index))
+  if (!/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(source.symbol))
+    errors.push(`${id} 必须使用命名函数作为步骤或条件`);
 for (const module of modules)
   for (const action of module.actions)
     for (const step of action.steps)
       if (!index[step.id]) errors.push(`${step.id} 没有命名函数位置`);
+      else if (step.when && !index[step.when.id])
+        errors.push(`${step.when.id} 没有条件函数位置`);
 if (errors.length) throw new Error(errors.join("\n"));
-exportDocs(true);
+await exportDocs(true);
 console.log("文件登记、依赖方向、步骤、页面样式和框架保护检查通过。");
 if (!structural) {
   if (moduleName && !modules.some((m) => m.name === moduleName))
@@ -37,6 +67,7 @@ if (!structural) {
         fingerprint: fingerprint(),
         scope: moduleName || "全部框架和业务包",
         checkedAt: new Date().toISOString(),
+        status: "通过",
         typeCheck: "通过",
         structure: "通过",
         tests: JSON.parse(

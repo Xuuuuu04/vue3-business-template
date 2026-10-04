@@ -91,3 +91,16 @@ test("读取取消保留取消状态，缺少路径参数不会发请求", async
   ).rejects.toThrow("缺少路径参数");
   expect(called).toBe(false);
 });
+
+test("网关 502 与请求 408 不表示后台一定没有保存", async () => {
+  for (const status of [502, 408])
+    await expect(
+      sendRequest(
+        { ...endpoint, method: "POST" },
+        { params: { id: "x" } },
+        new AbortController().signal,
+        record(),
+        async () => new Response(null, { status }),
+      ),
+    ).rejects.toMatchObject({ unknownResult: true });
+});

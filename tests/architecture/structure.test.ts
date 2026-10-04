@@ -71,3 +71,35 @@ test("跨包内部导入与依赖循环不能通过", () => {
     rmSync(root, { recursive: true });
   }
 });
+
+test("允许公共入口，拒绝从应用目录和 export 绕过内部限制", () => {
+  const root = fixture(
+    "import { z } from '@/shared/public'; export { sendRequest } from '@/shared/http/client'; import {router} from '@/app/router';",
+  );
+  try {
+    const errors = inspectModule(root, base).join(" ");
+    expect(errors).toContain("共用内部");
+    expect(errors).toContain("应用内部");
+    expect(errors).not.toContain("应用内部 @/shared/public");
+  } finally {
+    rmSync(root, { recursive: true });
+  }
+});
+
+test("模块登记禁止提前导入步骤，任意动态加载也被拒绝", () => {
+  const root = fixture("export const x=1;");
+  writeFileSync(
+    join(root, "src/modules/sample/module.ts"),
+    "import { actions } from './flow'; const x=()=>import('./steps/private');",
+  );
+  try {
+    const errors = inspectModule(root, {
+      ...base,
+      files: [...base.files, "module.ts"],
+    }).join(" ");
+    expect(errors).toContain("业务代码必须按需加载");
+    expect(errors).toContain("动态加载只在模块清单中声明");
+  } finally {
+    rmSync(root, { recursive: true });
+  }
+});

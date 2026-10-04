@@ -33,6 +33,7 @@
   --el-font-size-medium: var(--font-body);
   --el-text-color-primary: var(--color-text);
   --el-text-color-regular: var(--color-text);
+  --el-text-color-placeholder: var(--color-muted);
   --el-text-color-secondary: var(--color-muted);
   --el-border-color: var(--color-border);
   --el-border-radius-base: var(--radius);

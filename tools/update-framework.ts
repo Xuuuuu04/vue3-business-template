@@ -7,7 +7,8 @@ import {
   rmSync,
 } from "node:fs";
 import { resolve } from "node:path";
-import { protectedFiles, lockData } from "./framework-lock";
+import { protectedFiles, lockData, verifyLock } from "./framework-lock";
+import { sourceFingerprint } from "./lib";
 import { relative } from "node:path";
 const args = process.argv.slice(2);
 const at = args.indexOf("--source");
@@ -22,6 +23,9 @@ if (!existsSync(".template/base.json"))
   throw new Error(
     "缺少原模板内容。请使用 start:project 创建产品，或先恢复其 .template/base.json。",
   );
+const sourceErrors = verifyLock(source);
+if (sourceErrors.length)
+  throw new Error("新版模板的框架保护检查未通过：\n" + sourceErrors.join("\n"));
 const base = JSON.parse(readFileSync(".template/base.json", "utf8")) as Record<
   string,
   string
@@ -65,6 +69,12 @@ if (conflicts.length)
   );
 if (args.includes("--apply")) {
   const backup: Record<string, string | undefined> = {};
+  for (const file of [
+    ".template/base.json",
+    ".template/source.json",
+    "framework.lock",
+  ])
+    backup[file] = existsSync(file) ? readFileSync(file, "utf8") : undefined;
   try {
     for (const item of changes) {
       backup[item.file] = existsSync(item.file)
@@ -79,6 +89,21 @@ if (args.includes("--apply")) {
     writeFileSync(
       ".template/base.json",
       JSON.stringify(incoming, null, 2) + "\n",
+    );
+    const metadata = existsSync(".template/source.json")
+      ? JSON.parse(readFileSync(".template/source.json", "utf8"))
+      : {};
+    writeFileSync(
+      ".template/source.json",
+      JSON.stringify(
+        {
+          ...metadata,
+          updatedAt: new Date().toISOString(),
+          sourceFingerprint: sourceFingerprint(source),
+        },
+        null,
+        2,
+      ) + "\n",
     );
     writeFileSync("framework.lock", JSON.stringify(lockData(), null, 2) + "\n");
   } catch (error) {

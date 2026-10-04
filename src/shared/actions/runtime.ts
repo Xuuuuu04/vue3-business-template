@@ -38,6 +38,9 @@ export async function execute<I extends object, O>(
   try {
     if (action.permission && !authorization(action.permission))
       throw new ActionError("not_allowed", "当前账号没有执行此操作的权限");
+    for (const key of Object.keys(input))
+      if (!action.inputFields.includes(key))
+        throw new ActionError("undeclared_input", `输入字段 ${key} 没有声明`);
     Object.assign(values, action.input.parse(input));
     for (const key of action.inputFields) {
       const parsed = action.fields[key]?.schema.safeParse(values[key]);
@@ -110,12 +113,28 @@ async function runStep(
   const started = performance.now();
   const written = new Set<string>();
   try {
-    if (
-      part.when &&
-      !part.when.run(view(values, fields, part.when.reads, [], new Set()))
-    ) {
-      item.status = "skipped";
-      return;
+    if (part.when) {
+      item.condition = {
+        title: part.when.title,
+        source: sourceOf(part.when.id),
+        elapsed: 0,
+      };
+      const conditionStarted = performance.now();
+      let outcome: unknown;
+      try {
+        outcome = part.when.run(
+          view(values, fields, part.when.reads, [], new Set()),
+        );
+      } finally {
+        item.condition.elapsed = performance.now() - conditionStarted;
+      }
+      if (typeof outcome !== "boolean")
+        throw new ActionError("condition_invalid", "条件必须产生布尔结果");
+      item.condition.outcome = outcome;
+      if (!outcome) {
+        item.status = "skipped";
+        return;
+      }
     }
     const tools: StepTools = {
       signal,

@@ -12,7 +12,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "check": "tsx tools/check.ts",
     "test": "vitest run",
-    "test:browser": "playwright test",
+    "test:browser": "tsx tools/browser-check.ts",
     "project": "tsx tools/project.ts",
     "new:module": "tsx tools/new-module.ts",
     "new:page": "tsx tools/new-part.ts page",

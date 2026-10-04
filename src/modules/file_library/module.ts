@@ -1,7 +1,5 @@
 /** 仅清单登记的文件、页面与动作能够进入产品。 */
 import { defineModule } from "@/shared/public";
-import { actions } from "./flow";
-import { endpoints } from "./api";
 export default defineModule({
   name: "file_library",
   title: "文件管理",
@@ -22,8 +20,13 @@ export default defineModule({
     "pages/UploadPage.vue",
     "tests/files.test.ts",
   ],
-  actions,
-  endpoints,
+  load: async () => {
+    const [{ actions }, { endpoints }] = await Promise.all([
+      import("./flow"),
+      import("./api"),
+    ]);
+    return { actions, endpoints };
+  },
   pages: [
     {
       id: "file_library.list_page",

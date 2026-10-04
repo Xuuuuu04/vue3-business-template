@@ -1,5 +1,6 @@
 /** 有界的开发运行记录。页面关闭后丢失，不能替代后台的业务结果。 */
 import { shallowRef, triggerRef, readonly } from "vue";
+import version from "@/generated/version.json";
 import sources from "@/generated/sources.json";
 
 export interface Source {
@@ -26,6 +27,12 @@ export interface StepRecord {
   outputs: string[];
   requests: RequestRecord[];
   error?: string;
+  condition?: {
+    title: string;
+    source?: Source;
+    elapsed: number;
+    outcome?: boolean;
+  };
 }
 export interface RunRecord {
   id: string;
@@ -59,7 +66,11 @@ export function startRecord(action: string, title: string): RunRecord {
     status: "running",
     steps: [],
     gaps: [],
-    codeVersion: import.meta.env?.VITE_CODE_VERSION ?? "development",
+    codeVersion:
+      import.meta.env?.VITE_CODE_VERSION &&
+      import.meta.env.VITE_CODE_VERSION !== version.sourceFingerprint
+        ? `${import.meta.env.VITE_CODE_VERSION}/${version.sourceFingerprint}`
+        : version.sourceFingerprint,
   };
   items.value = [record, ...items.value];
   if (items.value.length > MAX_RUNS) {

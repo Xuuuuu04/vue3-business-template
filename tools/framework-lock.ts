@@ -17,6 +17,7 @@ export function protectedFiles(root = process.cwd()) {
     .concat(
       [
         "scaffold.json",
+        "src/env.d.ts",
         "src/main.ts",
         "vite.config.ts",
         "vitest.config.ts",

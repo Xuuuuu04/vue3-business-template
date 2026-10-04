@@ -29,6 +29,16 @@ const Step = z.object({
     .object({ file: z.string(), line: z.number(), symbol: z.string() })
     .optional(),
   error: z.string().optional(),
+  condition: z
+    .object({
+      title: z.string(),
+      elapsed: z.number(),
+      outcome: z.boolean().optional(),
+      source: z
+        .object({ file: z.string(), line: z.number(), symbol: z.string() })
+        .optional(),
+    })
+    .optional(),
 });
 const Run = z.object({
   id: z.string(),
@@ -67,6 +77,16 @@ else {
         console.log(
           `    ${step.source.file}:${step.source.line} ${step.source.symbol}`,
         );
+      if (step.condition) {
+        const condition = step.condition;
+        console.log(
+          `    条件 ${condition.title} · ${condition.outcome ?? "执行失败"} · ${condition.elapsed.toFixed(1)} ms`,
+        );
+        if (condition.source)
+          console.log(
+            `    ${condition.source.file}:${condition.source.line} ${condition.source.symbol}`,
+          );
+      }
       for (const output of step.outputs) console.log(`    ${output}`);
       if (step.error) console.log(`    ${step.error}`);
       for (const request of step.requests)

@@ -17,5 +17,5 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
   },
-  reporter: [["list"], ["html", { open: "never" }]],
+  reporter: [["list"], ["json"], ["html", { open: "never" }]],
 });

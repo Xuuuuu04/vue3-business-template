@@ -10,6 +10,7 @@ import {
 import { resolve, relative } from "node:path";
 import { execFileSync } from "node:child_process";
 import { protectedFiles, lockData } from "./framework-lock";
+import { sourceFingerprint } from "./lib";
 import { sourceIndex } from "./inspect";
 import { assertFramework } from "./scaffold";
 const destination = process.argv[2];
@@ -49,7 +50,7 @@ rmSync(resolve(target, "doc/file_library"), { recursive: true, force: true });
 rmSync(resolve(target, "tests/browser/files.spec.ts"), { force: true });
 writeFileSync(
   resolve(target, "src/app/catalog.ts"),
-  `import type { BusinessModule } from '@/shared/public';\nexport const modules: BusinessModule[] = [];\n`,
+  `import type { Module } from '@/shared/public';\nexport const modules: Module[] = [];\n`,
 );
 writeFileSync(
   resolve(target, "scaffold.json"),
@@ -99,6 +100,14 @@ writeFileSync(
   JSON.stringify(sourceIndex(target), null, 2) + "\n",
 );
 writeFileSync(resolve(target, "src/generated/graph.json"), "[]\n");
+writeFileSync(
+  resolve(target, "src/generated/version.json"),
+  JSON.stringify(
+    { sourceFingerprint: sourceFingerprint(target).slice(0, 16) },
+    null,
+    2,
+  ) + "\n",
+);
 writeFileSync(
   resolve(target, "doc/structure.md"),
   "# 开发包与页面\n\n这份文件来自实际登记内容。运行是否成功，使用 project 命令和浏览器运行详情查看。\n\n",

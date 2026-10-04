@@ -194,3 +194,43 @@ test("记录超过容量仍有明确移除数量", async () => {
   expect(useRecords().items.value).toHaveLength(100);
   expect(useRecords().dropped()).toBeGreaterThan(0);
 });
+
+test("不能通过未声明的额外输入偷偷带入数据", async () => {
+  await expect(
+    execute(
+      action((d) => {
+        d.result = 1;
+      }),
+      { input: 1, extra: "hidden" } as { input: number },
+      [],
+      signal(),
+    ),
+  ).rejects.toThrow("输入字段 extra 没有声明");
+});
+test("条件单独记录真实结果与耗时，跳过步骤不伪造输出", async () => {
+  const base = action((data) => {
+    data.result = data.input;
+  });
+  const conditional = {
+    ...base.steps[0]!,
+    id: "test.conditional",
+    reads: [],
+    writes: ["other"],
+    when: {
+      id: "test.false",
+      title: "不执行条件",
+      reads: [],
+      run: () => false,
+    },
+    run: () => {
+      throw new Error("不应执行");
+    },
+  };
+  const flow = defineAction({ ...base, steps: [conditional, base.steps[0]!] });
+  expect(await execute(flow, { input: 3 }, [], signal())).toBe(3);
+  const step = useRecords().items.value[0]!.steps[0]!;
+  expect(step.status).toBe("skipped");
+  expect(step.outputs).toEqual([]);
+  expect(step.condition?.outcome).toBe(false);
+  expect(step.condition?.elapsed).toBeGreaterThanOrEqual(0);
+});

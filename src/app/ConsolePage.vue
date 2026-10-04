@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { modules } from "./catalog";
-import { describe } from "@/shared/modules/graph";
+import generatedGraph from "@/generated/graph.json";
+import type { describe } from "@/shared/modules/graph";
 import { useRecords } from "@/shared/records/store";
 import { usePerformance } from "@/shared/records/performance";
 import { PageFrame, UiButton, UiInput } from "@/shared/ui/public";
-const graph = describe(modules);
+const graph = generatedGraph as unknown as ReturnType<typeof describe>;
 const { items, dropped } = useRecords();
 const { signals, gaps } = usePerformance();
 const tab = ref("structure");
@@ -107,7 +107,7 @@ function exportRuns() {
         </p>
         <ol class="graph-steps">
           <li v-for="(step, index) in action.steps" :key="step.id">
-            <p v-if="index" class="graph-connector">↓ 上一步结果进入下一步</p>
+            <p v-if="index" class="graph-connector">↓ 按声明顺序执行下一步</p>
             <div class="graph-step">
               <h2>{{ index + 1 }}. {{ step.title }}</h2>
               <p>规则：{{ step.rule }}</p>
@@ -125,7 +125,13 @@ function exportRuns() {
                     .join("、") || "无"
                 }}
               </p>
-              <p v-if="step.when">条件：{{ step.when.title }}</p>
+              <p v-if="step.when">
+                条件：{{ step.when.title
+                }}<span v-if="step.when.source">
+                  · {{ step.when.source.file }}:{{ step.when.source.line }}
+                  {{ step.when.source.symbol }}</span
+                >
+              </p>
               <p v-if="step.uses.length">接口：{{ step.uses.join("、") }}</p>
               <p class="run-source">
                 {{
@@ -206,6 +212,17 @@ function exportRuns() {
                     ? `${step.source.file}:${step.source.line} · ${step.source.symbol}`
                     : "无源码索引"
                 }}
+              </p>
+              <p v-if="step.condition">
+                条件：{{ step.condition.title }} ·
+                {{ step.condition.outcome ?? "没有产生结果" }} ·
+                {{ millis(step.condition.elapsed)
+                }}<span v-if="step.condition.source">
+                  · {{ step.condition.source.file }}:{{
+                    step.condition.source.line
+                  }}
+                  {{ step.condition.source.symbol }}</span
+                >
               </p>
               <p v-if="step.error" role="alert">{{ step.error }}</p>
               <p v-for="output in step.outputs" :key="output">{{ output }}</p>

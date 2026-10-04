@@ -34,6 +34,8 @@ npm run check
 ```sh
 npm run project -- --json
 npm run project -- --module file_library --json
+npm run impact -- --base main
+npm run runs -- --file frontend-runs.json --run 运行编号
 npm run new:page -- file_library history --title 文件历史
 npm run new:step -- file_library summarize --action file_library.list --title 整理结果
 ```

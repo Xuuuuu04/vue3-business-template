@@ -2,16 +2,26 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { modules } from "../src/app/catalog";
+import { loadBusinessModules } from "../src/shared/modules/definitions";
 import { describe } from "../src/shared/modules/graph";
 import { sourceIndex } from "./inspect";
-import { direct } from "./lib";
-export function documentation() {
+import { direct, sourceFingerprint } from "./lib";
+export async function documentation() {
   const sources = sourceIndex();
-  const graph = describe(modules);
+  const graph = describe(
+    await loadBusinessModules(modules),
+    (id) => sources[id],
+  );
   for (const module of graph)
     for (const action of module.actions)
       for (const step of action.steps) step.source = sources[step.id];
   const docs: Record<string, string> = {
+    "src/generated/version.json":
+      JSON.stringify(
+        { sourceFingerprint: sourceFingerprint().slice(0, 16) },
+        null,
+        2,
+      ) + "\n",
     "src/generated/sources.json": JSON.stringify(sources, null, 2) + "\n",
     "src/generated/graph.json": JSON.stringify(graph, null, 2) + "\n",
   };
@@ -46,8 +56,8 @@ export function documentation() {
   }
   return docs;
 }
-export function exportDocs(check = false) {
-  const expected = documentation();
+export async function exportDocs(check = false) {
+  const expected = await documentation();
   const errors: string[] = [];
   for (const [file, content] of Object.entries(expected)) {
     if (check) {
@@ -62,7 +72,7 @@ export function exportDocs(check = false) {
   return Object.keys(expected);
 }
 if (direct(fileURLToPath(import.meta.url))) {
-  exportDocs(process.argv.includes("--check"));
+  await exportDocs(process.argv.includes("--check"));
   console.log(
     process.argv.includes("--check")
       ? "生成内容与代码一致。"

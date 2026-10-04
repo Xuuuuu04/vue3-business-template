@@ -25,6 +25,7 @@ export function projectFiles(root = process.cwd()) {
         "AGENTS.md",
         "README.md",
         "framework.lock",
+        "scaffold.json",
         "project-plan.json",
       ]
         .map((name) => resolve(root, name))

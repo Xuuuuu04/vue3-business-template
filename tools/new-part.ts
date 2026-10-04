@@ -5,6 +5,7 @@ import {
   registry,
   saveRegistry,
   assertFramework,
+  htmlTitle,
   nameOf,
   titleOf,
 } from "./scaffold";
@@ -119,7 +120,7 @@ definition = updateObject(
 );
 const content =
   kind === "page"
-    ? `<script setup lang="ts">\nimport { PageFrame } from '@/shared/ui/public';\n</script>\n<template><PageFrame title=${JSON.stringify(title)} description="页面结构已生成，请先写清使用者任务，再填写内容。" /></template>\n`
+    ? `<script setup lang="ts">\nimport { PageFrame } from '@/shared/ui/public';\n</script>\n<template><PageFrame title="${htmlTitle(title)}" description="页面结构已生成，请先写清使用者任务，再填写内容。" /></template>\n`
     : `/** 该步骤已加入指定动作，填入真实业务之前明确失败。 */\nimport { defineStep } from '@/shared/public';\nfunction execute${name}(){throw new Error('步骤 ${name} 尚未实现');}\nexport const ${name}Step=defineStep({id:'${module}.${name}',title:${JSON.stringify(title)},rule:'R-待确认',reads:[],writes:[],uses:[],run:execute${name}});\n`;
 mkdirSync(target.slice(0, target.lastIndexOf("/")), { recursive: true });
 writeFileSync(target, content);

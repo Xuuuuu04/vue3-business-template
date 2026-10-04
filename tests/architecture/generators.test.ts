@@ -59,6 +59,14 @@ test("生成器产生真实可执行的开发包，重复名称不覆盖", () =>
       { cwd: root, encoding: "utf8", timeout: 30000 },
     );
     expect(output).toContain("1 passed");
+    execFileSync(resolve("node_modules/.bin/vue-tsc"), ["--noEmit"], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: "pipe",
+      timeout: 30000,
+    });
+    expect(() => command(root, "tools/new-module.ts", "class")).toThrow();
+    expect(existsSync(join(root, "src/modules/class"))).toBe(false);
     const before = readFileSync(
       join(root, "src/modules/contacts/data.ts"),
       "utf8",
@@ -104,6 +112,10 @@ test("产品初始化清理样板业务，框架三份比较遇到冲突不写�
       join(root, file),
       readFileSync(join(root, file), "utf8") + "\n/* 模板修改 */\n",
     );
+    writeFileSync(
+      join(root, "framework.lock"),
+      JSON.stringify(lockData(root), null, 2) + "\n",
+    );
     const before = readFileSync(join(product, file), "utf8");
     expect(() =>
       command(
@@ -115,6 +127,43 @@ test("产品初始化清理样板业务，框架三份比较遇到冲突不写�
       ),
     ).toThrow();
     expect(readFileSync(join(product, file), "utf8")).toBe(before);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+    rmSync(parent, { recursive: true, force: true });
+  }
+}, 60000);
+test("框架更新先预览，执行时保留业务和产品单独修改", () => {
+  const root = clone();
+  const parent = mkdtempSync(join(tmpdir(), "vue-update-"));
+  const product = join(parent, "product");
+  try {
+    command(root, "tools/start-project.ts", product);
+    symlinkSync(resolve("node_modules"), join(product, "node_modules"), "dir");
+    const theme = "src/shared/theme/tokens.css";
+    const local = "src/shared/theme/layout.css";
+    const original = readFileSync(join(product, theme), "utf8");
+    const changed = original + "\n/* 新版主题 */\n";
+    writeFileSync(join(root, theme), changed);
+    const customization =
+      readFileSync(join(product, local), "utf8") + "\n/* 产品单独修改 */\n";
+    writeFileSync(join(product, local), customization);
+    writeFileSync(
+      join(root, "framework.lock"),
+      JSON.stringify(lockData(root), null, 2) + "\n",
+    );
+    const catalog = readFileSync(join(product, "src/app/catalog.ts"), "utf8");
+    command(product, "tools/update-framework.ts", "--source", root);
+    expect(readFileSync(join(product, theme), "utf8")).toBe(original);
+    command(product, "tools/update-framework.ts", "--source", root, "--apply");
+    expect(readFileSync(join(product, theme), "utf8")).toBe(changed);
+    expect(readFileSync(join(product, local), "utf8")).toBe(customization);
+    expect(readFileSync(join(product, "src/app/catalog.ts"), "utf8")).toBe(
+      catalog,
+    );
+    expect(
+      JSON.parse(readFileSync(join(product, ".template/source.json"), "utf8"))
+        .sourceFingerprint,
+    ).toBeTruthy();
   } finally {
     rmSync(root, { recursive: true, force: true });
     rmSync(parent, { recursive: true, force: true });

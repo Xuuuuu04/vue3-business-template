@@ -29,6 +29,10 @@ const identity = session.state;
             :key="module.name"
             class="nav-link"
             :to="module.pages[0]?.path || '/'"
+            :class="{ 'is-active': $route.meta.module === module.name }"
+            :aria-current="
+              $route.meta.module === module.name ? 'location' : undefined
+            "
             >{{ module.title }}</RouterLink
           ><template v-if="consoleEnabled"
             ><p class="nav-title">开发工具</p>

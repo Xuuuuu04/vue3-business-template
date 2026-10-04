@@ -105,7 +105,8 @@ h2 {
 .nav-link:hover {
   background: var(--color-canvas);
 }
-.nav-link.router-link-active {
+.nav-link.router-link-active,
+.nav-link.is-active {
   background: var(--el-color-primary-light-9);
   color: var(--color-primary);
   font-weight: 600;

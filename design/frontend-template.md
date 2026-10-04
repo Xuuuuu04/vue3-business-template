@@ -47,3 +47,5 @@
 CI 的作用是让误改检查、未执行测试和启动限制在远程再次被发现。模板不引入多余部署平台、插件、中间件或自建组件库。没有真实问题时不增加抽象。
 
 官方依据：[Vue 性能与页面加载](https://vuejs.org/guide/best-practices/performance.html)、[Element Plus 全局组件配置](https://element-plus.org/en-US/component/config-provider.html)。模板采用路由按需加载，开发模式保留 Vue 性能标记，公共控件统一设置大小与语言。
+
+模块登记只包含说明、文件、页面与延迟加载入口。应用启动和结构图不导入各包的计算实现；进入页面后才下载相关步骤。生成图和开发检查读取完整定义，用同一份登记保持结构一致。

@@ -6,13 +6,19 @@ import { demoApi } from "./tools/demo-api.ts";
 import { developmentGuard } from "./tools/dev-guard.ts";
 import { sourceFingerprint } from "./tools/lib.ts";
 export default defineConfig(({ mode, command }) => {
+  const env = { ...loadEnv(mode, process.cwd(), ""), ...process.env };
   if (command === "serve")
     execFileSync(
       process.execPath,
       ["--import", "tsx", "tools/check.ts", "--structure"],
-      { stdio: "inherit" },
+      {
+        stdio: "inherit",
+        env: {
+          ...process.env,
+          VITE_DISABLED_MODULES: env.VITE_DISABLED_MODULES || "",
+        },
+      },
     );
-  const env = { ...loadEnv(mode, process.cwd(), ""), ...process.env };
   const demo = env.VITE_API_MODE !== "real";
   if (command === "build" && demo && env.ALLOW_DEMO_BUILD !== "true")
     throw new Error(
