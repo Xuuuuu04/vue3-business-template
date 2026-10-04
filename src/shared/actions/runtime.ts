@@ -1,0 +1,292 @@
+/** 执行关键业务步骤；读写限制、类型检查、取消与记录集中处理。 */
+import type { Action, Fields, Step } from "./definitions";
+import { validateAction } from "./definitions";
+import {
+  ActionError,
+  sendRequest,
+  type Endpoint,
+  type StepTools,
+  type Transport,
+} from "@/shared/http/client";
+import {
+  changed,
+  sourceOf,
+  startRecord,
+  summary,
+  type RunRecord,
+  type StepRecord,
+} from "@/shared/records/store";
+
+let authorization: (permission: string) => boolean = () => true;
+/** 仅应用入口配置权限提示，后台仍验证身份与数据范围。 */
+export function setAuthorization(check: (permission: string) => boolean) {
+  authorization = check;
+}
+
+/** 输入先按类型检查，每次动作使用独立数据，异步动作不共用可写中间结果。 */
+export async function execute<I extends object, O>(
+  action: Action<I, O>,
+  input: I,
+  endpoints: Endpoint[],
+  signal: AbortSignal,
+  transport?: Transport,
+): Promise<O> {
+  validateAction(action);
+  const record = startRecord(action.id, action.title);
+  const started = performance.now();
+  const values: Record<string, unknown> = {};
+  try {
+    if (action.permission && !authorization(action.permission))
+      throw new ActionError("not_allowed", "当前账号没有执行此操作的权限");
+    Object.assign(values, action.input.parse(input));
+    for (const key of action.inputFields) {
+      const parsed = action.fields[key]?.schema.safeParse(values[key]);
+      if (!parsed?.success)
+        throw new ActionError(
+          "invalid_input",
+          `输入字段 ${key} 类型不符合约定`,
+        );
+      values[key] = parsed.data;
+    }
+    for (const [key, field] of Object.entries(action.fields)) {
+      if (!(key in values)) {
+        const parsed = field.schema.safeParse(undefined);
+        if (parsed.success) values[key] = parsed.data;
+      }
+    }
+    for (const part of action.steps) {
+      signal.throwIfAborted();
+      await runStep(
+        part,
+        values,
+        action.fields,
+        endpoints,
+        signal,
+        record,
+        transport,
+      );
+    }
+    signal.throwIfAborted();
+    record.status = "ok";
+    return values[action.result] as O;
+  } catch (error) {
+    record.status =
+      error instanceof ActionError && error.unknownResult
+        ? "unknown"
+        : signal.aborted
+          ? "cancelled"
+          : "failed";
+    record.error =
+      error instanceof Error ? error.message.slice(0, 300) : "动作执行失败";
+    throw error;
+  } finally {
+    record.elapsed = performance.now() - started;
+    changed();
+  }
+}
+
+/** 每一步的输出必须实际写入，失败后保留已经产生的安全摘要。 */
+async function runStep(
+  part: Step,
+  values: Record<string, unknown>,
+  fields: Fields,
+  endpoints: Endpoint[],
+  signal: AbortSignal,
+  run: RunRecord,
+  transport?: Transport,
+): Promise<void> {
+  const item: StepRecord = {
+    id: part.id,
+    title: part.title,
+    rule: part.rule,
+    source: sourceOf(part.id),
+    status: "running",
+    elapsed: 0,
+    outputs: [],
+    requests: [],
+  };
+  run.steps.push(item);
+  changed();
+  const started = performance.now();
+  const written = new Set<string>();
+  try {
+    if (
+      part.when &&
+      !part.when.run(view(values, fields, part.when.reads, [], new Set()))
+    ) {
+      item.status = "skipped";
+      return;
+    }
+    const tools: StepTools = {
+      signal,
+      note(message) {
+        if (item.outputs.length < 40) item.outputs.push(message.slice(0, 200));
+        else if (!run.gaps.includes("步骤附加说明超过 40 条"))
+          run.gaps.push("步骤附加说明超过 40 条");
+      },
+      async request<T>(id: string, options = {}): Promise<T> {
+        const endpoint = endpoints.find((entry) => entry.id === id);
+        if (!part.uses.includes(id) || !endpoint)
+          throw new ActionError(
+            "undeclared_call",
+            `步骤 ${part.id} 未声明接口 ${id}`,
+          );
+        const request = {
+          endpoint: id,
+          method: endpoint.method,
+          elapsed: 0,
+          outcome: "running",
+        };
+        if (item.requests.length >= 40)
+          throw new ActionError(
+            "request_limit",
+            "单一步骤请求超过 40 次，请分页或拆分动作",
+          );
+        item.requests.push(request);
+        return sendRequest<T>(endpoint, options, signal, request, transport);
+      },
+    };
+    const returned = await part.run(
+      view(values, fields, part.reads, part.writes, written),
+      tools,
+    );
+    if (returned !== undefined)
+      throw new ActionError("step_returned", "步骤结果必须写入声明字段");
+    for (const key of part.writes)
+      if (!written.has(key))
+        throw new ActionError(
+          "missing_write",
+          `步骤 ${part.id} 没有写入 ${key}`,
+        );
+    item.status = signal.aborted ? "cancelled" : "ok";
+  } catch (error) {
+    item.status = signal.aborted ? "cancelled" : "failed";
+    item.error =
+      error instanceof Error ? error.message.slice(0, 300) : "步骤执行失败";
+    throw error;
+  } finally {
+    for (const key of written) {
+      const field = fields[key]!;
+      item.outputs.push(
+        summary(field.title, values[key], field.secret, field.recordValue),
+      );
+    }
+    item.elapsed = performance.now() - started;
+    changed();
+  }
+}
+
+/** 读取对象使用深只读视图，避免对列表 push 或修改嵌套对象绕过写入声明。 */
+function readonlyValue(
+  value: unknown,
+  cache = new WeakMap<object, object>(),
+): unknown {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    value instanceof Blob ||
+    value instanceof FormData
+  )
+    return value;
+  const known = cache.get(value);
+  if (known) return known;
+  const proxy = new Proxy(value, {
+    get(target, key) {
+      return readonlyValue(Reflect.get(target, key), cache);
+    },
+    set() {
+      throw new ActionError(
+        "readonly_change",
+        "不能原地修改只读字段，请写入新字段",
+      );
+    },
+    getOwnPropertyDescriptor(target, key) {
+      const descriptor = Reflect.getOwnPropertyDescriptor(target, key);
+      return descriptor && "value" in descriptor
+        ? { ...descriptor, value: readonlyValue(descriptor.value, cache) }
+        : descriptor;
+    },
+    setPrototypeOf() {
+      throw new ActionError("readonly_change", "不能修改只读对象原型");
+    },
+    deleteProperty() {
+      throw new ActionError("readonly_change", "不能删除只读字段");
+    },
+    defineProperty() {
+      throw new ActionError("readonly_change", "不能重定义只读字段");
+    },
+  });
+  cache.set(value, proxy);
+  return proxy;
+}
+
+/** 只让步骤读写已声明的字段；类型不符时保留字段和步骤名称。 */
+function view(
+  values: Record<string, unknown>,
+  fields: Fields,
+  reads: string[],
+  writes: string[],
+  written: Set<string>,
+) {
+  return new Proxy(values, {
+    get(target, key) {
+      if (
+        typeof key !== "string" ||
+        (!reads.includes(key) && !written.has(key))
+      )
+        throw new ActionError(
+          "undeclared_read",
+          `读取未声明字段 ${String(key)}`,
+        );
+      if (!(key in target))
+        throw new ActionError("missing_value", `字段 ${key} 尚未产生`);
+      return readonlyValue(target[key]);
+    },
+    set(target, key, value) {
+      if (typeof key !== "string" || !writes.includes(key))
+        throw new ActionError(
+          "undeclared_write",
+          `写入未声明字段 ${String(key)}`,
+        );
+      const parsed = fields[key]?.schema.safeParse(value);
+      if (!parsed?.success)
+        throw new ActionError(
+          "invalid_value",
+          `字段 ${key} 的值类型不符合约定`,
+        );
+      target[key] = parsed.data;
+      written.add(key);
+      return true;
+    },
+    ownKeys(target) {
+      return Object.keys(target).filter(
+        (key) => reads.includes(key) || written.has(key),
+      );
+    },
+    getOwnPropertyDescriptor(target, key) {
+      if (
+        typeof key !== "string" ||
+        (!reads.includes(key) && !written.has(key))
+      )
+        return undefined;
+      return {
+        configurable: true,
+        enumerable: true,
+        writable: false,
+        value: readonlyValue(target[key]),
+      };
+    },
+    getPrototypeOf() {
+      return null;
+    },
+    setPrototypeOf() {
+      throw new ActionError("undeclared_write", "步骤不能修改数据原型");
+    },
+    deleteProperty() {
+      throw new ActionError("undeclared_write", "步骤不能删除字段");
+    },
+    defineProperty() {
+      throw new ActionError("undeclared_write", "步骤不能重定义字段");
+    },
+  });
+}

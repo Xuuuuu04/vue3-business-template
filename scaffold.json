@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "modules": {
+    "file_library": {
+      "files": [
+        "README.md",
+        "module.ts",
+        "public.ts",
+        "data.ts",
+        "api.ts",
+        "flow.ts",
+        "state.ts",
+        "steps/read.ts",
+        "steps/write.ts",
+        "pages/ListPage.vue",
+        "pages/DetailPage.vue",
+        "pages/UploadPage.vue",
+        "tests/files.test.ts"
+      ],
+      "generator": "new-module/1"
+    }
+  }
+}

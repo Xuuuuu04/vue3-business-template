@@ -1,0 +1,50 @@
+{
+  "name": "vue3-business-template",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsx tools/check.ts --structure && vue-tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "check": "tsx tools/check.ts",
+    "test": "vitest run",
+    "test:browser": "playwright test",
+    "project": "tsx tools/project.ts",
+    "new:module": "tsx tools/new-module.ts",
+    "new:page": "tsx tools/new-part.ts page",
+    "new:step": "tsx tools/new-part.ts step",
+    "docs": "tsx tools/export-docs.ts",
+    "framework": "tsx tools/framework-lock.ts",
+    "start:project": "tsx tools/start-project.ts",
+    "update:framework": "tsx tools/update-framework.ts",
+    "build:demo": "ALLOW_DEMO_BUILD=true npm run build",
+    "dev:real": "VITE_API_MODE=real npm run dev",
+    "runs": "tsx tools/runs.ts",
+    "impact": "tsx tools/impact.ts",
+    "test:backend": "tsx tools/test-backend.ts"
+  },
+  "dependencies": {
+    "element-plus": "^2.14.7",
+    "vue": "^3.5.43",
+    "vue-router": "^5.3.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.4",
+    "@vitejs/plugin-vue": "^6.0.9",
+    "@vue/compiler-dom": "^3.5.43",
+    "@vue/compiler-sfc": "^3.5.43",
+    "postcss": "^8.5.28",
+    "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3",
+    "vue-tsc": "^3.3.12"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "file_library.read_page": {
+    "file": "src/modules/file_library/steps/read.ts",
+    "line": 4,
+    "symbol": "readPage"
+  },
+  "file_library.present_page": {
+    "file": "src/modules/file_library/steps/read.ts",
+    "line": 10,
+    "symbol": "presentPage"
+  },
+  "file_library.read_file": {
+    "file": "src/modules/file_library/steps/read.ts",
+    "line": 13,
+    "symbol": "readFile"
+  },
+  "file_library.present_file": {
+    "file": "src/modules/file_library/steps/read.ts",
+    "line": 18,
+    "symbol": "presentFile"
+  },
+  "file_library.prepare_upload": {
+    "file": "src/modules/file_library/steps/write.ts",
+    "line": 4,
+    "symbol": "prepareUpload"
+  },
+  "file_library.upload_file": {
+    "file": "src/modules/file_library/steps/write.ts",
+    "line": 11,
+    "symbol": "uploadFile"
+  },
+  "file_library.delete_file": {
+    "file": "src/modules/file_library/steps/write.ts",
+    "line": 17,
+    "symbol": "deleteFile"
+  },
+  "file_library.download_file": {
+    "file": "src/modules/file_library/steps/write.ts",
+    "line": 22,
+    "symbol": "downloadFile"
+  },
+  "session.sign_in": {
+    "file": "src/shared/session/session.ts",
+    "line": 29,
+    "symbol": "signIn"
+  }
+}

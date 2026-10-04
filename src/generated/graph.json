@@ -1,0 +1,408 @@
+[
+  {
+    "name": "file_library",
+    "title": "文件管理",
+    "description": "按团队查看、上传、下载与删除文件",
+    "dependsOn": [],
+    "source": "src/modules/file_library/module.ts",
+    "files": [
+      "README.md",
+      "module.ts",
+      "public.ts",
+      "data.ts",
+      "api.ts",
+      "flow.ts",
+      "state.ts",
+      "steps/read.ts",
+      "steps/write.ts",
+      "pages/ListPage.vue",
+      "pages/DetailPage.vue",
+      "pages/UploadPage.vue",
+      "tests/files.test.ts"
+    ],
+    "pages": [
+      {
+        "id": "file_library.list_page",
+        "title": "文件列表",
+        "path": "/files",
+        "file": "src/modules/file_library/pages/ListPage.vue",
+        "actions": [
+          "file_library.list"
+        ],
+        "components": [
+          "PageFrame",
+          "UiTable",
+          "UiColumn",
+          "UiInput",
+          "UiPagination",
+          "UiButton",
+          "StatusMessage"
+        ],
+        "state": "src/modules/file_library/state.ts"
+      },
+      {
+        "id": "file_library.detail_page",
+        "title": "文件详情",
+        "path": "/files/:id",
+        "file": "src/modules/file_library/pages/DetailPage.vue",
+        "actions": [
+          "file_library.info",
+          "file_library.delete",
+          "file_library.download"
+        ],
+        "components": [
+          "PageFrame",
+          "UiDialog",
+          "UiButton",
+          "StatusMessage"
+        ],
+        "state": "src/modules/file_library/state.ts"
+      },
+      {
+        "id": "file_library.upload_page",
+        "title": "上传文件",
+        "path": "/files/upload",
+        "file": "src/modules/file_library/pages/UploadPage.vue",
+        "actions": [
+          "file_library.upload",
+          "file_library.list"
+        ],
+        "components": [
+          "PageFrame",
+          "UiButton",
+          "StatusMessage"
+        ],
+        "state": "src/modules/file_library/state.ts"
+      }
+    ],
+    "endpoints": [
+      {
+        "id": "file_library.list",
+        "title": "读取文件列表",
+        "method": "GET",
+        "path": "/api/v1/files/:org"
+      },
+      {
+        "id": "file_library.info",
+        "title": "读取文件详情",
+        "method": "GET",
+        "path": "/api/v1/files/:org/:id/info"
+      },
+      {
+        "id": "file_library.upload",
+        "title": "上传文件",
+        "method": "POST",
+        "path": "/api/v1/files/:org"
+      },
+      {
+        "id": "file_library.delete",
+        "title": "删除文件",
+        "method": "DELETE",
+        "path": "/api/v1/files/:org/:id"
+      },
+      {
+        "id": "file_library.download",
+        "title": "下载文件",
+        "method": "GET",
+        "path": "/api/v1/files/:org/:id/download",
+        "responseKind": "blob"
+      }
+    ],
+    "actions": [
+      {
+        "id": "file_library.list",
+        "title": "查看文件列表",
+        "inputFields": [
+          "org",
+          "offset",
+          "limit"
+        ],
+        "result": "result",
+        "fields": {
+          "org": {
+            "title": "文件所属团队代码",
+            "secret": false
+          },
+          "offset": {
+            "title": "起始位置，从零计数",
+            "secret": false
+          },
+          "limit": {
+            "title": "本页最多显示数量",
+            "secret": false
+          },
+          "page": {
+            "title": "后台返回的一页",
+            "secret": false
+          },
+          "result": {
+            "title": "页面显示的一页",
+            "secret": false
+          }
+        },
+        "steps": [
+          {
+            "id": "file_library.read_page",
+            "title": "读取这一页的文件",
+            "rule": "R-01",
+            "reads": [
+              "org",
+              "offset",
+              "limit"
+            ],
+            "writes": [
+              "page"
+            ],
+            "uses": [
+              "file_library.list"
+            ],
+            "source": {
+              "file": "src/modules/file_library/steps/read.ts",
+              "line": 4,
+              "symbol": "readPage"
+            }
+          },
+          {
+            "id": "file_library.present_page",
+            "title": "形成列表结果",
+            "rule": "R-01",
+            "reads": [
+              "page"
+            ],
+            "writes": [
+              "result"
+            ],
+            "uses": [],
+            "source": {
+              "file": "src/modules/file_library/steps/read.ts",
+              "line": 10,
+              "symbol": "presentPage"
+            }
+          }
+        ]
+      },
+      {
+        "id": "file_library.info",
+        "title": "查看文件详情",
+        "inputFields": [
+          "org",
+          "id"
+        ],
+        "result": "result",
+        "fields": {
+          "org": {
+            "title": "文件所属团队代码",
+            "secret": false
+          },
+          "id": {
+            "title": "文件编号",
+            "secret": false
+          },
+          "file": {
+            "title": "后台文件信息",
+            "secret": false
+          },
+          "result": {
+            "title": "详情显示信息",
+            "secret": false
+          }
+        },
+        "steps": [
+          {
+            "id": "file_library.read_file",
+            "title": "读取文件信息",
+            "rule": "R-02",
+            "reads": [
+              "org",
+              "id"
+            ],
+            "writes": [
+              "file"
+            ],
+            "uses": [
+              "file_library.info"
+            ],
+            "source": {
+              "file": "src/modules/file_library/steps/read.ts",
+              "line": 13,
+              "symbol": "readFile"
+            }
+          },
+          {
+            "id": "file_library.present_file",
+            "title": "形成详情结果",
+            "rule": "R-02",
+            "reads": [
+              "file"
+            ],
+            "writes": [
+              "result"
+            ],
+            "uses": [],
+            "source": {
+              "file": "src/modules/file_library/steps/read.ts",
+              "line": 18,
+              "symbol": "presentFile"
+            }
+          }
+        ]
+      },
+      {
+        "id": "file_library.upload",
+        "title": "上传文件",
+        "inputFields": [
+          "org",
+          "file"
+        ],
+        "result": "result",
+        "fields": {
+          "org": {
+            "title": "文件所属团队代码",
+            "secret": false
+          },
+          "file": {
+            "title": "选择的文件内容",
+            "secret": true
+          },
+          "body": {
+            "title": "上传正文",
+            "secret": true
+          },
+          "result": {
+            "title": "已保存文件信息",
+            "secret": false
+          }
+        },
+        "steps": [
+          {
+            "id": "file_library.prepare_upload",
+            "title": "检查文件并准备上传",
+            "rule": "R-03",
+            "reads": [
+              "file"
+            ],
+            "writes": [
+              "body"
+            ],
+            "uses": [],
+            "source": {
+              "file": "src/modules/file_library/steps/write.ts",
+              "line": 4,
+              "symbol": "prepareUpload"
+            }
+          },
+          {
+            "id": "file_library.upload_file",
+            "title": "保存文件",
+            "rule": "R-03",
+            "reads": [
+              "org",
+              "body"
+            ],
+            "writes": [
+              "result"
+            ],
+            "uses": [
+              "file_library.upload"
+            ],
+            "source": {
+              "file": "src/modules/file_library/steps/write.ts",
+              "line": 11,
+              "symbol": "uploadFile"
+            }
+          }
+        ]
+      },
+      {
+        "id": "file_library.delete",
+        "title": "删除文件",
+        "inputFields": [
+          "org",
+          "id"
+        ],
+        "result": "result",
+        "fields": {
+          "org": {
+            "title": "文件所属团队代码",
+            "secret": false
+          },
+          "id": {
+            "title": "文件编号",
+            "secret": false
+          },
+          "result": {
+            "title": "删除完成",
+            "secret": false
+          }
+        },
+        "steps": [
+          {
+            "id": "file_library.delete_file",
+            "title": "删除已确认的文件",
+            "rule": "R-04",
+            "reads": [
+              "org",
+              "id"
+            ],
+            "writes": [
+              "result"
+            ],
+            "uses": [
+              "file_library.delete"
+            ],
+            "source": {
+              "file": "src/modules/file_library/steps/write.ts",
+              "line": 17,
+              "symbol": "deleteFile"
+            }
+          }
+        ]
+      },
+      {
+        "id": "file_library.download",
+        "title": "下载文件",
+        "inputFields": [
+          "org",
+          "id"
+        ],
+        "result": "result",
+        "fields": {
+          "org": {
+            "title": "文件所属团队代码",
+            "secret": false
+          },
+          "id": {
+            "title": "文件编号",
+            "secret": false
+          },
+          "result": {
+            "title": "下载文件内容",
+            "secret": true
+          }
+        },
+        "steps": [
+          {
+            "id": "file_library.download_file",
+            "title": "读取下载内容",
+            "rule": "R-05",
+            "reads": [
+              "org",
+              "id"
+            ],
+            "writes": [
+              "result"
+            ],
+            "uses": [
+              "file_library.download"
+            ],
+            "source": {
+              "file": "src/modules/file_library/steps/write.ts",
+              "line": 22,
+              "symbol": "downloadFile"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

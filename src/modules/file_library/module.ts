@@ -1,0 +1,71 @@
+/** 仅清单登记的文件、页面与动作能够进入产品。 */
+import { defineModule } from "@/shared/public";
+import { actions } from "./flow";
+import { endpoints } from "./api";
+export default defineModule({
+  name: "file_library",
+  title: "文件管理",
+  description: "按团队查看、上传、下载与删除文件",
+  dependsOn: [],
+  files: [
+    "README.md",
+    "module.ts",
+    "public.ts",
+    "data.ts",
+    "api.ts",
+    "flow.ts",
+    "state.ts",
+    "steps/read.ts",
+    "steps/write.ts",
+    "pages/ListPage.vue",
+    "pages/DetailPage.vue",
+    "pages/UploadPage.vue",
+    "tests/files.test.ts",
+  ],
+  actions,
+  endpoints,
+  pages: [
+    {
+      id: "file_library.list_page",
+      title: "文件列表",
+      path: "/files",
+      permission: "file_library.read",
+      file: "pages/ListPage.vue",
+      actions: ["file_library.list"],
+      components: [
+        "PageFrame",
+        "UiTable",
+        "UiColumn",
+        "UiInput",
+        "UiPagination",
+        "UiButton",
+        "StatusMessage",
+      ],
+      load: () => import("./pages/ListPage.vue"),
+    },
+    {
+      id: "file_library.detail_page",
+      title: "文件详情",
+      path: "/files/:id",
+      permission: "file_library.read",
+      file: "pages/DetailPage.vue",
+      actions: [
+        "file_library.info",
+        "file_library.delete",
+        "file_library.download",
+      ],
+      components: ["PageFrame", "UiDialog", "UiButton", "StatusMessage"],
+      load: () => import("./pages/DetailPage.vue"),
+    },
+    {
+      id: "file_library.upload_page",
+      title: "上传文件",
+      path: "/files/upload",
+      permission: "file_library.write",
+      file: "pages/UploadPage.vue",
+      actions: ["file_library.upload", "file_library.list"],
+      components: ["PageFrame", "UiButton", "StatusMessage"],
+      load: () => import("./pages/UploadPage.vue"),
+    },
+  ],
+});

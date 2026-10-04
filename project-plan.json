@@ -1,0 +1,11 @@
+{
+  "product": "Vue3 通用前端模板",
+  "businessLines": [
+    {
+      "name": "团队文件",
+      "packages": ["file_library"],
+      "operations": ["列表与返回", "上传", "详情", "下载", "删除"],
+      "status": "样板业务，真实检查请查看 project 命令"
+    }
+  ]
+}
