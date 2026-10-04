@@ -1,5 +1,5 @@
 {
-  ".github/workflows/check.yml": "17a66216e15eaab2c268c251b2dd2888c783e3b6cbebda9a200e702578ae5742",
+  ".github/workflows/check.yml": "5862e4ce849a90269f5ebe6268ad4cb15a705fe3551d18016a30e4fe4aa82c4c",
   "playwright.config.ts": "99d785dbbf4c5e26443958c4d3ecee3d4b8fac8bb3a7a2909703a82210dbf047",
   "scaffold.json": "ea386d3897637d3028628b0b2ead7e088738f408ea5efdc5a598bb027c09a697",
   "src/app/App.vue": "62875ccfe1ea2eb088f0c72a67f46640cacac280f200296d83180770fab6b2e5",
