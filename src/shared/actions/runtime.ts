@@ -73,6 +73,21 @@ export async function execute<I extends object, O>(
     record.status = "ok";
     return values[action.result] as O;
   } catch (error) {
+    // 后续失败不能抹掉本次已经保存的事实，也不能让页面重发整个动作。
+    const saved = record.steps.some((step) =>
+      step.requests.some(
+        (request) => request.method !== "GET" && request.outcome === "ok",
+      ),
+    );
+    if (saved) {
+      const failure = new ActionError(
+        error instanceof ActionError ? error.code : "after_write_failed",
+        `已有后台写入操作成功，但后续步骤失败：${error instanceof Error ? error.message : "动作执行失败"} 请先查询实际结果，不要再次提交整个操作。`,
+        true,
+      );
+      failure.cause = error;
+      error = failure;
+    }
     record.status =
       error instanceof ActionError && error.unknownResult
         ? "unknown"
