@@ -35,7 +35,11 @@ export default defineModule({
       path: "/files",
       permission: "file_library.read",
       file: "pages/ListPage.vue",
-      actions: ["file_library.list", "file_library.download"],
+      actions: [
+        "file_library.list",
+        "file_library.download",
+        "file_library.delete",
+      ],
       components: [
         "PageFrame",
         "StatusMessage",
@@ -48,6 +52,8 @@ export default defineModule({
         "UiFileIcon",
         "UiTime",
         "UiTip",
+        "UiDialog",
+        "BatchProgress",
       ],
       load: () => import("./pages/ListPage.vue"),
     },

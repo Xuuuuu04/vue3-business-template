@@ -28,7 +28,8 @@
         "file": "src/modules/file_library/pages/ListPage.vue",
         "actions": [
           "file_library.list",
-          "file_library.download"
+          "file_library.download",
+          "file_library.delete"
         ],
         "components": [
           "PageFrame",
@@ -41,7 +42,9 @@
           "UiEmpty",
           "UiFileIcon",
           "UiTime",
-          "UiTip"
+          "UiTip",
+          "UiDialog",
+          "BatchProgress"
         ],
         "state": "src/modules/file_library/state.ts"
       },

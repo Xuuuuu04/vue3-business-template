@@ -1,6 +1,6 @@
 /** 确认样例来自 doc/file_library/rules.md；假服务只验证前端处理。 */
 import { expect, test } from "vitest";
-import { createTask } from "@/shared/public";
+import { createTask, useBatch } from "@/shared/public";
 import { listFiles, uploadFile, deleteFile } from "../flow";
 import { endpoints } from "../api";
 const file = {
@@ -69,4 +69,26 @@ test("R-06：写入中断保留未知状态，再点击不能重发", async () =
   await task.run({ org: "demo-team", id: "one" });
   expect(calls).toBe(1);
   expect(task.state.value.status).toBe("unknown");
+});
+test("R-10：批量删除逐个执行，失败继续，结果未知时停止且不发后面的请求", async () => {
+  const calls: string[] = [];
+  const replies: Record<string, () => Promise<Response>> = {
+    a: async () => new Response(null, { status: 204 }),
+    b: async () => Response.json({ message: "没有权限" }, { status: 403 }),
+    c: async () => new Response(null, { status: 204 }),
+  };
+  const run = (ids: string[], broken?: string) => {
+    const task = createTask(deleteFile, endpoints, "submit", async (url) => {
+      const id = String(url).split("/").pop()!;
+      calls.push(id);
+      if (id === broken) throw new TypeError("connection lost");
+      return replies[id]!();
+    });
+    const batch = useBatch();
+    return batch.run(task, ids.map((id) => ({ key: id, label: id, input: { org: "demo-team", id } })));
+  };
+  expect((await run(["a", "b", "c"])).map((i) => i.status)).toEqual(["ok", "failed", "ok"]);
+  calls.length = 0;
+  expect((await run(["a", "b", "c"], "b")).map((i) => i.status)).toEqual(["ok", "unknown", "skipped"]);
+  expect(calls).toEqual(["a", "b"]);
 });

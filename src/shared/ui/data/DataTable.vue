@@ -28,6 +28,7 @@ const props = withDefaults(
     groupBy?: string;
     /** 为 true 时点击表头只发出 sort 变化，由页面重新读取；默认在当前页内排序。 */
     serverSort?: boolean;
+    /** 表格区域最高多少；默认留出页头后占满一屏，表头和分页始终可见。写 "none" 跟随页面滚动。 */
     maxHeight?: string;
     emptyTitle?: string;
     emptyHint?: string;
@@ -193,7 +194,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       </Tip>
     </header>
 
-    <div class="min-h-0 flex-1 overflow-auto border-t border-line" :style="{ maxHeight: fullscreen ? 'none' : maxHeight }">
+    <div class="min-h-0 flex-1 overflow-auto border-t border-line" :style="{ maxHeight: fullscreen ? 'none' : (maxHeight ?? 'calc(100dvh - 330px)') }">
       <table class="w-full min-w-max border-separate border-spacing-0">
         <thead>
           <tr>
@@ -269,12 +270,12 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       </table>
     </div>
 
-    <Transition enter-from-class="max-h-0 opacity-0" enter-active-class="transition-all duration-200 ease-(--ease) overflow-hidden" enter-to-class="max-h-16 opacity-100" leave-active-class="transition-all duration-150 overflow-hidden" leave-to-class="max-h-0 opacity-0" leave-from-class="max-h-16">
-      <div v-if="selectable && selected.length" class="flex items-center gap-3 bg-fg px-4 py-2.5 text-surface">
+    <Transition enter-from-class="opacity-0 translate-y-4" enter-active-class="transition duration-200 ease-(--ease)" leave-active-class="transition duration-150" leave-to-class="opacity-0 translate-y-4">
+      <div v-if="selectable && selected.length" class="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-xl bg-fg py-2 pr-2 pl-4 text-surface shadow-pop" role="toolbar" aria-label="批量操作">
         <span class="tabular-nums">已选 <b>{{ selected.length }}</b> 项</span>
-        <span class="flex-1" />
+        <span class="mx-1 h-5 w-px bg-surface/20" />
         <slot name="bulk" :count="selected.length" :clear="() => (selected = [])" />
-        <button type="button" class="rounded-md border border-surface/30 px-3 py-1 hover:bg-surface/10" @click="selected = []">取消选择</button>
+        <button type="button" class="h-7 rounded-md px-2.5 text-[13px] text-surface/70 hover:bg-surface/10 hover:text-surface" @click="selected = []">取消选择</button>
       </div>
     </Transition>
     <footer v-if="showFooter" class="flex flex-wrap items-center gap-3 border-t border-line px-4 py-2.5 text-[13px] text-fg-muted">

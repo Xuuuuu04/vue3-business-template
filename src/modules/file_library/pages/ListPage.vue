@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { saveDownload, useSession } from "@/shared/public";
+import { saveDownload, useSession, useBatch } from "@/shared/public";
 import {
   PageFrame,
   StatusMessage,
@@ -14,6 +14,8 @@ import {
   UiFileIcon,
   UiTime,
   UiTip,
+  UiDialog,
+  BatchProgress,
   fileKind,
   formatBytes,
   type DataColumn,
@@ -24,7 +26,7 @@ import { useFileLibrary, type FileView } from "../public";
 const SIZES = [10, 20, 50];
 const route = useRoute();
 const router = useRouter();
-const { list, download } = useFileLibrary();
+const { list, download, remove } = useFileLibrary();
 const session = useSession();
 const org = session.state.value.org;
 const size = computed(() =>
@@ -89,6 +91,47 @@ function openFile(file: FileView) {
     query: { returnTo: route.fullPath },
   });
 }
+/** 勾选的文件编号；翻页、改条数后清空，避免操作看不见的文件。 */
+const selected = ref<string[]>([]);
+watch([offset, size], () => (selected.value = []));
+const picked = computed(() =>
+  (state.value.data?.items ?? []).filter((f) => selected.value.includes(f.id)),
+);
+const batch = useBatch();
+/** 批量弹窗：先确认删除，或直接显示下载进度；执行中不能关闭。 */
+const batchMode = ref<"" | "confirm" | "delete" | "download">("");
+const batchOpen = computed({
+  get: () => batchMode.value !== "",
+  set: (open: boolean) => {
+    if (!open && !batch.running.value) closeBatch();
+  },
+});
+function closeBatch() {
+  const removed = batchMode.value === "delete";
+  const done = batch.items.value.filter((i) => i.status === "ok").map((i) => i.key);
+  batchMode.value = "";
+  batch.reset();
+  if (removed) {
+    selected.value = selected.value.filter((k) => !done.includes(k));
+    load();
+  }
+}
+async function batchDelete() {
+  batchMode.value = "delete";
+  await batch.run(
+    remove,
+    picked.value.map((f) => ({ key: f.id, label: f.name, input: { org, id: f.id } })),
+  );
+}
+async function batchDownload() {
+  batchMode.value = "download";
+  const names = new Map(picked.value.map((f) => [f.id, f.name]));
+  await batch.run(
+    download,
+    picked.value.map((f) => ({ key: f.id, label: f.name, input: { org, id: f.id } })),
+    (blob, key) => blob && saveDownload(blob, names.get(key)!),
+  );
+}
 async function downloadFile(file: FileView) {
   const blob = await download.run({ org, id: file.id });
   if (blob) saveDownload(blob, file.name);
@@ -115,6 +158,8 @@ async function downloadFile(file: FileView) {
       :settings="false"
       :fullscreenable="false"
       row-clickable
+      selectable
+      v-model:selected="selected"
       :columns="columns"
       :rows="rows"
       row-key="id"
@@ -169,6 +214,18 @@ async function downloadFile(file: FileView) {
           ></Row
         ></template
       >
+      <template #bulk
+        ><UiButton size="sm" icon="download" @click="batchDownload"
+          >下载</UiButton
+        ><UiButton
+          v-if="session.can('file_library.write')"
+          size="sm"
+          variant="danger"
+          icon="delete"
+          @click="batchMode = 'confirm'"
+          >删除</UiButton
+        ></template
+      >
       <template #empty
         ><UiEmpty
           :title="filter ? '这一页没有符合条件的文件' : '还没有文件'"
@@ -184,5 +241,49 @@ async function downloadFile(file: FileView) {
         ></template
       >
     </DataTable>
+    <UiDialog
+      v-model:open="batchOpen"
+      :title="
+        batchMode === 'confirm'
+          ? `删除 ${picked.length} 个文件？`
+          : batch.running.value
+            ? batchMode === 'delete'
+              ? '正在删除'
+              : '正在下载'
+            : batchMode === 'delete'
+              ? '删除完成'
+              : '下载完成'
+      "
+      :description="
+        batchMode === 'confirm'
+          ? '删除后不能恢复。会按顺序逐个删除；某个结果未确认时会停下，不会自动重试。'
+          : undefined
+      "
+    >
+      <template v-if="batchMode === 'confirm'"
+        ><BatchProgress
+          :items="picked.map((f) => ({ key: f.id, label: f.name, status: 'waiting' }))"
+      /></template>
+      <BatchProgress
+        v-else
+        :items="batch.items.value"
+        :verb="batchMode === 'delete' ? '已删除' : '已下载'"
+      />
+      <template #footer>
+        <template v-if="batchMode === 'confirm'"
+          ><UiButton @click="batchMode = ''">取消</UiButton
+          ><UiButton variant="danger" @click="batchDelete"
+            >确认删除 {{ picked.length }} 个</UiButton
+          ></template
+        >
+        <UiButton
+          v-else
+          variant="primary"
+          :loading="batch.running.value"
+          @click="closeBatch"
+          >{{ batch.running.value ? "执行中" : "完成" }}</UiButton
+        >
+      </template>
+    </UiDialog>
   </PageFrame>
 </template>

@@ -8,6 +8,8 @@ export {
 export type { Action, Fields, Step, Condition } from "./actions/definitions";
 export { createTask } from "./state/task";
 export type { TaskState } from "./state/task";
+export { useBatch } from "./state/batch";
+export type { BatchOutcome } from "./state/batch";
 export { defineModule } from "./modules/definitions";
 export type { Module, BusinessModule, Page } from "./modules/definitions";
 export type { Endpoint, StepTools } from "./http/client";

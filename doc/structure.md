@@ -12,6 +12,6 @@
 
 | 页面 | 路径 | 源码 | 动作 |
 | --- | --- | --- | --- |
-| 文件列表 | /files | src/modules/file_library/pages/ListPage.vue | file_library.list、file_library.download |
+| 文件列表 | /files | src/modules/file_library/pages/ListPage.vue | file_library.list、file_library.download、file_library.delete |
 | 文件详情 | /files/:id | src/modules/file_library/pages/DetailPage.vue | file_library.info、file_library.delete、file_library.download |
 | 上传文件 | /files/upload | src/modules/file_library/pages/UploadPage.vue | file_library.upload、file_library.list |
