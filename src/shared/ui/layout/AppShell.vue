@@ -33,12 +33,12 @@ function active(item: { to: string; exact?: boolean }) { return route.path === i
         <span v-else class="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-[15px] font-bold text-primary-ink">{{ initial }}</span>
         <span v-show="!collapsed" class="truncate text-base font-semibold text-side-active">{{ brand }}</span>
       </div>
-      <nav class="mt-2 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto" aria-label="主要导航">
+      <nav class="-mx-2.5 mt-2 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2.5" aria-label="主要导航">
         <template v-for="(g, gi) in nav" :key="gi">
           <p v-if="g.title && !collapsed" class="px-3 pt-4 pb-1.5 text-xs text-side-faint">{{ g.title }}</p>
           <div v-else-if="gi && collapsed" class="mx-3 my-2 h-px bg-side-line" />
           <Tip v-for="item in g.items" :key="item.to" :text="collapsed ? item.label : ''" side="right">
-            <RouterLink :to="item.to" class="relative flex h-9.5 items-center gap-3 rounded-md px-3 whitespace-nowrap text-side-fg transition-colors duration-150 hover:bg-side-hover" :class="active(item) && 'bg-side-hover font-semibold !text-side-active'" :aria-current="active(item) ? 'page' : undefined" :aria-label="collapsed ? item.label : undefined">
+            <RouterLink :to="item.to" class="relative flex h-9.5 items-center gap-3 rounded-md px-3 whitespace-nowrap text-side-fg transition-colors duration-150 hover:bg-side-hover" :class="active(item) && 'font-semibold !text-side-active before:absolute before:top-1/2 before:-left-2.5 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-(--side-bar)'" :aria-current="active(item) ? 'page' : undefined" :aria-label="collapsed ? item.label : undefined">
               <component :is="item.icon" v-if="item.icon" class="size-[18px] shrink-0" :class="active(item) && 'text-primary'" />
               <span v-show="!collapsed" class="flex-1 truncate">{{ item.label }}</span>
               <span v-if="item.badge && !collapsed" class="rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-ink tabular-nums">{{ item.badge }}</span>
