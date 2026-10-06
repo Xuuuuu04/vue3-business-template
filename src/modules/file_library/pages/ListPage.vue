@@ -6,11 +6,12 @@ import {
   PageFrame,
   StatusMessage,
   StatusLine,
-  FilterBar,
-  FilterItem,
   DataTable,
+  FilterItem,
   UiButton,
-  UiInput,
+  UiSearchInput,
+  UiTag,
+  UiEmpty,
   type DataColumn,
 } from "@/shared/ui/public";
 import { useFileLibrary, fileSize, fileDate } from "../public";
@@ -39,12 +40,10 @@ const rows = computed(() =>
     file.name.toLowerCase().includes(filter.value.toLowerCase()),
   ),
 );
-const applied = computed(() =>
-  filter.value ? [{ key: "q", label: `文件名：${filter.value}` }] : [],
-);
 const columns: DataColumn[] = [
   { key: "name", title: "文件名", minWidth: 320 },
-  { key: "size", title: "大小", kind: "number", width: 120 },
+  { key: "content_type", title: "类型", width: 160 },
+  { key: "size", title: "大小", kind: "number", width: 110 },
   { key: "created_at", title: "保存时间", width: 200 },
   { key: "actions", title: "操作", align: "right", width: 96, sticky: "right" },
 ];
@@ -71,31 +70,15 @@ function openFile(id: string) {
     >
     <template #status
       ><StatusLine
-        :items="[
-          { text: `共 ${state.data?.total ?? 0} 个文件` },
-          { text: '筛选只作用于当前页' },
-        ]"
+        :items="[{ text: `共 ${state.data?.total ?? 0} 个文件` }]"
     /></template>
-    <FilterBar
-      :applied="applied"
-      :loading="state.status === 'loading'"
-      @query="load"
-      @reset="filter = ''"
-      @remove="filter = ''"
-    >
-      <FilterItem size="lg">
-        <UiInput
-          v-model="filter"
-          aria-label="筛选本页文件"
-          placeholder="输入文件名"
-        />
-      </FilterItem>
-    </FilterBar>
     <StatusMessage :status="state.status" :error="state.error" />
     <DataTable
       v-model:page="page"
       :page-size="PAGE_SIZE"
       :sizes="[PAGE_SIZE]"
+      :settings="false"
+      :fullscreenable="false"
       title="团队文件"
       :columns="columns"
       :rows="rows"
@@ -103,12 +86,26 @@ function openFile(id: string) {
       :loading="state.status === 'loading' && !state.data"
       :total="state.data?.total ?? 0"
       empty-title="这一页没有符合条件的文件"
-      empty-hint="换个文件名，或清除筛选条件"
+      empty-hint="换个文件名，或清除搜索"
     >
+      <template #toolbar>
+        <FilterItem size="lg"
+          ><UiSearchInput
+            v-model="filter"
+            placeholder="在本页中查找文件名"
+            aria-label="在本页中查找文件名"
+        /></FilterItem>
+        <UiButton :loading="state.status === 'loading'" @click="load"
+          >刷新</UiButton
+        >
+      </template>
       <template #cell-name="{ row }"
         ><UiButton variant="link" @click="openFile(row.id)">{{
           row.name
         }}</UiButton></template
+      >
+      <template #cell-content_type="{ row }"
+        ><UiTag tone="code">{{ row.content_type }}</UiTag></template
       >
       <template #cell-size="{ row }">{{ fileSize(row.size) }}</template>
       <template #cell-created_at="{ row }">{{
@@ -117,6 +114,19 @@ function openFile(id: string) {
       <template #cell-actions="{ row }"
         ><UiButton variant="link" @click="openFile(row.id)"
           >查看</UiButton
+        ></template
+      >
+      <template #empty
+        ><UiEmpty
+          title="这一页没有符合条件的文件"
+          :hint="filter ? '换个文件名，或清除搜索' : '还没有文件，先上传一个'"
+          ><UiButton v-if="filter" @click="filter = ''">清除搜索</UiButton
+          ><UiButton
+            v-else-if="session.can('file_library.write')"
+            variant="primary"
+            @click="router.push('/files/upload')"
+            >上传文件</UiButton
+          ></UiEmpty
         ></template
       >
     </DataTable>

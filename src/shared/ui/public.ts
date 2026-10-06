@@ -5,6 +5,7 @@
 export { default as UiButton } from "./base/Button.vue";
 export { default as UiInput } from "./base/Input.vue";
 export { default as UiSelect } from "./base/Select.vue";
+export { default as UiSearchInput } from "./base/SearchInput.vue";
 export { default as UiCheckbox } from "./base/Checkbox.vue";
 export { default as UiTag } from "./base/Tag.vue";
 export { default as UiTabs } from "./base/Tabs.vue";
@@ -32,6 +33,7 @@ export { default as ThemePanel } from "./layout/ThemePanel.vue";
 export { default as StatusMessage } from "./StatusMessage.vue";
 
 export { default as DataTable } from "./data/DataTable.vue";
+export { default as SelectList } from "./data/SelectList.vue";
 export { default as CellText } from "./data/CellText.vue";
 export { default as FilterItem } from "./data/FilterItem.vue";
 export { default as FilterBar } from "./data/FilterBar.vue";
@@ -43,5 +45,6 @@ export { default as BarList } from "./data/BarList.vue";
 export { default as Sparkline } from "./data/Sparkline.vue";
 
 export { initTheme, useTheme, setDefaultTheme } from "./theme/theme";
+export type { ThemeSettings } from "./theme/theme";
 export { palettes } from "./theme/presets";
 export type { DataColumn, SortState, Option, TabItem, MenuItem, NavItem, NavGroup } from "./lib/types";

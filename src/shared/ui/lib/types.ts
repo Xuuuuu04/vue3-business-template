@@ -41,5 +41,5 @@ export interface SortState {
 }
 
 /** 侧栏导航：分组 → 项。icon 传 lucide 图标组件。 */
-export interface NavItem { to: string; label: string; icon?: import("vue").Component; badge?: number }
+export interface NavItem { to: string; label: string; icon?: import("vue").Component; badge?: number; /** 只在路径完全相同时算当前页，用于 "/" 这类会匹配所有子路径的入口。 */ exact?: boolean }
 export interface NavGroup { title?: string; items: NavItem[] }

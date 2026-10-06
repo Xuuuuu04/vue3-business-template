@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /** 登录、找回密码等页面的外壳。split：左侧品牌面板，右侧表单；centered：只有居中的表单。 */
-defineProps<{ brand: string; mark?: string; tagline?: string; variant?: "split" | "centered" }>();
+defineProps<{ brand: string; mark?: string; logo?: string; tagline?: string; variant?: "split" | "centered" }>();
 </script>
 <template>
   <div class="min-h-screen bg-canvas" :class="variant === 'centered' ? 'grid place-items-center p-6' : 'grid lg:grid-cols-2'">
     <aside v-if="variant !== 'centered'" class="relative hidden flex-col overflow-hidden bg-side p-10 text-side-active lg:flex" aria-hidden="false">
-      <div class="relative z-10 flex items-center gap-2.5 font-semibold"><span class="grid size-7 place-items-center rounded-md bg-primary font-bold text-primary-ink">{{ mark ?? brand.slice(0, 1) }}</span>{{ brand }}</div>
+      <div class="relative z-10 flex items-center gap-2.5 font-semibold"><img v-if="logo" :src="logo" :alt="brand" class="size-7 rounded-md object-contain" /><span v-else class="grid size-7 place-items-center rounded-md bg-primary font-bold text-primary-ink">{{ mark ?? brand.slice(0, 1) }}</span>{{ brand }}</div>
       <div class="sheet pointer-events-none absolute top-20 -right-16 grid w-[520px] -rotate-6 gap-2" aria-hidden="true">
         <i v-for="n in 6" :key="n" class="row" :style="{ animationDelay: `${-n}s` }"><b /><b /><b /><b /></i>
       </div>
@@ -14,7 +14,7 @@ defineProps<{ brand: string; mark?: string; tagline?: string; variant?: "split" 
     </aside>
     <main class="grid place-items-center p-6 sm:p-12">
       <div class="w-full max-w-sm animate-[rise_.5s_var(--ease)]" :class="variant === 'centered' && 'rounded-lg border border-line bg-surface p-8 shadow-card'">
-        <div class="mb-8 flex items-center gap-2.5 font-semibold" :class="variant !== 'centered' && 'lg:hidden'"><span class="grid size-7 place-items-center rounded-md bg-primary font-bold text-primary-ink">{{ mark ?? brand.slice(0, 1) }}</span>{{ brand }}</div>
+        <div class="mb-8 flex items-center gap-2.5 font-semibold" :class="variant !== 'centered' && 'lg:hidden'"><img v-if="logo" :src="logo" :alt="brand" class="size-7 rounded-md object-contain" /><span v-else class="grid size-7 place-items-center rounded-md bg-primary font-bold text-primary-ink">{{ mark ?? brand.slice(0, 1) }}</span>{{ brand }}</div>
         <slot />
       </div>
     </main>

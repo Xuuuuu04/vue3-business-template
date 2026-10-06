@@ -5,7 +5,7 @@ description: 新建、调整或评审页面，选择配色与组件，拼列表�
 
 # 界面系统
 
-先读 `src/shared/ui/README.md`（组件清单、拼装规则、表格用法），再看开发时的「界面库」页（`npm run dev` 后访问 `/system/components`），右上角切换主题看实际效果。
+先读 `src/shared/ui/README.md`（组件清单、拼装规则、表格用法），再看开发时的「设计预览」页（`npm run dev` 后在侧栏左下角进入「开发者工具」，或访问 `/dev/design`），点配色即时切换。
 
 ## 业务页面的规矩
 
@@ -34,13 +34,13 @@ description: 新建、调整或评审页面，选择配色与组件，拼列表�
 
 ## 配色与主题
 
-七套配色（石墨、暖砂、海盐、松林、绛红、墨黑、夜航），圆角、疏密、侧栏风格独立可选。产品默认主题在 `main.ts` 里 `initTheme()` 之前用 `setDefaultTheme(...)` 设置。不要照着某个现有业务的颜色定主题；按产品气质选，再让用户看实际页面确认。
+七套配色（石墨、暖砂、海盐、松林、绛红、墨黑、夜航），圆角、疏密、侧栏风格独立可选。产品默认主题在 `src/app/app.config.ts` 的 `theme` 里设置。不要照着某个现有业务的颜色定主题；按产品气质选，再让用户看实际页面确认。
 
 新增配色：在 `theme/presets.ts` 加一项，运行 `npx playwright test tests/browser/theme-contrast.spec.ts`，它检查每套配色在浅色、深色与三种侧栏下的文字对比度。
 
 ## 新增通用组件
 
-先看已有组件能否表达这个任务。确需新增：放进 `base/`、`layout/` 或 `data/`，只用语义色（`bg-surface`、`text-fg-muted`、`border-line`、`bg-primary` 等），在 `public.ts` 导出，补进 `README.md` 的表，在「界面库」页加一个例子，再按 `vue-check` 更新框架保护记录。弹出层的触发器外面包 `UiTip` 是安全的（它不依赖定位库）；但 Reka UI 的触发器不要互相嵌套，否则定位会失效。
+先看已有组件能否表达这个任务。确需新增：放进 `base/`、`layout/` 或 `data/`，只用语义色（`bg-surface`、`text-fg-muted`、`border-line`、`bg-primary` 等），在 `public.ts` 导出，补进 `README.md` 的表，在「设计预览」页加一个例子，再按 `vue-check` 更新框架保护记录。弹出层的触发器外面包 `UiTip` 是安全的（它不依赖定位库）；但 Reka UI 的触发器不要互相嵌套，否则定位会失效。
 
 ## 完成前
 

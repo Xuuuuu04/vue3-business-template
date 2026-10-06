@@ -32,10 +32,11 @@
         "components": [
           "PageFrame",
           "StatusLine",
-          "FilterBar",
-          "FilterItem",
           "DataTable",
-          "UiInput",
+          "FilterItem",
+          "UiSearchInput",
+          "UiTag",
+          "UiEmpty",
           "UiButton",
           "StatusMessage"
         ],

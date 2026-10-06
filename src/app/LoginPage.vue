@@ -3,6 +3,7 @@ import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useSession } from "@/shared/public";
 import { AuthLayout, Stack, Field, StatusMessage, UiInput, UiButton } from "@/shared/ui/public";
+import { appConfig } from "./app.config";
 const router = useRouter();
 const session = useSession();
 const draft = reactive({
@@ -29,7 +30,7 @@ async function submit() {
 }
 </script>
 <template>
-  <AuthLayout brand="木木工作台" mark="木" tagline="打开就能做事，每一步都看得见结果。">
+  <AuthLayout :brand="appConfig.name" :mark="appConfig.mark" :logo="appConfig.logo" :tagline="appConfig.tagline">
     <h1 class="mb-6 text-2xl font-semibold tracking-tight">登录账号</h1>
     <form @submit.prevent="submit">
       <Stack>

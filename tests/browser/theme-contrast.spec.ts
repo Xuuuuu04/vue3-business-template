@@ -16,7 +16,7 @@ const PAIRS: [string, string, number][] = [
 const PALETTES = ["graphite", "sand", "sea", "pine", "rose", "ink", "night"];
 
 test("所有配色、明暗、侧栏组合的文字对比度达标", async ({ page }) => {
-  await page.goto("/system/components");
+  await page.goto("/dev/design");
   const failures = await page.evaluate(
     async ([pairs, palettes]) => {
       // 通过开发服务器直接加载主题引擎，和页面使用同一份代码。

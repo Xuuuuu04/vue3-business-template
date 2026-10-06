@@ -156,14 +156,14 @@ test("R-01、R-02：分页、筛选、详情刷新与浏览器返回", async ({ 
   await page.goto("/files?offset=10&q=");
   await expect(page.getByText("共 16 个文件", { exact: false })).toBeVisible();
   const name = await page.locator("tbody td:first-child button").first().innerText();
-  await page.getByLabel("筛选本页文件").fill(name);
+  await page.getByLabel("在本页中查找文件名").fill(name);
   await expect(page).toHaveURL(/q=/);
   await page.locator("tbody td:first-child button").first().click();
   await expect(page.getByRole("heading", { name })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("heading", { name })).toBeVisible();
   await page.goBack();
-  await expect(page.getByLabel("筛选本页文件")).toHaveValue(name);
+  await expect(page.getByLabel("在本页中查找文件名")).toHaveValue(name);
   await expect(page).toHaveURL(/offset=10/);
 });
 test("R-03、R-04、R-05：实际上传、下载内容与确认删除", async ({ page }) => {
@@ -241,17 +241,15 @@ test("失败保留输入，未保存文件离开需要确认", async ({ page }) 
   await page.getByRole("button", { name: "返回列表", exact: true }).click();
   await expect(page).toHaveURL("/files/upload");
 });
-test("动作记录显示结果摘要和真实请求时间，不伪造后台编号", async ({ page }) => {
+test("操作记录显示结果摘要和真实请求时间，不伪造后台编号", async ({ page }) => {
   await page.goto("/files");
   await expect(page.locator("tbody td:first-child button").first()).toBeVisible();
-  await page.getByRole("link", { name: "结构与运行", exact: true }).click();
-  await page.getByRole("tab", { name: /实际运行/ }).click();
-  await expect(page.getByLabel("运行详情")).toContainText("查看文件列表");
-  await expect(page.getByLabel("运行详情")).toContainText("readPage");
-  await expect(page.getByLabel("运行详情")).toContainText(
-    "页面显示的一页：对象",
-  );
-  await expect(page.getByLabel("运行详情")).toContainText(
-    "未返回；演示服务不会伪造后台编号",
-  );
+  await page.getByRole("link", { name: "开发者工具", exact: true }).click();
+  await page.getByRole("link", { name: "操作记录", exact: true }).click();
+  await page.getByRole("button", { name: "查看过程" }).first().click();
+  const drawer = page.getByRole("dialog");
+  await expect(drawer).toContainText("查看文件列表");
+  await expect(drawer).toContainText("读取这一页的文件");
+  await expect(drawer).toContainText("页面显示的一页：对象");
+  await expect(drawer).toContainText("后台没有返回（演示服务不会编造）");
 });

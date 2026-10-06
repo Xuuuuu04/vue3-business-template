@@ -2,7 +2,9 @@ import { createApp, nextTick } from "vue";
 import App from "./app/App.vue";
 import { router } from "./app/router";
 import "./shared/ui/theme/tokens.css";
-import { initTheme } from "./shared/ui/public";
+import { initTheme, setDefaultTheme } from "./shared/ui/public";
+import { appConfig } from "./app/app.config";
+setDefaultTheme(appConfig.theme);
 initTheme();
 import { setAuthorization } from "./shared/actions/runtime";
 import { useSession } from "./shared/public";
@@ -20,7 +22,7 @@ router.afterEach(async (to) => {
     to.path,
     performance.now() - navigationStarted,
   );
-  document.title = `${String(to.meta.title || "工作台")} · Vue3 通用前端模板`;
+  document.title = `${String(to.meta.title || "工作台")} · ${appConfig.name}`;
 });
 if (import.meta.hot) import.meta.hot.dispose(stopPerformance);
 const app = createApp(App);

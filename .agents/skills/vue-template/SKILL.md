@@ -16,7 +16,7 @@ npm run update:framework -- --source /新版模板目录 --apply  # 确认后执
 - 目标必须是本项目之外的空目录。
 - 干净产品去掉样板业务和历史，保留模板来源记录和框架内容，复制项目 Skill，不复制本机记录、检查结果和 Git 历史。
 - 创建后在新目录运行 `npm install`、`npm run docs`、`npm run framework -- --accept`，再生成业务包。
-- 在 `main.ts` 的 `initTheme()` 之前用 `setDefaultTheme(...)` 设置产品默认配色，并让用户看实际页面确认。
+- 改 `src/app/app.config.ts`：产品名称、logo、登录页文案、默认配色，并让用户看实际页面确认。
 
 ## 更新已有产品
 

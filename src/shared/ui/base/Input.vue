@@ -9,6 +9,8 @@ defineProps<{
   invalid?: boolean;
   size?: "md" | "lg";
   align?: "left" | "right";
+  /** 后缀是单位（如“元”）时设为 true，显示成带底色的单位格。 */
+  unit?: boolean;
   inputmode?: "text" | "decimal" | "numeric" | "search" | "email" | "tel" | "url";
   autocomplete?: string;
   id?: string;
@@ -39,6 +41,6 @@ defineProps<{
       class="h-full min-w-0 flex-1 bg-transparent px-2.5 text-fg outline-none placeholder:text-fg-faint tabular-nums"
       :class="align === 'right' && 'text-right'"
     />
-    <span v-if="$slots.suffix" class="flex h-full items-center border-l border-line bg-muted px-2.5 text-[13px] text-fg-muted"><slot name="suffix" /></span>
+    <span v-if="$slots.suffix" class="flex h-full items-center px-2.5 text-[13px] text-fg-muted" :class="unit && 'border-l border-line bg-muted'"><slot name="suffix" /></span>
   </div>
 </template>

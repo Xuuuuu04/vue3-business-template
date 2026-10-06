@@ -51,12 +51,12 @@ try {
   await page.getByRole("button", { name: "确认删除", exact: true }).click();
   await expect(page).toHaveURL(frontend + "/files");
   results.push("真实删除与列表更新");
-  await page.getByRole("link", { name: "结构与运行", exact: true }).click();
-  await page.getByRole("tab", { name: /实际运行/ }).click();
-  await expect(page.getByLabel("运行详情")).not.toContainText(
-    "未返回；演示服务",
-  );
-  await expect(page.getByLabel("运行详情")).toContainText("后台运行编号：");
+  await page.getByRole("link", { name: "开发者工具", exact: true }).click();
+  await page.getByRole("link", { name: "操作记录", exact: true }).click();
+  await page.getByRole("button", { name: "查看过程" }).first().click();
+  const detail = page.getByRole("dialog");
+  await expect(detail).not.toContainText("演示服务不会编造");
+  await expect(detail).toContainText("后台运行编号：");
   results.push("后台真实运行编号关联");
   if (reader) {
     await page.goto(frontend + "/login");
