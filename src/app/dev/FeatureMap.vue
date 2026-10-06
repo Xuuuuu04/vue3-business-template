@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { ArrowDown, Copy, Check } from "lucide-vue-next";
+import { ArrowDown } from "lucide-vue-next";
 import generatedGraph from "@/generated/graph.json";
 import type { describe } from "@/shared/modules/graph";
-import { PageFrame, StatusLine, Grid, Card, Stack, Row, SelectList, UiTag, UiEmpty, UiButton, useToast } from "@/shared/ui/public";
+import { PageFrame, StatusLine, Grid, Card, Stack, Row, SelectList, UiTag, UiEmpty, UiCopy } from "@/shared/ui/public";
 
 const graph = generatedGraph as unknown as ReturnType<typeof describe>;
-const toast = useToast();
 const items = graph.flatMap((m) => m.actions.map((a) => ({ value: a.id, label: a.title, group: m.title, hint: a.id })));
 const selected = ref(items[0]?.value ?? "");
 const owner = computed(() => graph.find((m) => m.actions.some((a) => a.id === selected.value)));
 const action = computed(() => owner.value?.actions.find((a) => a.id === selected.value));
 const pages = computed(() => owner.value?.pages.filter((p) => p.actions.includes(selected.value)) ?? []);
-const copied = ref("");
 /** 字段名换成中文含义；没有登记含义的原样显示。 */
 const names = (keys: string[]) => keys.map((k) => action.value?.fields[k]?.title ?? k);
 function endpoint(id: string) {
@@ -20,9 +18,6 @@ function endpoint(id: string) {
   return e ? `${e.method} ${e.path}` : id;
 }
 function where(s?: { file: string; line: number }) { return s ? `${s.file}:${s.line}` : ""; }
-async function copy(text: string) {
-  try { await navigator.clipboard.writeText(text); copied.value = text; toast.success("已复制位置"); setTimeout(() => (copied.value = ""), 1500); } catch { toast.error("浏览器不允许复制"); }
-}
 const total = graph.reduce((n, m) => n + m.actions.length, 0);
 </script>
 <template>
@@ -53,7 +48,7 @@ const total = graph.reduce((n, m) => n + m.actions.length, 0);
                   <template v-if="step.when"><dt class="text-fg-faint">执行条件</dt><dd>{{ step.when.title }}</dd></template>
                   <dt class="text-fg-faint">代码位置</dt>
                   <dd class="flex items-center gap-2" v-if="step.source"><UiTag tone="code">{{ where(step.source) }}</UiTag><span class="text-fg-faint">{{ step.source.symbol }}</span>
-                    <UiButton variant="ghost" size="sm" :aria-label="`复制 ${where(step.source)}`" @click="copy(where(step.source))"><Check v-if="copied === where(step.source)" class="size-3.5" /><Copy v-else class="size-3.5" /></UiButton></dd>
+                    <UiCopy :text="where(step.source)" :label="`复制 ${where(step.source)}`" /></dd>
                   <dd v-else class="text-warn">没有找到代码位置，请运行 npm run docs</dd>
                 </dl>
               </div>

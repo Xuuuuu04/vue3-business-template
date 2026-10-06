@@ -4,7 +4,7 @@ import { useRouter } from "vue-router";
 import { Download, History } from "lucide-vue-next";
 import { useRecords } from "@/shared/records/store";
 import { endpointLabel } from "./endpoint";
-import { PageFrame, StatusLine, DataTable, UiTag, UiButton, UiDrawer, UiEmpty, DescriptionList, StatusMessage, Stack, type DataColumn } from "@/shared/ui/public";
+import { PageFrame, StatusLine, DataTable, FilterItem, UiTag, UiButton, UiDrawer, UiEmpty, UiSegmented, UiSearchInput, UiCopy, DescriptionList, StatusMessage, Stack, type DataColumn } from "@/shared/ui/public";
 
 const router = useRouter();
 const { items, dropped } = useRecords();
@@ -15,7 +15,9 @@ const tone = { running: "info", ok: "ok", failed: "bad", cancelled: "neutral", u
 const label = { running: "进行中", ok: "成功", failed: "失败", cancelled: "已取消", unknown: "结果未确认", skipped: "已跳过" } as const;
 const ms = (v: number) => `${v < 10 ? v.toFixed(1) : Math.round(v)} ms`;
 const clock = (iso: string) => new Date(iso).toLocaleTimeString("zh-CN", { hour12: false });
-const rows = computed(() => items.value.map((r) => ({ ...r, requests: r.steps.reduce((n, s) => n + s.requests.length, 0), stepCount: r.steps.length })));
+const show = ref<string>("all");
+const query = ref("");
+const rows = computed(() => items.value.filter((r) => (show.value === "all" || r.status === show.value) && (!query.value || r.title.includes(query.value))).map((r) => ({ ...r, requests: r.steps.reduce((n, s) => n + s.requests.length, 0), stepCount: r.steps.length })));
 const columns: DataColumn[] = [
   { key: "started", title: "时间", width: 110 },
   { key: "title", title: "操作", minWidth: 200 },
@@ -25,7 +27,7 @@ const columns: DataColumn[] = [
   { key: "requests", title: "接口请求", kind: "number", width: 100 },
   { key: "view", title: "", align: "right", width: 90 },
 ];
-function show(id: string) { pickedId.value = id; open.value = true; }
+function show2(id: string) { pickedId.value = id; open.value = true; }
 const facts = computed(() => picked.value ? [
   { label: "开始时间", value: clock(picked.value.started) },
   { label: "总耗时", value: ms(picked.value.elapsed) },
@@ -45,11 +47,12 @@ function exportRuns() {
   <PageFrame title="操作记录">
     <template #actions><UiButton :disabled="!items.length" @click="exportRuns"><Download class="size-4" />导出记录</UiButton></template>
     <template #status><StatusLine :items="[{ text: `最近 ${items.length} 次操作` }, { text: '最多保留 100 次，刷新页面后清空' }, ...(dropped() ? [{ text: `已移除较早的 ${dropped()} 次`, tone: 'warn' as const }] : [])]" /></template>
-    <DataTable title="操作" :columns="columns" :rows="rows" row-key="id" :settings="false" :fullscreenable="false">
+    <DataTable :columns="columns" :rows="rows" row-key="id" :settings="false" :fullscreenable="false" row-clickable @row-click="(r) => show2(r.id)">
+      <template #search><FilterItem size="lg"><UiSearchInput v-model="query" placeholder="按操作名查找" /></FilterItem><UiSegmented v-model="show" size="sm" aria-label="按结果筛选" :options="[{ value: 'all', label: '全部' }, { value: 'failed', label: '失败' }, { value: 'unknown', label: '结果未确认' }]" /></template>
       <template #cell-started="{ row }"><span class="text-fg-muted tabular-nums">{{ clock(row.started) }}</span></template>
       <template #cell-status="{ row }"><UiTag :tone="tone[row.status as keyof typeof tone]" dot>{{ label[row.status as keyof typeof label] }}</UiTag></template>
       <template #cell-elapsed="{ row }">{{ ms(row.elapsed) }}</template>
-      <template #cell-view="{ row }"><UiButton variant="link" @click="show(row.id)">查看过程</UiButton></template>
+      <template #cell-view="{ row }"><UiButton variant="link" @click="show2(row.id)">查看过程</UiButton></template>
       <template #empty><UiEmpty title="还没有操作记录" hint="去产品页面做一次操作，比如打开文件列表，这里就会出现。"><template #icon><History class="size-5" /></template><UiButton variant="primary" @click="router.push('/')">去产品页面</UiButton></UiEmpty></template>
     </DataTable>
     <UiDrawer v-model:open="open" :title="picked?.title ?? '操作过程'" width="lg">
@@ -66,7 +69,7 @@ function exportRuns() {
               <ul v-if="s.requests.length" class="mt-2 flex flex-col gap-1.5 border-t border-line pt-2">
                 <li v-for="(r, k) in s.requests" :key="k" class="text-[13px]">
                   <span class="flex flex-wrap items-center gap-2"><UiTag tone="code">{{ endpointLabel(r.endpoint, r.method) }}</UiTag><span :class="r.outcome === 'ok' ? 'text-ok' : 'text-bad'">{{ r.status ?? r.outcome }}</span><span class="text-fg-muted tabular-nums">{{ ms(r.elapsed) }}</span></span>
-                  <span class="mt-1 block text-fg-faint">请求编号：{{ r.requestId || "无" }} · 后台运行编号：{{ r.backendRun || "后台没有返回（演示服务不会编造）" }}</span>
+                  <span class="mt-1 flex flex-wrap items-center gap-x-1 text-fg-faint">请求编号：{{ r.requestId || "无" }}<UiCopy v-if="r.requestId" :text="r.requestId" label="复制请求编号" />· 后台运行编号：{{ r.backendRun || "后台没有返回（演示服务不会编造）" }}<UiCopy v-if="r.backendRun" :text="r.backendRun" label="复制后台运行编号" /></span>
                 </li>
               </ul>
             </li>
