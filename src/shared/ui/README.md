@@ -34,16 +34,21 @@
 
 | 用途 | 组件 |
 | --- | --- |
-| 操作 | `UiButton`（primary、secondary、ghost、danger-quiet、danger、link 行内操作、text 表格里可点开的名称；每个区域最多一个 primary） |
-| 输入 | `UiInput`、`UiPasswordInput`（显示密码、大写提醒）、`UiSearchInput`、`UiSelect`、`UiCheckbox`、`UiFileDrop`，外面用 `Field` 加名称、提示、错误 |
-| 标记 | `UiTag`（状态用 ok、warn、bad；编码用 code）、`UiTabs`、`UiTip`、`UiFileIcon`（按类型着色的文件图标）、`UiTime`（“3 小时前”，悬停看完整时间）、`UiCopy`（复制按钮） |
-| 浮层 | `UiDialog`（短决定）、`UiDrawer`（从列表快速查看）、`UiMenu`、`useToast()` |
-| 读取与空 | `UiSkeleton`、`UiEmpty`、`StatusMessage`（动作失败或结果未知） |
-| 版式 | `PageFrame`、`Stack`、`Row`、`Grid`、`Card`、`StatusLine` |
-| 数据 | `DataTable`、`CellText`、`FilterBar`、`FilterItem`、`MetricStrip`、`DescriptionList`、`Timeline`、`FilePreview`（文本、CSV 表格、图片预览）、`SelectList` |
-| 图表 | `LineChart`、`BarList`、`Sparkline` |
-| 外壳 | `AppShell`（可收起侧栏）、`AuthLayout`（登录页：品牌面板、亮点、页脚）、`BrandMark`、`AppFooter`、`TopProgress`（切页进度条） |
-| 全局 | `CommandPalette`（⌘K 搜索）、`UserMenu`、`NotificationBell`、`ThemePanel`；`notify()` 添加通知 |
+| 操作 | `UiButton`（primary、secondary、ghost、danger-quiet、danger、link 行内操作、text 表格里可点开的名称；`icon="download"` 加图标；每个区域最多一个 primary）、`UiMenu`、`UiPopconfirm`（影响小的就近确认）、`UiKbd` |
+| 文本输入 | `UiInput`、`UiPasswordInput`（显示密码、大写提醒）、`UiSearchInput`、`UiTextarea`（随内容长高、字数） |
+| 选择 | `UiSelect`（少于 10 项）、`UiCombobox`（可搜索、可多选）、`UiTagsInput`、`UiCheckbox`、`UiSwitch`（立即生效）、`UiRadioGroup`（含卡片样式）、`UiSegmented` |
+| 数字与日期 | `UiNumberInput`（加减、上下限、单位）、`UiDatePicker`、`UiDateRangePicker`（含常用范围）、`UiFileDrop` |
+| 表单版式 | `Field`（名称、提示、错误）、`FormSection`（设置类：左标题右控件） |
+| 标记 | `UiTag`（状态 ok、warn、bad；编码 code）、`UiAvatar`、`UiAvatarGroup`、`UiFileIcon`、`UiTime`（“3 小时前”，悬停看完整时间）、`UiCopy` |
+| 浮层 | `UiDialog`（短决定）、`UiDrawer`（从列表快速查看）、`useToast()`、`UiTip` |
+| 状态与反馈 | `UiAlert`（提示条）、`UiResult`（结果页）、`UiProgress`、`UiSteps`、`UiSkeleton`、`UiEmpty`、`StatusMessage`（动作失败或结果未知）、`BatchProgress`（批量逐项结果，配合 `useBatch`） |
+| 版式 | `PageFrame`（`back` 返回、`#icon`、`#actions`、`#tabs`、`#status`）、`Stack`、`Row`、`Grid`、`Card`、`StatusLine`、`UiTabs`、`UiAccordion` |
+| 数据 | `DataTable`、`CellText`、`FilterBar`、`FilterItem`、`MetricStrip`、`DescriptionList`、`Timeline`、`ActivityFeed`、`FilePreview`、`SelectList` |
+| 图表 | `LineChart`、`BarChart`、`DonutChart`、`BarList`、`Sparkline` |
+| AI 应用 | `ChatThread`（对话）、`PromptInput`（回车发送、停止生成）、`Markdown`（不执行 HTML）、`CodeBlock`、`UsageMeter` |
+| 外壳 | `AppShell`、`AuthLayout`、`BrandMark`、`AppFooter`、`TopProgress`、`CommandPalette`（⌘K）、`UserMenu`、`NotificationBell`（`notify()`）、`ThemePanel` |
+
+批量操作用 `@/shared/public` 的 `useBatch`：按顺序逐个执行同一动作，明确失败继续，结果未知立即停止，任何一项都不自动重试。
 
 完整的实际效果看开发时的「设计预览」页（`/dev/design`），点配色即时切换。
 

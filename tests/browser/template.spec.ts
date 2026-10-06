@@ -4,7 +4,7 @@ test("界面库：键盘确认、焦点返回与窄屏", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "设计预览", level: 1, exact: true }),
   ).toBeVisible();
-  await page.getByRole("tab", { name: "控件" }).click();
+  await page.getByRole("tab", { name: "按钮与反馈" }).click();
   const trigger = page.getByRole("button", { name: "确认弹窗", exact: true });
   await trigger.click();
   await expect(page.getByRole("dialog")).toBeVisible();
@@ -130,4 +130,20 @@ test("全局搜索与用户菜单：⌘K 跳转页面，关于显示版本", asy
   await page.getByRole("button", { name: /用户菜单/ }).click();
   await page.getByRole("menuitem", { name: "关于" }).click();
   await expect(page.getByRole("dialog")).toContainText("版本");
+});
+
+test("设计预览每一页都能正常显示，没有报错", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+  await page.goto("/dev/design");
+  for (const name of ["配色与字体", "表单", "按钮与反馈", "数据展示", "AI 应用", "页面拼法"]) {
+    await page.getByRole("tab", { name }).click();
+    await expect(page.getByRole("tab", { name })).toHaveAttribute("data-state", "active");
+  }
+  await page.getByRole("tab", { name: "AI 应用" }).click();
+  await page.getByRole("textbox", { name: "输入问题" }).fill("按周拆开看看");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("log")).toContainText("按周拆开看看");
+  expect(errors).toEqual([]);
 });
