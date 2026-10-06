@@ -4,7 +4,8 @@ import generatedGraph from "@/generated/graph.json";
 import type { describe } from "@/shared/modules/graph";
 import { useRecords } from "@/shared/records/store";
 import { usePerformance } from "@/shared/records/performance";
-import { PageFrame, UiButton, UiInput } from "@/shared/ui/public";
+import "./console.css";
+import { PageFrame, UiButton, UiInput, UiTabs } from "@/shared/ui/public";
 const graph = generatedGraph as unknown as ReturnType<typeof describe>;
 const { items, dropped } = useRecords();
 const { signals, gaps } = usePerformance();
@@ -54,31 +55,19 @@ function exportRuns() {
 }
 </script>
 <template>
-  <PageFrame
-    title="结构与运行"
-    description="从开发包进入动作，再查看步骤的数据来源、执行结果和源码位置。"
-  >
+  <PageFrame title="结构与运行" class="console">
     <template #actions
       ><UiButton @click="exportRuns">导出当前运行记录</UiButton></template
     >
-    <div class="tabs" role="tablist" aria-label="查看内容">
-      <UiButton
-        :aria-selected="tab === 'structure'"
-        role="tab"
-        @click="tab = 'structure'"
-        >模块与计算图</UiButton
-      ><UiButton
-        :aria-selected="tab === 'runs'"
-        role="tab"
-        @click="tab = 'runs'"
-        >实际运行（{{ items.length }}）</UiButton
-      ><UiButton
-        :aria-selected="tab === 'performance'"
-        role="tab"
-        @click="tab = 'performance'"
-        >浏览器性能</UiButton
-      >
-    </div>
+    <template #tabs
+      ><UiTabs
+        v-model="tab"
+        :items="[
+          { value: 'structure', label: '模块与计算图' },
+          { value: 'runs', label: '实际运行', count: items.length },
+          { value: 'performance', label: '浏览器性能' },
+        ]"
+    /></template>
     <div v-if="tab === 'structure'" class="graph-layout">
       <nav class="graph-tree" aria-label="模块动作">
         <div v-for="module in graph" :key="module.name">

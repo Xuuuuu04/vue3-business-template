@@ -38,13 +38,14 @@ function fixture(
 test("拒绝私写样式、未登记组件、裸请求和共用内部导入", () => {
   const root = fixture(
     "import x from '@/shared/http/client'; window.fetch('/api');",
-    '<template><PageFrame style="color:red"/><UiCard /></template><style>.x{font-size:10px}</style>',
+    '<template><PageFrame style="color:red" class="mine"/><UiCard /></template><style>.x{font-size:10px}</style>',
   );
   try {
     const errors = inspectModule(root, base);
     expect(errors.join(" ")).toContain("内部文件");
     expect(errors.join(" ")).toContain("效果 window");
     expect(errors.join(" ")).toContain("样式");
+    expect(errors.join(" ")).toContain("类名");
     expect(errors.join(" ")).toContain("UiCard");
   } finally {
     rmSync(root, { recursive: true });

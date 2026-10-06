@@ -123,13 +123,14 @@ export function inspectModule(
               used.add(node.tag);
             for (const prop of node.props) {
               if (
-                (prop.type === NodeTypes.ATTRIBUTE && prop.name === "style") ||
+                (prop.type === NodeTypes.ATTRIBUTE &&
+                  (prop.name === "style" || prop.name === "class")) ||
                 (prop.type === NodeTypes.DIRECTIVE &&
                   prop.name === "bind" &&
                   prop.arg?.type === NodeTypes.SIMPLE_EXPRESSION &&
-                  prop.arg.content === "style")
+                  (prop.arg.content === "style" || prop.arg.content === "class"))
               )
-                errors.push(`${name}：不能在页面内写样式`);
+                errors.push(`${name}：不能在页面内写样式或类名，请使用公共版式组件`);
             }
           }
           for (const child of node.children) {

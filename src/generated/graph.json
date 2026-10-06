@@ -31,10 +31,11 @@
         ],
         "components": [
           "PageFrame",
-          "UiTable",
-          "UiColumn",
+          "StatusLine",
+          "FilterBar",
+          "FilterItem",
+          "DataTable",
           "UiInput",
-          "UiPagination",
           "UiButton",
           "StatusMessage"
         ],
@@ -52,6 +53,8 @@
         ],
         "components": [
           "PageFrame",
+          "Card",
+          "DescriptionList",
           "UiDialog",
           "UiButton",
           "StatusMessage"
@@ -69,6 +72,10 @@
         ],
         "components": [
           "PageFrame",
+          "Card",
+          "Stack",
+          "Row",
+          "UiFileDrop",
           "UiButton",
           "StatusMessage"
         ],

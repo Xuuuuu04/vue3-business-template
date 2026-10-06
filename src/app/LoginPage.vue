@@ -2,7 +2,7 @@
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useSession } from "@/shared/public";
-import { PageFrame, UiInput, UiButton } from "@/shared/ui/public";
+import { AuthLayout, Stack, Field, StatusMessage, UiInput, UiButton } from "@/shared/ui/public";
 const router = useRouter();
 const session = useSession();
 const draft = reactive({
@@ -29,51 +29,17 @@ async function submit() {
 }
 </script>
 <template>
-  <PageFrame
-    title="登录账号"
-    description="使用后端提供的组织代码和账号。登录信息只保留在当前页面，刷新后需要重新登录。"
-    ><form class="form-section" @submit.prevent="submit">
-      <div class="field">
-        <label for="org">组织代码</label
-        ><UiInput
-          id="org"
-          v-model="draft.org_code"
-          required
-          autocomplete="organization"
-        />
-      </div>
-      <div class="field">
-        <label for="username">账号</label
-        ><UiInput
-          id="username"
-          v-model="draft.username"
-          required
-          autocomplete="username"
-        />
-      </div>
-      <div class="field">
-        <label for="password">密码</label
-        ><UiInput
-          id="password"
-          v-model="draft.password"
-          required
-          type="password"
-          autocomplete="current-password"
-          show-password
-        />
-      </div>
-      <div class="field">
-        <label for="otp">两步验证码（未开启可留空）</label
-        ><UiInput
-          id="otp"
-          v-model="draft.otp_code"
-          autocomplete="one-time-code"
-        />
-      </div>
-      <p v-if="error" role="alert">{{ error }}</p>
-      <UiButton native-type="submit" type="primary" :loading="busy"
-        >登录账号</UiButton
-      >
-    </form></PageFrame
-  >
+  <AuthLayout brand="木木工作台" mark="木" tagline="打开就能做事，每一步都看得见结果。">
+    <h1 class="mb-6 text-2xl font-semibold tracking-tight">登录账号</h1>
+    <form @submit.prevent="submit">
+      <Stack>
+        <Field label="组织代码" for="org"><UiInput id="org" v-model="draft.org_code" size="lg" autocomplete="organization" /></Field>
+        <Field label="账号" for="username"><UiInput id="username" v-model="draft.username" size="lg" autocomplete="username" /></Field>
+        <Field label="密码" for="password"><UiInput id="password" v-model="draft.password" size="lg" type="password" autocomplete="current-password" /></Field>
+        <Field label="两步验证码" for="otp" hint="未开启可留空"><UiInput id="otp" v-model="draft.otp_code" size="lg" autocomplete="one-time-code" /></Field>
+        <StatusMessage :status="error ? 'error' : 'idle'" :error="error" />
+        <UiButton type="submit" variant="primary" size="lg" :loading="busy">登录账号</UiButton>
+      </Stack>
+    </form>
+  </AuthLayout>
 </template>

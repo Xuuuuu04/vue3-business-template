@@ -1,0 +1,34 @@
+<script setup lang="ts">
+import { computed } from "vue";
+import { ChevronLeft, ChevronRight } from "lucide-vue-next";
+import UiSelect from "./Select.vue";
+/** 分页：页码、每页条数；条数选项由页面决定。 */
+const page = defineModel<number>("page", { required: true });
+const pageSize = defineModel<number>("pageSize", { required: true });
+const props = defineProps<{ total: number; sizes?: number[] }>();
+const pages = computed(() => Math.max(1, Math.ceil(props.total / pageSize.value)));
+/** 当前页附近的页码；首尾页始终显示，中间省略。 */
+const shown = computed<(number | "…")[]>(() => {
+  const n = pages.value, p = page.value;
+  const set = new Set([1, n, p - 1, p, p + 1].filter((x) => x >= 1 && x <= n));
+  const sorted = [...set].sort((a, b) => a - b);
+  const out: (number | "…")[] = [];
+  sorted.forEach((x, i) => { if (i && x - sorted[i - 1]! > 1) out.push("…"); out.push(x); });
+  return out;
+});
+const sizeOptions = computed(() => (props.sizes ?? [10, 20, 50]).map((s) => ({ value: String(s), label: `${s} 条/页` })));
+function setSize(v: string) { pageSize.value = Number(v); page.value = 1; }
+</script>
+<template>
+  <div class="flex items-center gap-3">
+    <div v-if="(sizes?.length ?? 3) > 1" class="w-28"><UiSelect :model-value="String(pageSize)" :options="sizeOptions" aria-label="每页条数" @update:model-value="setSize" /></div>
+    <nav class="flex items-center gap-1" aria-label="分页">
+      <button type="button" class="grid size-8 place-items-center rounded-md text-fg-muted hover:bg-muted disabled:opacity-40" :disabled="page <= 1" aria-label="上一页" @click="page--"><ChevronLeft class="size-4" /></button>
+      <template v-for="(p, i) in shown" :key="i">
+        <span v-if="p === '…'" class="px-1 text-fg-faint">…</span>
+        <button v-else type="button" class="h-8 min-w-8 rounded-md border px-2 tabular-nums" :class="p === page ? 'border-primary-line bg-primary-soft font-semibold text-primary-text' : 'border-transparent text-fg-muted hover:bg-muted'" :aria-current="p === page ? 'page' : undefined" @click="page = p">{{ p }}</button>
+      </template>
+      <button type="button" class="grid size-8 place-items-center rounded-md text-fg-muted hover:bg-muted disabled:opacity-40" :disabled="page >= pages" aria-label="下一页" @click="page++"><ChevronRight class="size-4" /></button>
+    </nav>
+  </div>
+</template>

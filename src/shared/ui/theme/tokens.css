@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+/*
+ * 主题变量分三层：
+ * 1. 输入：由主题预设写入 <html>，只有色相、色度、亮度、圆角、疏密、侧栏风格。
+ * 2. 语义色：本文件按输入推出的背景、文字、边框、品牌色，组件只用这一层。
+ * 3. Tailwind 名称：@theme 把语义色登记成 bg-surface、text-fg 这类类名。
+ * 换主题只改第 1 层；新增组件不得直接写颜色值。
+ */
+:root {
+  --n-h: 90; --n-c: 0.012;            /* 中性色色相与色度：决定灰是偏冷还是偏暖 */
+  --b-h: 265; --b-c: 0.19; --b-l: 0.54; /* 品牌色色相、色度、亮度 */
+  --on-primary: oklch(0.99 0 0);       /* 品牌色底上的文字 */
+  --fs: 14px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* 浅色中性色阶 */
+  --canvas: oklch(0.972 calc(var(--n-c) * 0.55) var(--n-h));
+  --surface: oklch(1 0 0);
+  --subtle: oklch(0.985 calc(var(--n-c) * 0.3) var(--n-h));
+  --muted: oklch(0.945 calc(var(--n-c) * 0.7) var(--n-h));
+  --line: oklch(0.915 calc(var(--n-c) * 0.8) var(--n-h));
+  --line-strong: oklch(0.85 calc(var(--n-c) * 0.9) var(--n-h));
+  --fg: oklch(0.22 calc(var(--n-c) * 0.6) var(--n-h));
+  --fg-muted: oklch(0.47 calc(var(--n-c) * 0.7) var(--n-h));
+  --fg-faint: oklch(0.62 calc(var(--n-c) * 0.7) var(--n-h));
+  --overlay: oklch(0.2 0.01 var(--n-h) / 0.38);
+  --shadow-color: oklch(0.25 0.02 var(--n-h));
+
+  /* 品牌色 */
+  --primary: oklch(var(--b-l) var(--b-c) var(--b-h));
+  --primary-hover: oklch(calc(var(--b-l) - 0.05) var(--b-c) var(--b-h));
+  --primary-ink: var(--on-primary);
+  --primary-soft: oklch(0.972 calc(var(--b-c) * 0.2) var(--b-h));
+  --primary-soft-hover: oklch(0.945 calc(var(--b-c) * 0.3) var(--b-h));
+  --primary-line: oklch(0.87 calc(var(--b-c) * 0.5) var(--b-h));
+  --primary-text: oklch(0.43 calc(var(--b-c) * 0.85) var(--b-h));
+  --ring: oklch(var(--b-l) var(--b-c) var(--b-h) / 0.28);
+
+  /* 状态色：色相固定，亮度跟随明暗模式 */
+  --ok: oklch(0.5 0.12 152); --ok-soft: oklch(0.966 0.03 152);
+  --warn: oklch(0.52 0.12 70); --warn-soft: oklch(0.97 0.04 85);
+  --bad: oklch(0.52 0.18 25); --bad-soft: oklch(0.965 0.025 25);
+  --info: oklch(0.5 0.1 250); --info-soft: oklch(0.966 0.02 250);
+
+  /* 侧栏：默认深色 */
+  --side-bg: oklch(0.22 calc(var(--n-c) * 0.9) var(--n-h));
+  --side-hover: oklch(0.27 calc(var(--n-c) * 0.9) var(--n-h));
+  --side-line: oklch(0.3 calc(var(--n-c) * 0.9) var(--n-h));
+  --side-fg: oklch(0.82 calc(var(--n-c) * 0.6) var(--n-h));
+  --side-fg-faint: oklch(0.6 calc(var(--n-c) * 0.6) var(--n-h));
+  --side-active: oklch(0.8 calc(var(--b-c) * 0.7) var(--b-h));
+
+  /* 圆角、疏密 */
+  --r-sm: 6px; --r-md: 8px; --r-lg: 12px;
+  --control-h: 32px; --control-h-lg: 40px; --row-h: 48px; --cell-px: 12px; --page-px: 24px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* 圆角：三档 */
+[data-radius="sharp"] { --r-sm: 3px; --r-md: 4px; --r-lg: 6px; }
+[data-radius="round"] { --r-sm: 8px; --r-md: 10px; --r-lg: 16px; }
+/* 疏密：两档 */
+[data-density="comfortable"] { --control-h: 36px; --control-h-lg: 44px; --row-h: 56px; --cell-px: 16px; --page-px: 32px; }
+/* 侧栏：浅色 / 品牌色 */
+[data-sidebar="light"] {
+  --side-bg: var(--surface); --side-hover: var(--muted); --side-line: var(--line);
+  --side-fg: var(--fg-muted); --side-fg-faint: var(--fg-faint); --side-active: var(--primary-text);
+}
+[data-sidebar="brand"] {
+  --side-bg: oklch(min(calc(var(--b-l) - 0.12), 0.4) calc(var(--b-c) * 0.9) var(--b-h));
+  --side-hover: oklch(min(calc(var(--b-l) - 0.07), 0.46) calc(var(--b-c) * 0.9) var(--b-h));
+  --side-line: oklch(min(calc(var(--b-l) - 0.04), 0.5) calc(var(--b-c) * 0.8) var(--b-h));
+  --side-fg: oklch(0.93 0.02 var(--b-h)); --side-fg-faint: oklch(0.78 0.04 var(--b-h)); --side-active: oklch(1 0 0);
+}
+
+/* 深色模式：只重写中性色、状态色与阴影，品牌色保持输入 */
+[data-mode="dark"] {
+  --canvas: oklch(0.17 calc(var(--n-c) * 0.8) var(--n-h));
+  --surface: oklch(0.215 calc(var(--n-c) * 0.8) var(--n-h));
+  --subtle: oklch(0.235 calc(var(--n-c) * 0.8) var(--n-h));
+  --muted: oklch(0.275 calc(var(--n-c) * 0.8) var(--n-h));
+  --line: oklch(0.3 calc(var(--n-c) * 0.8) var(--n-h));
+  --line-strong: oklch(0.38 calc(var(--n-c) * 0.8) var(--n-h));
+  --fg: oklch(0.95 calc(var(--n-c) * 0.3) var(--n-h));
+  --fg-muted: oklch(0.74 calc(var(--n-c) * 0.5) var(--n-h));
+  --fg-faint: oklch(0.58 calc(var(--n-c) * 0.5) var(--n-h));
+  --overlay: oklch(0 0 0 / 0.6);
+  --shadow-color: oklch(0 0 0);
+  --primary-soft: oklch(calc(var(--b-l) - 0.3) calc(var(--b-c) * 0.45) var(--b-h) / 0.42);
+  --primary-soft-hover: oklch(calc(var(--b-l) - 0.26) calc(var(--b-c) * 0.5) var(--b-h) / 0.5);
+  --primary-line: oklch(calc(var(--b-l) - 0.16) calc(var(--b-c) * 0.6) var(--b-h) / 0.7);
+  --primary-text: oklch(0.82 calc(var(--b-c) * 0.7) var(--b-h));
+  --ok: oklch(0.78 0.14 152); --ok-soft: oklch(0.35 0.06 152 / 0.45);
+  --warn: oklch(0.82 0.13 80); --warn-soft: oklch(0.4 0.07 80 / 0.4);
+  --bad: oklch(0.76 0.15 22); --bad-soft: oklch(0.38 0.08 22 / 0.45);
+  --info: oklch(0.78 0.1 250); --info-soft: oklch(0.38 0.06 250 / 0.45);
+  --side-bg: oklch(0.145 calc(var(--n-c) * 0.8) var(--n-h));
+  --side-hover: oklch(0.2 calc(var(--n-c) * 0.8) var(--n-h));
+  --side-line: oklch(0.25 calc(var(--n-c) * 0.8) var(--n-h));
+}
+
+/* Tailwind 类名：bg-canvas bg-surface text-fg border-line bg-primary rounded-md 等 */
+@theme inline {
+  --color-canvas: var(--canvas); --color-surface: var(--surface); --color-subtle: var(--subtle); --color-muted: var(--muted);
+  --color-line: var(--line); --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg); --color-fg-muted: var(--fg-muted); --color-fg-faint: var(--fg-faint);
+  --color-primary: var(--primary); --color-primary-hover: var(--primary-hover); --color-primary-ink: var(--primary-ink);
+  --color-primary-soft: var(--primary-soft); --color-primary-soft-hover: var(--primary-soft-hover);
+  --color-primary-line: var(--primary-line); --color-primary-text: var(--primary-text);
+  --color-ok: var(--ok); --color-ok-soft: var(--ok-soft); --color-warn: var(--warn); --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad); --color-bad-soft: var(--bad-soft); --color-info: var(--info); --color-info-soft: var(--info-soft);
+  --color-side: var(--side-bg); --color-side-hover: var(--side-hover); --color-side-line: var(--side-line);
+  --color-side-fg: var(--side-fg); --color-side-faint: var(--side-fg-faint); --color-side-active: var(--side-active);
+  --radius-sm: var(--r-sm); --radius-md: var(--r-md); --radius-lg: var(--r-lg);
+  --font-sans: var(--font-sans); --font-mono: var(--font-mono);
+  --shadow-card: 0 1px 2px oklch(from var(--shadow-color) l c h / 0.05);
+  --shadow-pop: 0 12px 32px oklch(from var(--shadow-color) l c h / 0.16), 0 2px 6px oklch(from var(--shadow-color) l c h / 0.08);
+  --ease-out: var(--ease);
+}
+
+@layer base {
+  html { font-size: var(--fs); color-scheme: light; }
+  [data-mode="dark"] { color-scheme: dark; }
+  body { margin: 0; background: var(--canvas); color: var(--fg); font-family: var(--font-sans); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  :focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ring); }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  ::selection { background: var(--primary-soft-hover); }
+  @media (prefers-reduced-motion: reduce) { *, ::before, ::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+}
+
+@keyframes pop { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes fade { from { opacity: 0; } }
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@keyframes drawer-in { from { transform: translateX(100%); } }
+@keyframes drawer-out { to { transform: translateX(100%); } }
+@keyframes dialog-in { from { opacity: 0; transform: translate(-50%, -48%) scale(0.97); } }
+@keyframes draw-line { to { stroke-dashoffset: 0; } }
+@keyframes grow-x { to { width: var(--w); } }

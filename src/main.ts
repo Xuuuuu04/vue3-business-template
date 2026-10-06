@@ -1,9 +1,9 @@
 import { createApp, nextTick } from "vue";
 import App from "./app/App.vue";
 import { router } from "./app/router";
-import "./shared/theme/vendor";
-import "./shared/theme/tokens.css";
-import "./shared/theme/layout.css";
+import "./shared/ui/theme/tokens.css";
+import { initTheme } from "./shared/ui/public";
+initTheme();
 import { setAuthorization } from "./shared/actions/runtime";
 import { useSession } from "./shared/public";
 setAuthorization(useSession().can);

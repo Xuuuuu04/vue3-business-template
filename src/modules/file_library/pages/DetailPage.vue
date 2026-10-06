@@ -5,6 +5,8 @@ import { saveDownload, useSession } from "@/shared/public";
 import {
   PageFrame,
   StatusMessage,
+  Card,
+  DescriptionList,
   UiButton,
   UiDialog,
 } from "@/shared/ui/public";
@@ -34,6 +36,21 @@ const returnTo = computed(() =>
     ? String(route.query.returnTo)
     : "/files",
 );
+const fields = computed(() =>
+  file.value
+    ? [
+        { label: "文件名", value: file.value.name },
+        {
+          label: "文件大小",
+          value: `${fileSize(file.value.size)}（${file.value.size} 字节）`,
+        },
+        { label: "保存时间", value: fileDate(file.value.created_at) },
+        { label: "文件类型", value: file.value.content_type },
+        { label: "文件编号", value: file.value.id },
+        { label: "内容校验值", value: file.value.sha256 },
+      ]
+    : [],
+);
 watch(
   id,
   () => {
@@ -60,45 +77,27 @@ async function downloadCurrent() {
 }
 </script>
 <template>
-  <PageFrame
-    :title="file?.name || '文件详情'"
-    description="这里显示后台保存的文件信息。"
-  >
+  <PageFrame :title="file?.name || '文件详情'" narrow>
     <template #actions
-      ><UiButton @click="router.push(returnTo)">返回列表</UiButton></template
+      ><UiButton @click="router.push(returnTo)">返回列表</UiButton
+      ><UiButton
+        v-if="file"
+        variant="primary"
+        :loading="downloading.status === 'loading'"
+        @click="downloadCurrent"
+        >下载原文件</UiButton
+      ><UiButton
+        v-if="file && session.can('file_library.write')"
+        variant="danger-quiet"
+        :disabled="removal.status === 'unknown'"
+        @click="confirm = true"
+        >删除文件</UiButton
+      ></template
     >
     <StatusMessage :status="state.status" :error="state.error" />
-    <template v-if="file"
-      ><dl class="detail-grid">
-        <dt>文件名</dt>
-        <dd>{{ file.name }}</dd>
-        <dt>文件大小</dt>
-        <dd>{{ fileSize(file.size) }}（{{ file.size }} 字节）</dd>
-        <dt>保存时间</dt>
-        <dd>{{ fileDate(file.created_at) }}</dd>
-        <dt>文件类型</dt>
-        <dd>{{ file.content_type }}</dd>
-        <dt>文件编号</dt>
-        <dd class="break-word">{{ file.id }}</dd>
-        <dt>内容校验值</dt>
-        <dd class="break-word">{{ file.sha256 }}</dd>
-      </dl>
-      <div class="action-row">
-        <UiButton
-          type="primary"
-          :loading="downloading.status === 'loading'"
-          @click="downloadCurrent"
-          >下载原文件</UiButton
-        ><UiButton
-          v-if="session.can('file_library.write')"
-          type="danger"
-          plain
-          :disabled="removal.status === 'unknown'"
-          @click="confirm = true"
-          >删除文件</UiButton
-        >
-      </div>
-    </template>
+    <Card v-if="file" title="文件信息"
+      ><DescriptionList :items="fields"
+    /></Card>
     <StatusMessage :status="downloading.status" :error="downloading.error" />
     <StatusMessage :status="removal.status" :error="removal.error"
       ><UiButton @click="detail.run({ org, id })"
@@ -107,18 +106,16 @@ async function downloadCurrent() {
       <p>结果未确认时请不要再次删除。可返回列表查看最新结果。</p></StatusMessage
     >
     <UiDialog
-      v-model="confirm"
+      v-model:open="confirm"
       title="确认删除文件"
-      width="min(520px, 92vw)"
-      :close-on-click-modal="false"
-      ><p>删除 {{ confirmedFile?.name }} 后将无法从这里下载。确认删除吗？</p>
-      <template #footer
+      :description="`删除 ${confirmedFile?.name} 后将无法从这里下载。确认删除吗？`"
+      ><template #footer
         ><UiButton
           :disabled="removal.status === 'loading'"
           @click="confirm = false"
           >保留文件</UiButton
         ><UiButton
-          type="danger"
+          variant="danger"
           :loading="removal.status === 'loading'"
           :disabled="removal.status === 'unknown'"
           @click="deleteConfirmed"

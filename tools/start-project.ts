@@ -43,6 +43,11 @@ for (const entry of readdirSync(source)) {
     continue;
   cpSync(resolve(source, entry), resolve(target, entry), { recursive: true });
 }
+// 本机的 .agents 内容不复制，只带项目 Skill。
+if (existsSync(resolve(source, ".agents/skills")))
+  cpSync(resolve(source, ".agents/skills"), resolve(target, ".agents/skills"), {
+    recursive: true,
+  });
 const { rmSync } = await import("node:fs");
 rmSync(resolve(target, "src/modules"), { recursive: true, force: true });
 mkdirSync(resolve(target, "src/modules"), { recursive: true });

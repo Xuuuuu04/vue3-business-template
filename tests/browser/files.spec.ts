@@ -9,8 +9,8 @@ async function switchDetail(page: Page, url: string) {
 }
 async function detailPair(page: Page) {
   await page.goto("/files");
-  await expect(page.locator(".text-link").nth(1)).toBeVisible();
-  const links = page.locator(".text-link");
+  await expect(page.locator("tbody td:first-child button").nth(1)).toBeVisible();
+  const links = page.locator("tbody td:first-child button");
   const firstName = await links.nth(0).innerText();
   const secondName = await links.nth(1).innerText();
   await links.nth(1).click();
@@ -155,10 +155,10 @@ test("R-05：SPA切换期间下载保持原文件名", async ({ page }) => {
 test("R-01、R-02：分页、筛选、详情刷新与浏览器返回", async ({ page }) => {
   await page.goto("/files?offset=10&q=");
   await expect(page.getByText("共 16 个文件", { exact: false })).toBeVisible();
-  const name = await page.locator(".text-link").first().innerText();
+  const name = await page.locator("tbody td:first-child button").first().innerText();
   await page.getByLabel("筛选本页文件").fill(name);
   await expect(page).toHaveURL(/q=/);
-  await page.locator(".text-link").first().click();
+  await page.locator("tbody td:first-child button").first().click();
   await expect(page.getByRole("heading", { name })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("heading", { name })).toBeVisible();
@@ -235,7 +235,7 @@ test("失败保留输入，未保存文件离开需要确认", async ({ page }) 
   await page.getByRole("button", { name: "保存文件", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("没有上传权限");
   await expect(
-    page.getByText("已选择：retain.txt", { exact: false }),
+    page.getByText("retain.txt", { exact: true }),
   ).toBeVisible();
   page.once("dialog", (dialog) => dialog.dismiss());
   await page.getByRole("button", { name: "返回列表", exact: true }).click();
@@ -243,7 +243,7 @@ test("失败保留输入，未保存文件离开需要确认", async ({ page }) 
 });
 test("动作记录显示结果摘要和真实请求时间，不伪造后台编号", async ({ page }) => {
   await page.goto("/files");
-  await expect(page.locator(".text-link").first()).toBeVisible();
+  await expect(page.locator("tbody td:first-child button").first()).toBeVisible();
   await page.getByRole("link", { name: "结构与运行", exact: true }).click();
   await page.getByRole("tab", { name: /实际运行/ }).click();
   await expect(page.getByLabel("运行详情")).toContainText("查看文件列表");

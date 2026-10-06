@@ -1,38 +1,51 @@
 import { test, expect } from "@playwright/test";
-test("统一组件、键盘确认与窄屏页面", async ({ page }) => {
+test("界面库：键盘确认、焦点返回与窄屏", async ({ page }) => {
   await page.goto("/system/components");
   await expect(
-    page.getByRole("heading", { name: "组件样板", exact: true }),
+    page.getByRole("heading", { name: "界面库", level: 1, exact: true }),
   ).toBeVisible();
-  await page.getByLabel("项目名称").fill("正式项目");
-  await page.getByRole("button", { name: "主要操作", exact: true }).click();
+  await page.getByRole("tab", { name: "控件与反馈" }).click();
+  const trigger = page.getByRole("button", { name: "确认弹窗", exact: true });
+  await trigger.click();
   await expect(page.getByRole("dialog")).toBeVisible();
   for (let i = 0; i < 8; i++) {
     await page.keyboard.press("Tab");
     expect(
       await page.evaluate(() =>
-        Boolean(document.activeElement?.closest(".el-dialog")),
+        Boolean(document.activeElement?.closest('[role="dialog"]')),
       ),
     ).toBe(true);
   }
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).not.toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "主要操作", exact: true }),
-  ).toBeFocused();
+  await expect(trigger).toBeFocused();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+  // 正文 14px 起，辅助文字不小于 12px。
   const small = await page.locator("main").evaluate((root) =>
-    [...root.querySelectorAll("p,button,input,label,span")]
+    [...root.querySelectorAll("p,button,input,label,td")]
       .filter((el) => el.getClientRects().length && el.textContent?.trim())
-      .filter((el) => parseFloat(getComputedStyle(el).fontSize) < 16)
+      .filter((el) => parseFloat(getComputedStyle(el).fontSize) < 12)
       .map((el) => el.textContent),
   );
   expect(small).toEqual([]);
+});
+test("主题切换：配色、明暗与侧栏收起都立即生效并被记住", async ({ page }) => {
+  await page.goto("/system/components");
+  const html = page.locator("html");
+  await expect(html).toHaveAttribute("data-mode", "light");
+  await page.getByRole("button", { name: "主题与外观" }).click();
+  await page.getByRole("button", { name: "夜航" }).click();
+  await expect(html).toHaveAttribute("data-mode", "dark");
+  await page.keyboard.press("Escape");
+  await page.reload();
+  await expect(html).toHaveAttribute("data-mode", "dark");
+  await page.getByRole("button", { name: "收起侧栏" }).click();
+  await expect(page.getByRole("button", { name: "展开侧栏" })).toBeVisible();
 });
 test("结构图有实际函数位置与页面组件关系", async ({ page }) => {
   await page.goto("/system/console");
