@@ -30,6 +30,7 @@ export const router = createRouter({
     ),
     { path: "/forbidden", component: () => import("./ForbiddenPage.vue") },
     { path: "/welcome", component: () => import("./WelcomePage.vue") },
+    { path: "/settings", component: () => import("./SettingsPage.vue"), meta: { title: "偏好设置" } },
     { path: "/login", component: () => import("./LoginPage.vue"), meta: { title: "登录" } },
     { path: "/legal/:kind(terms|privacy)", component: () => import("./LegalPage.vue"), meta: { title: "协议与政策" } },
     ...(consoleEnabled

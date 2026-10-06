@@ -10,7 +10,7 @@ import Tip from "../base/Tip.vue";
 import BrandMark from "./BrandMark.vue";
 import Button from "../base/Button.vue";
 
-const props = defineProps<{ brand: string; mark?: string; logo?: string; nav: { title?: string; items: { to: string; label: string; icon?: Component; badge?: number; exact?: boolean }[] }[]; section?: string }>();
+const props = defineProps<{ brand: string; mark?: string; logo?: string; nav: { title?: string; items: { to: string; label: string; icon?: Component; badge?: number; exact?: boolean }[] }[]; section?: string; sectionTo?: string }>();
 
 const KEY = "ui-sidebar-collapsed";
 function read(): boolean { try { return localStorage.getItem(KEY) === "1"; } catch { return false; } }
@@ -56,13 +56,13 @@ function active(item: { to: string; exact?: boolean }) { return route.path === i
     <div class="flex min-h-0 min-w-0 flex-col">
       <header class="z-30 flex h-14 shrink-0 items-center gap-1 border-b border-line bg-canvas/85 px-3 backdrop-blur md:px-5">
         <Button variant="ghost" size="icon" class="md:hidden" aria-label="打开导航" @click="mobileOpen = true"><Menu class="size-[18px]" /></Button>
-        <Tip :text="collapsed ? '展开侧栏' : '收起侧栏'">
-          <Button variant="ghost" size="icon" class="hidden md:inline-flex" :aria-label="collapsed ? '展开侧栏' : '收起侧栏'" @click="collapsed = !collapsed">
+        <Tip :text="collapsed ? '展开侧栏' : '收起侧栏'" class="max-md:hidden">
+          <Button variant="ghost" size="icon" :aria-label="collapsed ? '展开侧栏' : '收起侧栏'" @click="collapsed = !collapsed">
             <PanelLeftOpen v-if="collapsed" class="size-[18px]" /><PanelLeftClose v-else class="size-[18px]" />
           </Button>
         </Tip>
         <nav class="ml-1 flex min-w-0 items-center gap-2 text-fg-muted" aria-label="当前位置">
-          <span v-if="section && section !== title" class="hidden sm:inline">{{ section }}</span><span v-if="section && section !== title" class="hidden text-fg-faint sm:inline">/</span>
+          <RouterLink v-if="section && section !== title && sectionTo" :to="sectionTo" class="hidden transition-colors hover:text-fg sm:inline">{{ section }}</RouterLink><span v-else-if="section && section !== title" class="hidden sm:inline">{{ section }}</span><span v-if="section && section !== title" class="hidden text-fg-faint sm:inline">/</span>
           <b class="truncate font-semibold text-fg">{{ title }}</b>
         </nav>
         <span class="flex-1" />

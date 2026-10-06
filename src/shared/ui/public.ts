@@ -17,11 +17,16 @@ export { default as UiMenu } from "./base/Menu.vue";
 export { default as UiSkeleton } from "./base/Skeleton.vue";
 export { default as UiEmpty } from "./base/EmptyState.vue";
 export { default as UiFileDrop } from "./base/FileDrop.vue";
+export { default as UiFileIcon } from "./base/FileIcon.vue";
+export { default as UiTime } from "./base/Time.vue";
+export { default as UiCopy } from "./base/CopyButton.vue";
 export { default as UiPagination } from "./base/Pagination.vue";
 export { default as Toaster } from "./base/Toaster.vue";
 export { useToast } from "./lib/toast";
 export { notify, useNotices } from "./lib/notifications";
 export { syncFavicon } from "./lib/favicon";
+export { moduleIcon, moduleIcons } from "./lib/icons";
+export { fileKind, formatBytes, formatDateTime, formatRelative } from "./lib/format";
 
 export { default as Stack } from "./layout/Stack.vue";
 export { default as Row } from "./layout/Row.vue";
@@ -43,6 +48,7 @@ export { default as StatusMessage } from "./StatusMessage.vue";
 
 export { default as DataTable } from "./data/DataTable.vue";
 export { default as SelectList } from "./data/SelectList.vue";
+export { default as FilePreview } from "./data/FilePreview.vue";
 export { default as CellText } from "./data/CellText.vue";
 export { default as FilterItem } from "./data/FilterItem.vue";
 export { default as FilterBar } from "./data/FilterBar.vue";

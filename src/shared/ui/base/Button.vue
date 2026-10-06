@@ -4,6 +4,7 @@ import { computed } from "vue";
 import { cva } from "class-variance-authority";
 import { Loader2 } from "lucide-vue-next";
 import { cn } from "../lib/cn";
+import { actionIcons } from "../lib/icons";
 
 const props = withDefaults(
   defineProps<{
@@ -12,6 +13,8 @@ const props = withDefaults(
     loading?: boolean;
     disabled?: boolean;
     type?: "button" | "submit" | "reset";
+    /** 文字前的图标名，见 lib/icons.ts 的 actionIcons。 */
+    icon?: string;
   }>(),
   { variant: "secondary", size: "md", type: "button" },
 );
@@ -44,6 +47,7 @@ const classes = computed(() => cn(styles({ variant: props.variant, size: props.v
 <template>
   <button :type="type" :class="classes" :disabled="disabled || loading" :aria-busy="loading || undefined">
     <Loader2 v-if="loading" class="size-4 animate-spin" aria-hidden="true" />
+    <component :is="actionIcons[icon]" v-else-if="icon && actionIcons[icon]" class="size-4 shrink-0" aria-hidden="true" />
     <slot />
   </button>
 </template>

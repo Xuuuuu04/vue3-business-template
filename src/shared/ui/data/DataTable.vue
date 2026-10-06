@@ -35,6 +35,8 @@ const props = withDefaults(
     sizes?: number[];
     settings?: boolean;
     fullscreenable?: boolean;
+    /** 整行可点击（如进入详情）；点到行内按钮、输入框时不触发。 */
+    rowClickable?: boolean;
   }>(),
   { emptyTitle: "没有符合条件的数据", settings: true, fullscreenable: true },
 );
@@ -44,6 +46,19 @@ const expanded = defineModel<string[]>("expanded", { default: () => [] });
 const page = defineModel<number>("page", { default: 1 });
 const pageSize = defineModel<number>("pageSize", { default: 20 });
 const slots = useSlots();
+const emit = defineEmits<{ "row-click": [row: T] }>();
+function clickRow(e: MouseEvent, row: T) {
+  if (!props.rowClickable) return;
+  if ((e.target as HTMLElement).closest("button, a, input, label, [role=checkbox]")) return;
+  emit("row-click", row);
+}
+/** 当前页显示的是第几条到第几条。 */
+const range = computed(() => {
+  const t = props.total ?? 0;
+  if (!t) return "";
+  const from = (page.value - 1) * pageSize.value + 1;
+  return `第 ${from}–${Math.min(t, from + pageSize.value - 1)} 条，共 ${t.toLocaleString("zh-CN")} 条`;
+});
 
 const hidden = ref(new Set(props.columns.filter((c) => c.hidden).map((c) => c.key)));
 const visibleColumns = computed(() => props.columns.filter((c) => !hidden.value.has(c.key)));
@@ -227,7 +242,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
               </td>
             </tr>
             <template v-for="row in g.rows" :key="keyOf(row)">
-              <tr v-show="!collapsed.has(g.key)" class="group/row animate-[fade_.35s_ease-out_both]" :style="{ animationDelay: `${Math.min(rowIndex(row), 12) * 22}ms` }" :class="selected.includes(keyOf(row)) && 'is-selected'" @dblclick="slots['expanded'] && toggleExpand(row)">
+              <tr v-show="!collapsed.has(g.key)" class="group/row animate-[fade_.35s_ease-out_both]" :style="{ animationDelay: `${Math.min(rowIndex(row), 12) * 22}ms` }" :class="[rowClickable && 'cursor-pointer', selected.includes(keyOf(row)) && 'is-selected']" @dblclick="slots['expanded'] && toggleExpand(row)" @click="clickRow($event, row)">
                 <td v-if="selectable" class="sticky left-0 z-10 h-(--row-h) border-b border-line bg-surface pl-4 group-hover/row:bg-subtle group-[.is-selected]/row:bg-primary-soft">
                   <UiCheckbox :model-value="selected.includes(keyOf(row))" :aria-label="`选择第 ${keyOf(row)} 行`" @update:model-value="(v) => toggleRow(row, v)" />
                 </td>
@@ -263,7 +278,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       </div>
     </Transition>
     <footer v-if="showFooter" class="flex flex-wrap items-center gap-3 border-t border-line px-4 py-2.5 text-[13px] text-fg-muted">
-      <span class="tabular-nums">共 {{ total!.toLocaleString("zh-CN") }} 条</span>
+      <span class="tabular-nums">{{ range }}</span>
       <slot name="footer" />
       <span class="flex-1" />
       <Pagination v-model:page="page" v-model:page-size="pageSize" :total="total!" :sizes="sizes" />

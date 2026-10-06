@@ -3,11 +3,15 @@
  * 页面骨架：标题与操作、可选的标签页和状态行，然后是内容。
  * 标题下面不放说明文字；需要让人知道的状态放进 status 插槽。narrow 用于表单和详情，靠左对齐，与其他页面共用左边线。
  */
-defineProps<{ title: string; narrow?: boolean }>();
+import { RouterLink } from "vue-router";
+import { ArrowLeft } from "lucide-vue-next";
+defineProps<{ title: string; narrow?: boolean; /** 返回的上一级地址，标题左边出现返回箭头。 */ back?: string }>();
 </script>
 <template>
-  <section class="w-full animate-[rise_.4s_var(--ease)] px-(--page-px) pt-5 pb-16" :class="narrow ? 'max-w-4xl' : 'max-w-[1440px]'" :aria-label="title">
+  <section class="w-full animate-[rise_.4s_var(--ease)] px-(--page-px) pt-6 pb-10" :class="narrow ? 'max-w-4xl' : 'max-w-[1680px]'" :aria-label="title">
     <header class="mb-4 flex min-h-9 flex-wrap items-center gap-3">
+      <RouterLink v-if="back" :to="back" class="-ml-1.5 grid size-8 shrink-0 place-items-center rounded-md text-fg-muted transition-colors hover:bg-muted hover:text-fg" aria-label="返回"><ArrowLeft class="size-[18px]" /></RouterLink>
+      <slot name="icon" />
       <h1 class="min-w-0 flex-1 truncate text-[22px] leading-8 font-semibold tracking-tight">{{ title }}</h1>
       <div v-if="$slots.actions" class="flex flex-wrap items-center gap-2"><slot name="actions" /></div>
     </header>

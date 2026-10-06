@@ -36,11 +36,11 @@
 | --- | --- |
 | 操作 | `UiButton`（primary、secondary、ghost、danger-quiet、danger、link 行内操作、text 表格里可点开的名称；每个区域最多一个 primary） |
 | 输入 | `UiInput`、`UiPasswordInput`（显示密码、大写提醒）、`UiSearchInput`、`UiSelect`、`UiCheckbox`、`UiFileDrop`，外面用 `Field` 加名称、提示、错误 |
-| 标记 | `UiTag`（状态用 ok、warn、bad；编码用 code）、`UiTabs`、`UiTip` |
+| 标记 | `UiTag`（状态用 ok、warn、bad；编码用 code）、`UiTabs`、`UiTip`、`UiFileIcon`（按类型着色的文件图标）、`UiTime`（“3 小时前”，悬停看完整时间）、`UiCopy`（复制按钮） |
 | 浮层 | `UiDialog`（短决定）、`UiDrawer`（从列表快速查看）、`UiMenu`、`useToast()` |
 | 读取与空 | `UiSkeleton`、`UiEmpty`、`StatusMessage`（动作失败或结果未知） |
 | 版式 | `PageFrame`、`Stack`、`Row`、`Grid`、`Card`、`StatusLine` |
-| 数据 | `DataTable`、`CellText`、`FilterBar`、`FilterItem`、`MetricStrip`、`DescriptionList`、`Timeline` |
+| 数据 | `DataTable`、`CellText`、`FilterBar`、`FilterItem`、`MetricStrip`、`DescriptionList`、`Timeline`、`FilePreview`（文本、CSV 表格、图片预览）、`SelectList` |
 | 图表 | `LineChart`、`BarList`、`Sparkline` |
 | 外壳 | `AppShell`（可收起侧栏）、`AuthLayout`（登录页：品牌面板、亮点、页脚）、`BrandMark`、`AppFooter`、`TopProgress`（切页进度条） |
 | 全局 | `CommandPalette`（⌘K 搜索）、`UserMenu`、`NotificationBell`、`ThemePanel`；`notify()` 添加通知 |
@@ -61,10 +61,14 @@
 | 页面 | 拼法 |
 | --- | --- |
 | 列表 | `PageFrame` → `StatusLine` → `FilterBar` → `DataTable`；详情用 `UiDrawer` 或独立页 |
-| 详情 | `PageFrame`（操作放右上）→ `Card` → `DescriptionList`；相关记录用 `Timeline`、`DataTable` |
+| 详情 | `PageFrame back="上一级"`（标题左边放 `#icon`，操作放右上）→ `Grid ratio="2:1"`：左边主体（预览、内容），右边 `Card` + `DescriptionList`（编号、校验值配 `UiCopy`） |
 | 表单 | `PageFrame narrow` → `Card` → `Stack` → `Field` + 控件 → 提交按钮放 `Row justify="end"` |
 | 总览 | `PageFrame` → `MetricStrip` → `Grid ratio="3:2"`（`LineChart`、`BarList`）→ `DataTable` |
 | 登录 | `AuthLayout` → 标题 → `Field` 与 `UiInput size="lg"` → 主按钮 |
+
+## 按钮图标与模块图标
+
+业务页面不能自己导入图标库：按钮写 `<UiButton icon="download">`，可用名称见 `lib/icons.ts` 的 `actionIcons`；侧栏图标在 `module.ts` 写 `icon: "folder"`，可用名称见 `moduleIcons`。
 
 ## 表格怎么用
 
@@ -75,6 +79,8 @@
 - 固定列写 `sticky: "left" | "right"` 并给出 `width`。
 - 勾选 `selectable`，选中后底部出现批量操作条，按钮放 `#bulk` 插槽。
 - 分组 `group-by`，行内展开 `#expanded` 插槽，列设置与全屏默认带。
+- 整行可点进入详情用 `row-clickable` 加 `@row-click`；行内按钮、链接点击不会触发整行。
+- 分页写 `v-model:page`、`v-model:page-size`、`:total`、`:sizes`，底部显示“第 1–20 条，共 N 条”和每页条数；列表页把页码、条数、排序写进地址。
 - 读取中用 `loading`（骨架行），没有数据用 `#empty` 或 `empty-title`，不要用空数组替换失败。
 
 ## 新增组件前

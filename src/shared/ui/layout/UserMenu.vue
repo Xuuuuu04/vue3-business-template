@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { DropdownMenuRoot, DropdownMenuTrigger, DropdownMenuPortal, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "reka-ui";
-import { Moon, Sun, LifeBuoy, Info, LogOut, ChevronDown } from "lucide-vue-next";
+import { Moon, Sun, LifeBuoy, Info, LogOut, ChevronDown, Settings } from "lucide-vue-next";
 import { useTheme } from "../theme/theme";
 /** 用户菜单：头像、名称、所在组织；切换明暗、帮助、关于、退出登录。 */
 defineProps<{ name: string; org?: string; signedIn: boolean }>();
-const emit = defineEmits<{ help: []; about: []; logout: [] }>();
+const emit = defineEmits<{ settings: []; help: []; about: []; logout: [] }>();
 const { settings, update } = useTheme();
 </script>
 <template>
@@ -23,6 +23,7 @@ const { settings, update } = useTheme();
         <DropdownMenuItem class="flex h-9 cursor-pointer items-center gap-2.5 rounded-md px-2.5 outline-none select-none data-[highlighted]:bg-muted" @select.prevent="update({ mode: settings.mode === 'dark' ? 'light' : 'dark' })">
           <Sun v-if="settings.mode === 'dark'" class="size-4 text-fg-muted" /><Moon v-else class="size-4 text-fg-muted" />{{ settings.mode === "dark" ? "切换到浅色" : "切换到深色" }}
         </DropdownMenuItem>
+        <DropdownMenuItem class="flex h-9 cursor-pointer items-center gap-2.5 rounded-md px-2.5 outline-none select-none data-[highlighted]:bg-muted" @select="emit('settings')"><Settings class="size-4 text-fg-muted" />偏好设置</DropdownMenuItem>
         <DropdownMenuItem class="flex h-9 cursor-pointer items-center gap-2.5 rounded-md px-2.5 outline-none select-none data-[highlighted]:bg-muted" @select="emit('help')"><LifeBuoy class="size-4 text-fg-muted" />帮助与反馈</DropdownMenuItem>
         <DropdownMenuItem class="flex h-9 cursor-pointer items-center gap-2.5 rounded-md px-2.5 outline-none select-none data-[highlighted]:bg-muted" @select="emit('about')"><Info class="size-4 text-fg-muted" />关于</DropdownMenuItem>
         <template v-if="signedIn">

@@ -5,6 +5,7 @@ import { ref, onBeforeUnmount } from "vue";
  * 自己计算位置而不用 Reka 的定位，所以可以安全地套在菜单、弹出层的触发按钮外面；text 为空时不显示。
  * 默认显示在下方；side="right" 用于收起的侧栏。
  */
+defineOptions({ inheritAttrs: false });
 const props = defineProps<{ text: string; side?: "bottom" | "right" }>();
 const host = ref<HTMLElement>();
 const open = ref(false);
@@ -24,7 +25,7 @@ function hide() { clearTimeout(timer); open.value = false; }
 onBeforeUnmount(() => clearTimeout(timer));
 </script>
 <template>
-  <span ref="host" class="inline-flex min-w-0" @pointerenter="show" @pointerleave="hide" @focusin="show" @focusout="hide" @keydown.esc="hide" @pointerdown="hide">
+  <span ref="host" v-bind="$attrs" class="inline-flex min-w-0" @pointerenter="show" @pointerleave="hide" @focusin="show" @focusout="hide" @keydown.esc="hide" @pointerdown="hide">
     <slot />
   </span>
   <Teleport to="body">

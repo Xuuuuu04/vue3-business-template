@@ -20,7 +20,7 @@ const sizeOptions = computed(() => (props.sizes ?? [10, 20, 50]).map((s) => ({ v
 function setSize(v: string) { pageSize.value = Number(v); page.value = 1; }
 </script>
 <template>
-  <div class="flex items-center gap-3">
+  <div class="flex items-center gap-4">
     <div v-if="(sizes?.length ?? 3) > 1" class="w-28"><UiSelect :model-value="String(pageSize)" :options="sizeOptions" aria-label="每页条数" @update:model-value="setSize" /></div>
     <nav class="flex items-center gap-1" aria-label="分页">
       <button type="button" class="grid size-8 place-items-center rounded-md text-fg-muted hover:bg-muted disabled:opacity-40" :disabled="page <= 1" aria-label="上一页" @click="page--"><ChevronLeft class="size-4" /></button>

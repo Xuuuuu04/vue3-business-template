@@ -70,7 +70,7 @@ async function submit() {
         <div class="flex items-center justify-between">
           <UiCheckbox v-model="remember" label="记住账号" />
           <span class="flex items-center gap-3">
-            <button v-if="!useOtp" type="button" class="text-[13px] text-fg-muted hover:text-fg" @click="useOtp = true">使用验证码</button>
+            <button v-if="!useOtp" type="button" class="text-[13px] text-fg-muted hover:text-fg" @click="useOtp = true">有两步验证码？</button>
             <button type="button" class="text-[13px] text-primary-text hover:underline" @click="forgot = true">忘记密码？</button>
           </span>
         </div>

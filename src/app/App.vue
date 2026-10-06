@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter, RouterView, RouterLink } from "vue-router";
-import { LayoutGrid, ArrowLeft, Wrench, Compass, History, Gauge, Palette, PlugZap, Search, Moon, Sun, LogOut, Info } from "lucide-vue-next";
+import { ArrowLeft, Wrench, Compass, History, Gauge, Palette, PlugZap, Search, Moon, Sun, LogOut, Info, Settings } from "lucide-vue-next";
 import { useSession } from "@/shared/public";
 import {
   AppShell, AppFooter, ThemePanel, NotificationBell, UserMenu, CommandPalette, TopProgress, Toaster, BrandMark,
-  UiButton, UiTag, UiTip, UiDialog, syncFavicon, palettes, useTheme, type NavGroup,
+  UiButton, UiTag, UiTip, UiDialog, syncFavicon, palettes, useTheme, moduleIcon, type NavGroup,
 } from "@/shared/ui/public";
 import { appConfig } from "./app.config";
 import { enabledModules, consoleEnabled } from "./router";
@@ -21,7 +21,8 @@ const bare = computed(() => route.path === "/login" || route.path.startsWith("/l
 /** 开发者工具和产品界面分开：进入 /dev 后侧栏只显示开发者工具。 */
 const inDev = computed(() => route.path === "/dev" || route.path.startsWith("/dev/"));
 /** 业务页面的面包屑前一级：当前页面所属模块。 */
-const moduleTitle = computed(() => enabledModules.find((m) => m.name === route.meta.module)?.title);
+const currentModule = computed(() => enabledModules.find((m) => m.name === route.meta.module));
+const moduleTitle = computed(() => currentModule.value?.title);
 
 const nav = computed<NavGroup[]>(() =>
   inDev.value
@@ -38,7 +39,7 @@ const nav = computed<NavGroup[]>(() =>
           ],
         },
       ]
-    : [{ items: enabledModules.map((m) => ({ to: m.pages[0]?.path || "/", label: m.title, icon: LayoutGrid })) }],
+    : [{ items: enabledModules.map((m) => ({ to: m.pages[0]?.path || "/", label: m.title, icon: moduleIcon(m.icon) })) }],
 );
 
 // 顶部进度条：路由开始切换到完成
@@ -63,10 +64,11 @@ function leave() { session.logoutLocal(); void router.replace("/login"); }
 function help() { appConfig.support.helpUrl ? window.open(appConfig.support.helpUrl, "_blank", "noopener") : (window.location.href = `mailto:${appConfig.support.email}`); }
 
 const commands = computed(() => [
-  ...enabledModules.map((m) => ({ id: `go-${m.name}`, group: "页面", label: m.title, icon: LayoutGrid, hint: m.pages[0]?.path, run: () => void router.push(m.pages[0]?.path || "/") })),
+  ...enabledModules.map((m) => ({ id: `go-${m.name}`, group: "页面", label: m.title, icon: moduleIcon(m.icon), hint: m.pages[0]?.path, run: () => void router.push(m.pages[0]?.path || "/") })),
   ...(consoleEnabled ? [{ id: "dev", group: "开发者", label: "开发者工具", icon: Wrench, hint: "/dev", run: () => void router.push("/dev") }] : []),
   { id: "mode", group: "外观", label: settings.mode === "dark" ? "切换到浅色" : "切换到深色", icon: settings.mode === "dark" ? Sun : Moon, run: () => update({ mode: settings.mode === "dark" ? "light" : "dark" }) },
   ...palettes.map((p) => ({ id: `pal-${p.id}`, group: "外观", label: `配色：${p.name}`, icon: Palette, hint: p.character.split("，")[0], run: () => choosePalette(p.id) })),
+  { id: "settings", group: "外观", label: "偏好设置", icon: Settings, hint: "/settings", run: () => void router.push("/settings") },
   { id: "about", group: "帮助", label: "关于", icon: Info, run: () => (about.value = true) },
   ...(identity.value.signedIn ? [{ id: "logout", group: "账号", label: "退出登录", icon: LogOut, run: leave }] : []),
 ]);
@@ -76,7 +78,7 @@ const build = (import.meta.env.VITE_CODE_VERSION as string | undefined)?.slice(0
 <template>
   <TopProgress :active="loading" />
   <RouterView v-if="bare" />
-  <AppShell v-else :brand="appConfig.name" :mark="appConfig.mark" :logo="appConfig.logo" :nav="nav" :section="inDev ? '开发者工具' : moduleTitle">
+  <AppShell v-else :brand="appConfig.name" :mark="appConfig.mark" :logo="appConfig.logo" :nav="nav" :section="inDev ? '开发者工具' : moduleTitle" :section-to="inDev ? '/dev' : currentModule?.pages[0]?.path">
     <template #sidebar-footer="{ collapsed }">
       <UiTip :text="collapsed ? '开发者工具（仅开发时可见）' : ''">
         <RouterLink v-if="consoleEnabled && !inDev" to="/dev" class="flex h-10 w-full items-center gap-3 px-[18px] text-side-faint transition-colors hover:bg-side-hover hover:text-side-fg" :class="collapsed && 'justify-center px-0'" aria-label="开发者工具">
@@ -92,7 +94,7 @@ const build = (import.meta.env.VITE_CODE_VERSION as string | undefined)?.slice(0
       <UiTip v-if="session.demo" text="当前是演示数据，没有连接后台"><UiTag tone="warn" class="mr-1">演示数据</UiTag></UiTip>
       <NotificationBell />
       <ThemePanel />
-      <UserMenu :name="identity.signedIn ? identity.username : session.demo ? '演示用户' : '未登录'" :org="identity.org" :signed-in="identity.signedIn && !session.demo" @help="help" @about="about = true" @logout="leave" />
+      <UserMenu :name="identity.signedIn ? identity.username : session.demo ? '演示用户' : '未登录'" :org="identity.org" :signed-in="identity.signedIn && !session.demo" @settings="router.push('/settings')" @help="help" @about="about = true" @logout="leave" />
     </template>
     <RouterView />
     <template #footer><AppFooter :company="appConfig.company" :icp="appConfig.icp" :version="appConfig.version" :links="footerLinks" /></template>

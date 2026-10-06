@@ -1,31 +1,48 @@
 <script setup lang="ts">
 import { computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useSession } from "@/shared/public";
+import { saveDownload, useSession } from "@/shared/public";
 import {
   PageFrame,
   StatusMessage,
-  StatusLine,
   DataTable,
   FilterItem,
+  Row,
   UiButton,
   UiSearchInput,
-  UiTag,
   UiEmpty,
+  UiFileIcon,
+  UiTime,
+  UiTip,
+  fileKind,
+  formatBytes,
   type DataColumn,
+  type SortState,
 } from "@/shared/ui/public";
-import { useFileLibrary, fileSize, fileDate } from "../public";
-const PAGE_SIZE = 10;
+import { useFileLibrary, type FileView } from "../public";
+/** 每页条数的可选值；默认 20 条，写在地址里，返回列表时保持。 */
+const SIZES = [10, 20, 50];
 const route = useRoute();
 const router = useRouter();
-const { list } = useFileLibrary();
+const { list, download } = useFileLibrary();
 const session = useSession();
 const org = session.state.value.org;
+const size = computed(() =>
+  SIZES.includes(Number(route.query.size)) ? Number(route.query.size) : 20,
+);
 const offset = computed(() => Math.max(0, Number(route.query.offset) || 0));
 const page = computed({
-  get: () => offset.value / PAGE_SIZE + 1,
+  get: () => Math.floor(offset.value / size.value) + 1,
   set: (p: number) => {
-    void router.push({ query: { ...route.query, offset: (p - 1) * PAGE_SIZE } });
+    void router.push({
+      query: { ...route.query, offset: (p - 1) * size.value },
+    });
+  },
+});
+const pageSize = computed({
+  get: () => size.value,
+  set: (s: number) => {
+    void router.push({ query: { ...route.query, size: s, offset: 0 } });
   },
 });
 const filter = computed({
@@ -34,28 +51,47 @@ const filter = computed({
     void router.replace({ query: { ...route.query, q: q || undefined } });
   },
 });
+const sort = computed<SortState | null>({
+  get: () => {
+    const [key, dir] = String(route.query.sort || "").split(".");
+    return key && (dir === "asc" || dir === "desc")
+      ? { key, dir: dir as SortState["dir"] }
+      : null;
+  },
+  set: (s: SortState | null) => {
+    void router.replace({
+      query: { ...route.query, sort: s ? `${s.key}.${s.dir}` : undefined },
+    });
+  },
+});
 const state = list.state;
 const rows = computed(() =>
-  (state.value.data?.items ?? []).filter((file) =>
-    file.name.toLowerCase().includes(filter.value.toLowerCase()),
-  ),
+  (state.value.data?.items ?? [])
+    .filter((file) =>
+      file.name.toLowerCase().includes(filter.value.toLowerCase()),
+    )
+    .map((file) => ({ ...file, kind: fileKind(file.name, file.content_type).label })),
 );
 const columns: DataColumn[] = [
-  { key: "name", title: "文件名", minWidth: 320 },
-  { key: "content_type", title: "类型", width: 160 },
-  { key: "size", title: "大小", kind: "number", width: 110 },
-  { key: "created_at", title: "保存时间", width: 200 },
-  { key: "actions", title: "操作", align: "right", width: 96, sticky: "right" },
+  { key: "name", title: "名称", minWidth: 340 },
+  { key: "kind", title: "类型", width: 140 },
+  { key: "size", title: "大小", kind: "number", width: 120, sortable: true },
+  { key: "created_at", title: "保存时间", width: 160, sortable: true },
+  { key: "actions", title: "", align: "right", width: 112 },
 ];
 function load() {
-  void list.run({ org, offset: offset.value, limit: PAGE_SIZE });
+  void list.run({ org, offset: offset.value, limit: size.value });
 }
-watch(offset, load, { immediate: true });
-function openFile(id: string) {
+watch([offset, size], load, { immediate: true });
+function openFile(file: FileView) {
   void router.push({
-    path: `/files/${encodeURIComponent(id)}`,
+    path: `/files/${encodeURIComponent(file.id)}`,
     query: { returnTo: route.fullPath },
   });
+}
+async function downloadFile(file: FileView) {
+  const blob = await download.run({ org, id: file.id });
+  if (blob) saveDownload(blob, file.name);
 }
 </script>
 <template>
@@ -64,28 +100,27 @@ function openFile(id: string) {
       ><UiButton
         v-if="session.can('file_library.write')"
         variant="primary"
+        icon="upload"
         @click="router.push('/files/upload')"
         >上传文件</UiButton
       ></template
     >
-    <template #status
-      ><StatusLine
-        :items="[{ text: `共 ${state.data?.total ?? 0} 个文件` }]"
-    /></template>
     <StatusMessage :status="state.status" :error="state.error" />
+    <StatusMessage :status="download.state.value.status" :error="download.state.value.error" />
     <DataTable
       v-model:page="page"
-      :page-size="PAGE_SIZE"
-      :sizes="[PAGE_SIZE]"
+      v-model:page-size="pageSize"
+      v-model:sort="sort"
+      :sizes="SIZES"
       :settings="false"
       :fullscreenable="false"
+      row-clickable
       :columns="columns"
       :rows="rows"
       row-key="id"
       :loading="state.status === 'loading' && !state.data"
       :total="state.data?.total ?? 0"
-      empty-title="这一页没有符合条件的文件"
-      empty-hint="换个文件名，或清除搜索"
+      @row-click="openFile"
     >
       <template #search>
         <FilterItem size="lg"
@@ -96,35 +131,53 @@ function openFile(id: string) {
         /></FilterItem>
       </template>
       <template #toolbar>
-        <UiButton :loading="state.status === 'loading'" @click="load"
-          >刷新</UiButton
-        >
+        <UiTip text="刷新列表"
+          ><UiButton
+            size="icon"
+            variant="ghost"
+            icon="refresh"
+            aria-label="刷新列表"
+            :loading="state.status === 'loading'"
+            @click="load"
+        /></UiTip>
       </template>
       <template #cell-name="{ row }"
-        ><UiButton variant="text" @click="openFile(row.id)">{{
-          row.name
-        }}</UiButton></template
+        ><Row gap="md" nowrap
+          ><UiFileIcon :name="row.name" :type="row.content_type" /><UiButton
+            variant="text"
+            @click="openFile(row)"
+            >{{ row.name }}</UiButton
+          ></Row
+        ></template
       >
-      <template #cell-content_type="{ row }"
-        ><UiTag tone="code">{{ row.content_type }}</UiTag></template
-      >
-      <template #cell-size="{ row }">{{ fileSize(row.size) }}</template>
-      <template #cell-created_at="{ row }">{{
-        fileDate(row.created_at)
-      }}</template>
+      <template #cell-size="{ row }">{{ formatBytes(row.size) }}</template>
+      <template #cell-created_at="{ row }"
+        ><UiTime :value="row.created_at"
+      /></template>
       <template #cell-actions="{ row }"
-        ><UiButton variant="link" @click="openFile(row.id)"
-          >查看</UiButton
+        ><Row justify="end" gap="xs" nowrap
+          ><UiTip text="下载"
+          ><UiButton
+            size="icon"
+            variant="ghost"
+            icon="download"
+            :aria-label="`下载 ${row.name}`"
+            :disabled="download.state.value.status === 'loading'"
+            @click="downloadFile(row)" /></UiTip
+          ><UiButton variant="link" @click="openFile(row)"
+            >详情</UiButton
+          ></Row
         ></template
       >
       <template #empty
         ><UiEmpty
-          title="这一页没有符合条件的文件"
-          :hint="filter ? '换个文件名，或清除搜索' : '还没有文件，先上传一个'"
+          :title="filter ? '这一页没有符合条件的文件' : '还没有文件'"
+          :hint="filter ? '换个文件名，或清除搜索' : '上传第一个文件后会显示在这里'"
           ><UiButton v-if="filter" @click="filter = ''">清除搜索</UiButton
           ><UiButton
             v-else-if="session.can('file_library.write')"
             variant="primary"
+            icon="upload"
             @click="router.push('/files/upload')"
             >上传文件</UiButton
           ></UiEmpty

@@ -16,6 +16,8 @@ export interface ModuleMetadata {
   name: string;
   title: string;
   description: string;
+  /** 侧栏图标的名称，可选值见 src/shared/ui/lib/icons.ts；不填用默认图标。 */
+  icon?: string;
   dependsOn: string[];
   files: string[];
   pages: Page[];

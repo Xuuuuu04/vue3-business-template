@@ -47,7 +47,7 @@ try {
   for await (const chunk of stream!) chunks.push(chunk);
   expect(Buffer.concat(chunks)).toEqual(bytes);
   results.push("真实下载内容逐字节一致");
-  await page.getByRole("button", { name: "删除文件", exact: true }).click();
+  await page.getByRole("button", { name: "删除", exact: true }).click();
   await page.getByRole("button", { name: "确认删除", exact: true }).click();
   await expect(page).toHaveURL(frontend + "/files");
   results.push("真实删除与列表更新");
