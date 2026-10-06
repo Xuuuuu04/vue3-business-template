@@ -24,7 +24,7 @@ try {
   await page.getByLabel("组织代码").fill(org);
   await page.getByLabel("账号", { exact: true }).fill(username);
   await page.getByLabel("密码", { exact: true }).fill(password);
-  await page.getByRole("button", { name: "登录账号", exact: true }).click();
+  await page.getByRole("button", { name: "登录", exact: true }).click();
   await expect(page).toHaveURL(frontend + "/files");
   await expect(
     page.getByRole("button", { name: "上传文件", exact: true }),
@@ -47,23 +47,23 @@ try {
   for await (const chunk of stream!) chunks.push(chunk);
   expect(Buffer.concat(chunks)).toEqual(bytes);
   results.push("真实下载内容逐字节一致");
-  await page.getByRole("button", { name: "删除文件", exact: true }).click();
+  await page.getByRole("button", { name: "删除", exact: true }).click();
   await page.getByRole("button", { name: "确认删除", exact: true }).click();
   await expect(page).toHaveURL(frontend + "/files");
   results.push("真实删除与列表更新");
-  await page.getByRole("link", { name: "结构与运行", exact: true }).click();
-  await page.getByRole("tab", { name: /实际运行/ }).click();
-  await expect(page.getByLabel("运行详情")).not.toContainText(
-    "未返回；演示服务",
-  );
-  await expect(page.getByLabel("运行详情")).toContainText("后台运行编号：");
+  await page.getByRole("link", { name: "开发者工具", exact: true }).click();
+  await page.getByRole("link", { name: "操作记录", exact: true }).click();
+  await page.getByRole("button", { name: "查看过程" }).first().click();
+  const detail = page.getByRole("dialog");
+  await expect(detail).not.toContainText("演示服务不会编造");
+  await expect(detail).toContainText("后台运行编号：");
   results.push("后台真实运行编号关联");
   if (reader) {
     await page.goto(frontend + "/login");
     await page.getByLabel("组织代码").fill(org);
     await page.getByLabel("账号", { exact: true }).fill(reader);
     await page.getByLabel("密码", { exact: true }).fill(password);
-    await page.getByRole("button", { name: "登录账号", exact: true }).click();
+    await page.getByRole("button", { name: "登录", exact: true }).click();
     await expect(page).toHaveURL(frontend + "/files");
     await expect(
       page.getByRole("button", { name: "上传文件", exact: true }),
@@ -80,7 +80,7 @@ try {
     results.push("只读账号直接进入上传地址也被拒绝");
     await page.goto(frontend + "/files/upload");
     await expect(
-      page.getByRole("heading", { name: "登录账号", exact: true }),
+      page.getByRole("heading", { name: "登录", exact: true }),
     ).toBeVisible();
     results.push("刷新后登录状态失效，受限页面要求重新登录");
     const granted = await fetch(frontend + "/api/v1/access/login", {

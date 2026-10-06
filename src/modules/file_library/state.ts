@@ -15,10 +15,13 @@ export function useFileLibrary() {
   const upload = createTask(uploadFile, endpoints, "submit");
   const remove = createTask(deleteFile, endpoints, "submit");
   const download = createTask(downloadFile, endpoints, "submit");
+  // 预览只读取内容显示在页面里，换文件时取消上一次读取。
+  const preview = createTask(downloadFile, endpoints, "latest");
   onBeforeUnmount(() => {
-    for (const task of [list, detail, upload, remove, download]) task.dispose();
+    for (const task of [list, detail, upload, remove, download, preview])
+      task.dispose();
   });
-  return { list, detail, upload, remove, download };
+  return { list, detail, upload, remove, download, preview };
 }
 /** 大小单位只做展示，业务中始终保留字节。 */
 export function fileSize(size: number): string {

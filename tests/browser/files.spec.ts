@@ -9,8 +9,8 @@ async function switchDetail(page: Page, url: string) {
 }
 async function detailPair(page: Page) {
   await page.goto("/files");
-  await expect(page.locator(".text-link").nth(1)).toBeVisible();
-  const links = page.locator(".text-link");
+  await expect(page.locator("tbody td:nth-child(2) button").nth(1)).toBeVisible();
+  const links = page.locator("tbody td:nth-child(2) button");
   const firstName = await links.nth(0).innerText();
   const secondName = await links.nth(1).innerText();
   await links.nth(1).click();
@@ -18,7 +18,7 @@ async function detailPair(page: Page) {
     page.getByRole("heading", { name: secondName, exact: true }),
   ).toBeVisible();
   const second = { url: page.url(), name: secondName };
-  await page.getByRole("button", { name: "返回列表", exact: true }).click();
+  await page.getByRole("link", { name: "返回", exact: true }).click();
   await expect(links.nth(0)).toBeVisible();
   await links.nth(0).click();
   await expect(
@@ -60,7 +60,7 @@ test("R-02、R-04：SPA切参数时关闭旧确认，慢读取和403不能操作
       await route.fulfill({ status: 204 });
     } else await route.continue();
   });
-  await page.getByRole("button", { name: "删除文件", exact: true }).click();
+  await page.getByRole("button", { name: "删除", exact: true }).click();
   await expect(page.getByRole("dialog")).toContainText(first.name);
   await switchDetail(page, second.url);
   await started;
@@ -71,7 +71,7 @@ test("R-02、R-04：SPA切参数时关闭旧确认，慢读取和403不能操作
       page.getByRole("heading", { name: first.name, exact: true }),
     ).not.toBeVisible();
     await expect(
-      page.getByRole("button", { name: "删除文件", exact: true }),
+      page.getByRole("button", { name: "删除", exact: true }),
     ).toHaveCount(0);
     await expect(page.getByRole("button", { name: "下载原文件" })).toHaveCount(
       0,
@@ -81,7 +81,7 @@ test("R-02、R-04：SPA切参数时关闭旧确认，慢读取和403不能操作
   }
   await expect(page.getByRole("alert")).toContainText("无权读取第二文件");
   await expect(
-    page.getByRole("button", { name: "删除文件", exact: true }),
+    page.getByRole("button", { name: "删除", exact: true }),
   ).toHaveCount(0);
   await expect(page.getByRole("button", { name: "下载原文件" })).toHaveCount(0);
   expect(deletes).toEqual([]);
@@ -89,7 +89,7 @@ test("R-02、R-04：SPA切参数时关闭旧确认，慢读取和403不能操作
   await expect(
     page.getByRole("heading", { name: first.name, exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "删除文件", exact: true }).click();
+  await page.getByRole("button", { name: "删除", exact: true }).click();
   await expect(page.getByRole("dialog")).toContainText(first.name);
   await page.getByRole("button", { name: "保留文件", exact: true }).click();
   expect(deletes).toEqual([]);
@@ -109,13 +109,13 @@ test("R-04：SPA加载新文件后确认文字和删除请求采用同一对象"
       await route.fulfill({ status: 204 });
     } else await route.continue();
   });
-  await page.getByRole("button", { name: "删除文件", exact: true }).click();
+  await page.getByRole("button", { name: "删除", exact: true }).click();
   await switchDetail(page, second.url);
   await expect(
     page.getByRole("heading", { name: second.name, exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("dialog")).not.toBeVisible();
-  await page.getByRole("button", { name: "删除文件", exact: true }).click();
+  await page.getByRole("button", { name: "删除", exact: true }).click();
   await expect(page.getByRole("dialog")).toContainText(second.name);
   await expect(page.getByRole("dialog")).not.toContainText(first.name);
   await page.getByRole("button", { name: "确认删除", exact: true }).click();
@@ -154,16 +154,16 @@ test("R-05：SPA切换期间下载保持原文件名", async ({ page }) => {
 });
 test("R-01、R-02：分页、筛选、详情刷新与浏览器返回", async ({ page }) => {
   await page.goto("/files?offset=10&q=");
-  await expect(page.getByText("共 16 个文件", { exact: false })).toBeVisible();
-  const name = await page.locator(".text-link").first().innerText();
-  await page.getByLabel("筛选本页文件").fill(name);
+  await expect(page.getByText("共 16 条", { exact: false })).toBeVisible();
+  const name = await page.locator("tbody td:nth-child(2) button").first().innerText();
+  await page.getByLabel("在本页中查找文件名").fill(name);
   await expect(page).toHaveURL(/q=/);
-  await page.locator(".text-link").first().click();
+  await page.locator("tbody td:nth-child(2) button").first().click();
   await expect(page.getByRole("heading", { name })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("heading", { name })).toBeVisible();
   await page.goBack();
-  await expect(page.getByLabel("筛选本页文件")).toHaveValue(name);
+  await expect(page.getByLabel("在本页中查找文件名")).toHaveValue(name);
   await expect(page).toHaveURL(/offset=10/);
 });
 test("R-03、R-04、R-05：实际上传、下载内容与确认删除", async ({ page }) => {
@@ -185,7 +185,7 @@ test("R-03、R-04、R-05：实际上传、下载内容与确认删除", async ({
   const chunks: Buffer[] = [];
   for await (const chunk of stream!) chunks.push(chunk);
   expect(Buffer.concat(chunks)).toEqual(bytes);
-  await page.getByRole("button", { name: "删除文件", exact: true }).click();
+  await page.getByRole("button", { name: "删除", exact: true }).click();
   await expect(page.getByRole("dialog")).toContainText("browser-evidence.txt");
   await page.getByRole("button", { name: "确认删除", exact: true }).click();
   await expect(page).toHaveURL("/files");
@@ -235,23 +235,21 @@ test("失败保留输入，未保存文件离开需要确认", async ({ page }) 
   await page.getByRole("button", { name: "保存文件", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("没有上传权限");
   await expect(
-    page.getByText("已选择：retain.txt", { exact: false }),
+    page.getByText("retain.txt", { exact: true }),
   ).toBeVisible();
   page.once("dialog", (dialog) => dialog.dismiss());
-  await page.getByRole("button", { name: "返回列表", exact: true }).click();
+  await page.getByRole("button", { name: "取消", exact: true }).click();
   await expect(page).toHaveURL("/files/upload");
 });
-test("动作记录显示结果摘要和真实请求时间，不伪造后台编号", async ({ page }) => {
+test("操作记录显示结果摘要和真实请求时间，不伪造后台编号", async ({ page }) => {
   await page.goto("/files");
-  await expect(page.locator(".text-link").first()).toBeVisible();
-  await page.getByRole("link", { name: "结构与运行", exact: true }).click();
-  await page.getByRole("tab", { name: /实际运行/ }).click();
-  await expect(page.getByLabel("运行详情")).toContainText("查看文件列表");
-  await expect(page.getByLabel("运行详情")).toContainText("readPage");
-  await expect(page.getByLabel("运行详情")).toContainText(
-    "页面显示的一页：对象",
-  );
-  await expect(page.getByLabel("运行详情")).toContainText(
-    "未返回；演示服务不会伪造后台编号",
-  );
+  await expect(page.locator("tbody td:nth-child(2) button").first()).toBeVisible();
+  await page.getByRole("link", { name: "开发者工具", exact: true }).click();
+  await page.getByRole("link", { name: "操作记录", exact: true }).click();
+  await page.getByRole("button", { name: "查看过程" }).first().click();
+  const drawer = page.getByRole("dialog");
+  await expect(drawer).toContainText("查看文件列表");
+  await expect(drawer).toContainText("读取这一页的文件");
+  await expect(drawer).toContainText("页面显示的一页：对象");
+  await expect(drawer).toContainText("后台没有返回（演示服务不会编造）");
 });

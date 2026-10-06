@@ -5,13 +5,25 @@ import { saveDownload, useSession } from "@/shared/public";
 import {
   PageFrame,
   StatusMessage,
+  Card,
+  Grid,
+  Stack,
+  DescriptionList,
+  FilePreview,
   UiButton,
   UiDialog,
+  UiFileIcon,
+  UiCopy,
+  UiTag,
+  UiSkeleton,
+  fileKind,
+  formatBytes,
+  formatDateTime,
 } from "@/shared/ui/public";
-import { useFileLibrary, fileSize, fileDate, type FileView } from "../public";
+import { useFileLibrary, type FileView } from "../public";
 const route = useRoute();
 const router = useRouter();
-const { detail, remove, download } = useFileLibrary();
+const { detail, remove, download, preview } = useFileLibrary();
 const session = useSession();
 const org = session.state.value.org;
 const id = computed(() => String(route.params.id));
@@ -34,14 +46,38 @@ const returnTo = computed(() =>
     ? String(route.query.returnTo)
     : "/files",
 );
+/** 预览内容只属于当前文件；换文件时清空，等用户再点“显示预览”。 */
+const previewOf = ref("");
+const previewBlob = computed(() =>
+  previewOf.value === id.value && preview.state.value.status === "success"
+    ? preview.state.value.data
+    : undefined,
+);
+const fields = computed(() =>
+  file.value
+    ? [
+        { label: "类型", value: `${fileKind(file.value.name, file.value.content_type).label} · .${fileKind(file.value.name, file.value.content_type).ext.toLowerCase()}` },
+        { label: "大小", value: `${formatBytes(file.value.size)}（${file.value.size.toLocaleString("zh-CN")} 字节）` },
+        { label: "保存时间", value: formatDateTime(file.value.created_at) },
+        { label: "文件编号", key: "id" },
+        { label: "SHA-256", key: "sha" },
+      ]
+    : [],
+);
 watch(
   id,
   () => {
     confirm.value = false;
+    previewOf.value = "";
     void detail.run({ org, id: id.value });
   },
   { immediate: true },
 );
+function loadPreview() {
+  if (!file.value) return;
+  previewOf.value = file.value.id;
+  void preview.run({ org, id: file.value.id });
+}
 async function deleteConfirmed() {
   const target = confirmedFile.value;
   if (!target || target.id !== file.value?.id) return;
@@ -60,45 +96,28 @@ async function downloadCurrent() {
 }
 </script>
 <template>
-  <PageFrame
-    :title="file?.name || '文件详情'"
-    description="这里显示后台保存的文件信息。"
-  >
+  <PageFrame :title="file?.name || '文件详情'" :back="returnTo">
+    <template v-if="file" #icon
+      ><UiFileIcon :name="file.name" :type="file.content_type"
+    /></template>
     <template #actions
-      ><UiButton @click="router.push(returnTo)">返回列表</UiButton></template
+      ><UiButton
+        v-if="file && session.can('file_library.write')"
+        variant="danger-quiet"
+        icon="delete"
+        :disabled="removal.status === 'unknown'"
+        @click="confirm = true"
+        >删除</UiButton
+      ><UiButton
+        v-if="file"
+        variant="primary"
+        icon="download"
+        :loading="downloading.status === 'loading'"
+        @click="downloadCurrent"
+        >下载原文件</UiButton
+      ></template
     >
     <StatusMessage :status="state.status" :error="state.error" />
-    <template v-if="file"
-      ><dl class="detail-grid">
-        <dt>文件名</dt>
-        <dd>{{ file.name }}</dd>
-        <dt>文件大小</dt>
-        <dd>{{ fileSize(file.size) }}（{{ file.size }} 字节）</dd>
-        <dt>保存时间</dt>
-        <dd>{{ fileDate(file.created_at) }}</dd>
-        <dt>文件类型</dt>
-        <dd>{{ file.content_type }}</dd>
-        <dt>文件编号</dt>
-        <dd class="break-word">{{ file.id }}</dd>
-        <dt>内容校验值</dt>
-        <dd class="break-word">{{ file.sha256 }}</dd>
-      </dl>
-      <div class="action-row">
-        <UiButton
-          type="primary"
-          :loading="downloading.status === 'loading'"
-          @click="downloadCurrent"
-          >下载原文件</UiButton
-        ><UiButton
-          v-if="session.can('file_library.write')"
-          type="danger"
-          plain
-          :disabled="removal.status === 'unknown'"
-          @click="confirm = true"
-          >删除文件</UiButton
-        >
-      </div>
-    </template>
     <StatusMessage :status="downloading.status" :error="downloading.error" />
     <StatusMessage :status="removal.status" :error="removal.error"
       ><UiButton @click="detail.run({ org, id })"
@@ -106,19 +125,53 @@ async function downloadCurrent() {
       >
       <p>结果未确认时请不要再次删除。可返回列表查看最新结果。</p></StatusMessage
     >
+    <Grid v-if="file" ratio="2:1">
+      <Card title="预览">
+        <FilePreview
+          :name="file.name"
+          :type="file.content_type"
+          :size="file.size"
+          :blob="previewBlob"
+          :loading="previewOf === id && preview.state.value.status === 'loading'"
+          :error="previewOf === id ? preview.state.value.error : undefined"
+          @load="loadPreview"
+          ><template #unsupported
+            ><UiButton icon="download" @click="downloadCurrent"
+              >下载后查看</UiButton
+            ></template
+          ></FilePreview
+        >
+      </Card>
+      <Stack>
+        <Card title="文件信息">
+          <DescriptionList :items="fields"
+            ><template #value-id
+              ><UiTag tone="code">{{ file.id }}</UiTag
+              ><UiCopy :text="file.id" label="复制文件编号" /></template
+            ><template #value-sha
+              ><UiTag tone="code"
+                >{{ file.sha256.slice(0, 10) }}…{{ file.sha256.slice(-8) }}</UiTag
+              ><UiCopy :text="file.sha256" label="复制完整校验值"
+            /></template>
+          </DescriptionList>
+        </Card>
+      </Stack>
+    </Grid>
+    <Grid v-else-if="state.status === 'loading'" ratio="2:1">
+      <Card><UiSkeleton height="240px" /></Card>
+      <Card><Stack gap="sm"><UiSkeleton /><UiSkeleton width="80%" /><UiSkeleton width="60%" /></Stack></Card>
+    </Grid>
     <UiDialog
-      v-model="confirm"
-      title="确认删除文件"
-      width="min(520px, 92vw)"
-      :close-on-click-modal="false"
-      ><p>删除 {{ confirmedFile?.name }} 后将无法从这里下载。确认删除吗？</p>
-      <template #footer
+      v-model:open="confirm"
+      title="删除这个文件？"
+      :description="`「${confirmedFile?.name}」删除后不能恢复，也无法再从这里下载。`"
+      ><template #footer
         ><UiButton
           :disabled="removal.status === 'loading'"
           @click="confirm = false"
           >保留文件</UiButton
         ><UiButton
-          type="danger"
+          variant="danger"
           :loading="removal.status === 'loading'"
           :disabled="removal.status === 'unknown'"
           @click="deleteConfirmed"

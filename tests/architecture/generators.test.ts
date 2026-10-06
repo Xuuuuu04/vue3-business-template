@@ -8,6 +8,8 @@ import {
   writeFileSync,
   existsSync,
   rmSync,
+  readdirSync,
+  mkdirSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -29,6 +31,8 @@ function clone() {
     "scaffold.json",
   ])
     if (existsSync(name)) cpSync(name, join(root, name), { recursive: true });
+  mkdirSync(join(root, ".agents"), { recursive: true });
+  cpSync(".agents/skills", join(root, ".agents/skills"), { recursive: true });
   symlinkSync(resolve("node_modules"), join(root, "node_modules"), "dir");
   writeFileSync(
     join(root, "framework.lock"),
@@ -97,13 +101,18 @@ test("产品初始化清理样板业务，框架三份比较遇到冲突不写�
   try {
     command(root, "tools/start-project.ts", product);
     expect(existsSync(join(product, "src/modules/file_library"))).toBe(false);
+    // 新产品带上项目 Skill，但不带本机的任务与记录。
+    expect(existsSync(join(product, ".agents/skills/vue-guide/SKILL.md"))).toBe(
+      true,
+    );
+    expect(readdirSync(join(product, ".agents"))).toEqual(["skills"]);
     expect(
       readFileSync(join(product, "src/generated/graph.json"), "utf8"),
     ).toBe("[]\n");
     symlinkSync(resolve("node_modules"), join(product, "node_modules"), "dir");
     command(product, "tools/export-docs.ts");
     command(product, "tools/check.ts", "--structure");
-    const file = "src/shared/theme/tokens.css";
+    const file = "src/shared/ui/theme/tokens.css";
     writeFileSync(
       join(product, file),
       readFileSync(join(product, file), "utf8") + "\n/* 产品修改 */\n",
@@ -139,8 +148,8 @@ test("框架更新先预览，执行时保留业务和产品单独修改", () =>
   try {
     command(root, "tools/start-project.ts", product);
     symlinkSync(resolve("node_modules"), join(product, "node_modules"), "dir");
-    const theme = "src/shared/theme/tokens.css";
-    const local = "src/shared/theme/layout.css";
+    const theme = "src/shared/ui/theme/tokens.css";
+    const local = "src/shared/ui/theme/presets.ts";
     const original = readFileSync(join(product, theme), "utf8");
     const changed = original + "\n/* 新版主题 */\n";
     writeFileSync(join(root, theme), changed);

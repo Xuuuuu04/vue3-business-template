@@ -30,17 +30,18 @@ export const router = createRouter({
     ),
     { path: "/forbidden", component: () => import("./ForbiddenPage.vue") },
     { path: "/welcome", component: () => import("./WelcomePage.vue") },
-    { path: "/login", component: () => import("./LoginPage.vue") },
+    { path: "/settings", component: () => import("./SettingsPage.vue"), meta: { title: "偏好设置" } },
+    { path: "/login", component: () => import("./LoginPage.vue"), meta: { title: "登录" } },
+    { path: "/legal/:kind(terms|privacy)", component: () => import("./LegalPage.vue"), meta: { title: "协议与政策" } },
     ...(consoleEnabled
       ? [
-          {
-            path: "/system/console",
-            component: () => import("./ConsolePage.vue"),
-          },
-          {
-            path: "/system/components",
-            component: () => import("./ComponentsPage.vue"),
-          },
+          { path: "/dev", component: () => import("./dev/DevHome.vue"), meta: { title: "接入与说明" } },
+          { path: "/dev/map", component: () => import("./dev/FeatureMap.vue"), meta: { title: "功能地图" } },
+          { path: "/dev/records", component: () => import("./dev/Records.vue"), meta: { title: "操作记录" } },
+          { path: "/dev/speed", component: () => import("./dev/Speed.vue"), meta: { title: "页面速度" } },
+          { path: "/dev/design", component: () => import("./dev/DesignGuide.vue"), meta: { title: "设计预览" } },
+          { path: "/system/console", redirect: "/dev/map" },
+          { path: "/system/components", redirect: "/dev/design" },
         ]
       : []),
     { path: "/:pathMatch(.*)*", component: () => import("./NotFoundPage.vue") },

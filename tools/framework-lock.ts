@@ -11,9 +11,15 @@ export function protectedFiles(root = process.cwd()) {
     "tools",
     "tests/framework",
     "tests/architecture",
+    ".agents/skills",
   ]
     .flatMap((name) => filesBelow(resolve(root, name)))
-    .filter((file) => relative(root, file) !== "src/app/catalog.ts")
+    .filter(
+      (file) =>
+        !["src/app/catalog.ts", "src/app/app.config.ts"].includes(
+          relative(root, file),
+        ),
+    )
     .concat(
       [
         "scaffold.json",

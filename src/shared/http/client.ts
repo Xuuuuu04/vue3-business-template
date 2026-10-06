@@ -5,7 +5,7 @@ import type { RequestRecord } from "@/shared/records/store";
 export interface Endpoint {
   id: string;
   title: string;
-  method: "GET" | "POST" | "DELETE" | "PUT";
+  method: "GET" | "POST" | "DELETE" | "PUT" | "PATCH";
   path: string;
   responseKind?: "blob";
   response: z.ZodType;

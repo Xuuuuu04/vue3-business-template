@@ -1,9 +1,12 @@
 import { createApp, nextTick } from "vue";
 import App from "./app/App.vue";
 import { router } from "./app/router";
-import "./shared/theme/vendor";
-import "./shared/theme/tokens.css";
-import "./shared/theme/layout.css";
+import "@fontsource-variable/inter/wght.css";
+import "./shared/ui/theme/tokens.css";
+import { initTheme, setDefaultTheme } from "./shared/ui/public";
+import { appConfig } from "./app/app.config";
+setDefaultTheme(appConfig.theme);
+initTheme();
 import { setAuthorization } from "./shared/actions/runtime";
 import { useSession } from "./shared/public";
 setAuthorization(useSession().can);
@@ -20,7 +23,7 @@ router.afterEach(async (to) => {
     to.path,
     performance.now() - navigationStarted,
   );
-  document.title = `${String(to.meta.title || "工作台")} · Vue3 通用前端模板`;
+  document.title = `${String(to.meta.title || "工作台")} · ${appConfig.name}`;
 });
 if (import.meta.hot) import.meta.hot.dispose(stopPerformance);
 const app = createApp(App);

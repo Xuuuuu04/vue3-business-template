@@ -27,16 +27,24 @@
         "path": "/files",
         "file": "src/modules/file_library/pages/ListPage.vue",
         "actions": [
-          "file_library.list"
+          "file_library.list",
+          "file_library.download",
+          "file_library.delete"
         ],
         "components": [
           "PageFrame",
-          "UiTable",
-          "UiColumn",
-          "UiInput",
-          "UiPagination",
+          "StatusMessage",
+          "DataTable",
+          "FilterItem",
+          "Row",
           "UiButton",
-          "StatusMessage"
+          "UiSearchInput",
+          "UiEmpty",
+          "UiFileIcon",
+          "UiTime",
+          "UiTip",
+          "UiDialog",
+          "BatchProgress"
         ],
         "state": "src/modules/file_library/state.ts"
       },
@@ -52,9 +60,18 @@
         ],
         "components": [
           "PageFrame",
-          "UiDialog",
+          "StatusMessage",
+          "Card",
+          "Grid",
+          "Stack",
+          "DescriptionList",
+          "FilePreview",
           "UiButton",
-          "StatusMessage"
+          "UiDialog",
+          "UiFileIcon",
+          "UiCopy",
+          "UiTag",
+          "UiSkeleton"
         ],
         "state": "src/modules/file_library/state.ts"
       },
@@ -69,8 +86,15 @@
         ],
         "components": [
           "PageFrame",
+          "StatusMessage",
+          "Card",
+          "Stack",
+          "Row",
+          "Grid",
           "UiButton",
-          "StatusMessage"
+          "UiFileDrop",
+          "UiFileIcon",
+          "UiTime"
         ],
         "state": "src/modules/file_library/state.ts"
       }
