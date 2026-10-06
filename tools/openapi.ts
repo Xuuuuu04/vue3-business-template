@@ -39,7 +39,7 @@ export function findOperation(spec: OpenApi, method: string, path: string): Json
   }
   return undefined;
 }
-function successSchema(spec: OpenApi, op: Json): { status: string; schema?: Json } {
+function successSchema(op: Json): { status: string; schema?: Json } {
   const responses = (op.responses ?? {}) as Record<string, Json>;
   const status = Object.keys(responses).find((c) => c.startsWith("2")) ?? "";
   const content = responses[status]?.content as Record<string, Json> | undefined;
@@ -59,9 +59,8 @@ const jsonTypeOf: Record<string, string[]> = { string: ["string"], number: ["num
 
 function compare(spec: OpenApi, front: z.ZodType, back: Json | undefined, where: string, endpoint: string, out: Problem[]) {
   let k = zodKind(front);
-  let frontOptional = false;
-  while (k.inner) { frontOptional ||= k.type !== "nullable"; front = k.inner; k = zodKind(front); }
-  const { schema, nullable } = unwrapNull(spec, back);
+  while (k.inner) { front = k.inner; k = zodKind(front); }
+  const { schema } = unwrapNull(spec, back);
   if (!schema) return;
   const backType = String(schema.type ?? (schema.properties ? "object" : ""));
   if (k.type === "object" && k.shape) {
@@ -87,8 +86,6 @@ function compare(spec: OpenApi, front: z.ZodType, back: Json | undefined, where:
   }
   const allowed = jsonTypeOf[k.type];
   if (allowed && backType && !allowed.includes(backType)) out.push({ endpoint, kind: "type", message: `${where} 前端是 ${k.type}，文档是 ${backType}` });
-  void nullable;
-  void frontOptional;
 }
 
 export function checkEndpoints(spec: OpenApi, endpoints: FrontEndpoint[]): Problem[] {
@@ -98,7 +95,7 @@ export function checkEndpoints(spec: OpenApi, endpoints: FrontEndpoint[]): Probl
     const label = `${e.id}（${e.method} ${e.path}）`;
     if (!op) { out.push({ endpoint: label, kind: "missing", message: "文档里没有这个接口" }); continue; }
     if (e.responseKind === "blob") continue;
-    const { status, schema } = successSchema(spec, op);
+    const { status, schema } = successSchema(op);
     if (status === "204") {
       if (zodKind(e.response).type !== "null") out.push({ endpoint: label, kind: "type", message: "文档返回 204（没有内容），前端期待有返回值" });
       continue;
@@ -152,7 +149,7 @@ export function generateApi(spec: OpenApi, prefix: string, module: string): stri
     if (!path.startsWith(prefix)) continue;
     for (const [method, op] of Object.entries(ops)) {
       if (!["get", "post", "put", "patch", "delete"].includes(method)) continue;
-      const { status, schema } = successSchema(spec, op);
+      const { status, schema } = successSchema(op);
       const content = ((op.responses as Record<string, Json>)?.[status]?.content ?? {}) as Record<string, Json>;
       const binary = !content["application/json"] && Object.keys(content).length > 0;
       const response = status === "204" ? "z.null()" : binary ? "z.instanceof(Blob)" : zodSource(spec, schema, named, "    ");

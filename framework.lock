@@ -148,7 +148,7 @@
   "tools/lib.ts": "8642330acd1416f19f56f311def306902fa5f0367ccde86637e93885037c566a",
   "tools/new-module.ts": "362ab42e06657f6b52df5f739ae67c87eafef21728c61660f64183b96e57edb5",
   "tools/new-part.ts": "e15308220c12696f76ac598b3aa1ef4c9b574b4a3c0aac037698be744533bdcb",
-  "tools/openapi.ts": "e4a430d2f8a1364816c0aa7e2e5156a51d5b0fc70d4e36b83e1b7ce1de05917d",
+  "tools/openapi.ts": "01c803fe3e2bf18e8741ffd5de83ef204b48273a9c4f088e97fbc57eb31bd623",
   "tools/project.ts": "752656077118d11e3b442a86ab46f26044aca21d3c7b5d0e2b5604d1f66a9a92",
   "tools/runs.ts": "0a023571a1981ab4bdfdaf62965c2ea2a9084a9355ff052a849ac5710a5deaad",
   "tools/scaffold.ts": "d756f8ff6cbaadeaeafe231db089065977ce35f123690ed8f6e7311c5cb0df03",
