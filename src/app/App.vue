@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter, RouterView, RouterLink } from "vue-router";
-import { LayoutGrid, LogOut, LogIn, ArrowLeft, Wrench, Compass, History, Gauge, Palette, PlugZap } from "lucide-vue-next";
+import { LayoutGrid, ArrowLeft, Wrench, Compass, History, Gauge, Palette, PlugZap, Search, Moon, Sun, LogOut, Info } from "lucide-vue-next";
 import { useSession } from "@/shared/public";
-import { AppShell, ThemePanel, Toaster, UiButton, UiTag, UiTip, type NavGroup } from "@/shared/ui/public";
+import {
+  AppShell, AppFooter, ThemePanel, NotificationBell, UserMenu, CommandPalette, TopProgress, Toaster, BrandMark,
+  UiButton, UiTag, UiTip, UiDialog, syncFavicon, palettes, useTheme, type NavGroup,
+} from "@/shared/ui/public";
 import { appConfig } from "./app.config";
 import { enabledModules, consoleEnabled } from "./router";
 
@@ -11,11 +14,12 @@ const route = useRoute();
 const router = useRouter();
 const session = useSession();
 const identity = session.state;
-/** 登录页不显示侧栏与顶栏。 */
-const bare = computed(() => route.path === "/login");
+const { settings, update, choosePalette } = useTheme();
+
+/** 登录页和协议页不显示侧栏与顶栏。 */
+const bare = computed(() => route.path === "/login" || route.path.startsWith("/legal/"));
 /** 开发者工具和产品界面分开：进入 /dev 后侧栏只显示开发者工具。 */
 const inDev = computed(() => route.path === "/dev" || route.path.startsWith("/dev/"));
-
 /** 业务页面的面包屑前一级：当前页面所属模块。 */
 const moduleTitle = computed(() => enabledModules.find((m) => m.name === route.meta.module)?.title);
 
@@ -37,12 +41,40 @@ const nav = computed<NavGroup[]>(() =>
     : [{ items: enabledModules.map((m) => ({ to: m.pages[0]?.path || "/", label: m.title, icon: LayoutGrid })) }],
 );
 
-function leaveSession() {
-  session.logoutLocal();
-  void router.replace("/login");
-}
+// 顶部进度条：路由开始切换到完成
+const loading = ref(false);
+const stops = [router.beforeEach(() => { loading.value = true; }), router.afterEach(() => { loading.value = false; }), router.onError(() => { loading.value = false; })];
+onBeforeUnmount(() => stops.forEach((stop) => stop()));
+
+// 浏览器标签页图标跟随品牌色
+const theme = computed(() => `${settings.palette}${settings.brandHue}${settings.mode}`);
+onMounted(() => syncFavicon(appConfig.mark, appConfig.logo));
+watch(theme, () => requestAnimationFrame(() => syncFavicon(appConfig.mark, appConfig.logo)));
+
+// 全局搜索：⌘K / Ctrl+K
+const search = ref(false);
+const about = ref(false);
+function onKey(e: KeyboardEvent) { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); search.value = !search.value; } }
+onMounted(() => document.addEventListener("keydown", onKey));
+onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
+const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
+
+function leave() { session.logoutLocal(); void router.replace("/login"); }
+function help() { appConfig.support.helpUrl ? window.open(appConfig.support.helpUrl, "_blank", "noopener") : (window.location.href = `mailto:${appConfig.support.email}`); }
+
+const commands = computed(() => [
+  ...enabledModules.map((m) => ({ id: `go-${m.name}`, group: "页面", label: m.title, icon: LayoutGrid, hint: m.pages[0]?.path, run: () => void router.push(m.pages[0]?.path || "/") })),
+  ...(consoleEnabled ? [{ id: "dev", group: "开发者", label: "开发者工具", icon: Wrench, hint: "/dev", run: () => void router.push("/dev") }] : []),
+  { id: "mode", group: "外观", label: settings.mode === "dark" ? "切换到浅色" : "切换到深色", icon: settings.mode === "dark" ? Sun : Moon, run: () => update({ mode: settings.mode === "dark" ? "light" : "dark" }) },
+  ...palettes.map((p) => ({ id: `pal-${p.id}`, group: "外观", label: `配色：${p.name}`, icon: Palette, hint: p.character.split("，")[0], run: () => choosePalette(p.id) })),
+  { id: "about", group: "帮助", label: "关于", icon: Info, run: () => (about.value = true) },
+  ...(identity.value.signedIn ? [{ id: "logout", group: "账号", label: "退出登录", icon: LogOut, run: leave }] : []),
+]);
+const footerLinks = [{ label: "用户协议", to: "/legal/terms" }, { label: "隐私政策", to: "/legal/privacy" }];
+const build = (import.meta.env.VITE_CODE_VERSION as string | undefined)?.slice(0, 8);
 </script>
 <template>
+  <TopProgress :active="loading" />
   <RouterView v-if="bare" />
   <AppShell v-else :brand="appConfig.name" :mark="appConfig.mark" :logo="appConfig.logo" :nav="nav" :section="inDev ? '开发者工具' : moduleTitle">
     <template #sidebar-footer="{ collapsed }">
@@ -53,15 +85,26 @@ function leaveSession() {
       </UiTip>
     </template>
     <template #topbar>
-      <UiTag v-if="session.demo" tone="warn">演示数据</UiTag>
+      <button type="button" class="mr-2 hidden h-9 w-60 items-center gap-2 rounded-md border border-line bg-surface px-3 text-fg-faint shadow-card transition-colors hover:border-line-strong hover:text-fg-muted md:flex" aria-label="搜索页面和操作" @click="search = true">
+        <Search class="size-4" /><span class="flex-1 text-left">搜索页面和操作</span><kbd class="rounded border border-line-strong px-1.5 font-mono text-[11px]">{{ isMac ? "⌘" : "Ctrl" }} K</kbd>
+      </button>
+      <UiTip text="搜索"><UiButton variant="ghost" size="icon" class="md:hidden" aria-label="搜索页面和操作" @click="search = true"><Search class="size-[18px]" /></UiButton></UiTip>
+      <UiTip v-if="session.demo" text="当前是演示数据，没有连接后台"><UiTag tone="warn" class="mr-1">演示数据</UiTag></UiTip>
+      <NotificationBell />
       <ThemePanel />
-      <template v-if="!session.demo">
-        <span class="mx-2 text-fg-muted">{{ identity.signedIn ? identity.username : "尚未登录" }}</span>
-        <UiTip v-if="identity.signedIn" text="退出登录"><UiButton variant="ghost" size="icon" aria-label="退出登录" @click="leaveSession"><LogOut class="size-[18px]" /></UiButton></UiTip>
-        <UiButton v-else variant="secondary" @click="router.push('/login')"><LogIn class="size-4" />登录账号</UiButton>
-      </template>
+      <UserMenu :name="identity.signedIn ? identity.username : session.demo ? '演示用户' : '未登录'" :org="identity.org" :signed-in="identity.signedIn && !session.demo" @help="help" @about="about = true" @logout="leave" />
     </template>
     <RouterView />
+    <template #footer><AppFooter :company="appConfig.company" :icp="appConfig.icp" :version="appConfig.version" :links="footerLinks" /></template>
   </AppShell>
+  <CommandPalette v-model:open="search" :commands="commands" />
+  <UiDialog v-model:open="about" title="关于" width="sm">
+    <div class="flex flex-col items-center gap-3 py-2 text-center">
+      <BrandMark :name="appConfig.name" :mark="appConfig.mark" :logo="appConfig.logo" size="xl" />
+      <div><p class="text-lg font-semibold tracking-tight">{{ appConfig.name }}</p><p class="text-fg-faint tabular-nums">版本 {{ appConfig.version }}<template v-if="build">（{{ build }}）</template></p></div>
+      <p class="text-[13px] text-fg-faint">© {{ new Date().getFullYear() }} {{ appConfig.company }}</p>
+    </div>
+    <template #footer><UiButton @click="about = false">关闭</UiButton></template>
+  </UiDialog>
   <Toaster />
 </template>

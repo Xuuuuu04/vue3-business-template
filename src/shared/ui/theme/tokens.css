@@ -12,7 +12,8 @@
   --b-h: 265; --b-c: 0.19; --b-l: 0.54; /* 品牌色色相、色度、亮度 */
   --on-primary: oklch(0.99 0 0);       /* 品牌色底上的文字 */
   --fs: 14px;
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  /* 西文与数字用 Inter（随包提供），中文用系统黑体；顺序决定了同一行里中西文的搭配 */
+  --font-sans: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   /* 浅色中性色阶 */
@@ -124,8 +125,12 @@
 @layer base {
   html { font-size: var(--fs); color-scheme: light; }
   [data-mode="dark"] { color-scheme: dark; }
-  body { margin: 0; background: var(--canvas); color: var(--fg); font-family: var(--font-sans); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  body { margin: 0; background: var(--canvas); color: var(--fg); font-family: var(--font-sans); line-height: 1.55; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; font-optical-sizing: auto; font-feature-settings: "calt", "kern"; }
+  /* 字号层级：展示 32、页面标题 22、区块标题 15、正文 14、说明 13、标注 12；标题字重 600，字距略收 */
+  h1, h2, h3 { letter-spacing: -0.01em; }
   :focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ring); }
+  /* 输入框的聚焦圈画在外层容器上，输入元素自己不再画一层 */
+  input:focus-visible, textarea:focus-visible { box-shadow: none; }
   button { cursor: pointer; }
   button:disabled { cursor: not-allowed; }
   ::selection { background: var(--primary-soft-hover); }
@@ -141,3 +146,4 @@
 @keyframes dialog-in { from { opacity: 0; transform: translate(-50%, -48%) scale(0.97); } }
 @keyframes draw-line { to { stroke-dashoffset: 0; } }
 @keyframes grow-x { to { width: var(--w); } }
+@keyframes shake { 0%, 100% { transform: none; } 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }

@@ -50,6 +50,15 @@ const days = Array.from({ length: 30 }, (_, i) => `${i + 1} 日`);
 const a = Array.from({ length: 30 }, (_, i) => Math.round(52000 + Math.sin(i / 3.5) * 11000 + i * 700 + ((i * 13) % 7) * 800));
 const series = [{ name: "本月", values: a }, { name: "上月同期", values: a.map((v, i) => Math.round(v * 0.9 + Math.cos(i / 4) * 2000)), dashed: true }];
 const tokens = [["canvas", "页面底色"], ["surface", "卡片、表格"], ["muted", "悬停、分隔"], ["line", "边框"], ["fg", "正文"], ["fg-muted", "次要文字"], ["primary", "品牌色"], ["primary-soft", "品牌浅底"], ["ok", "成功"], ["warn", "待处理"], ["bad", "失败"], ["info", "提示"]];
+const types = [
+  ["展示标题", "32 / 600 / 字距 -1%", "text-[32px] leading-tight font-semibold tracking-tight", "每一步都看得见结果"],
+  ["页面标题", "22 / 600", "text-[22px] font-semibold tracking-tight", "文件管理 Files 1,284,630"],
+  ["区块标题", "15 / 600", "text-[15px] font-semibold", "团队文件与最近上传"],
+  ["正文", "14 / 400", "", "表格、表单与说明都使用这个大小，中文用系统黑体，数字与英文用 Inter。"],
+  ["辅助说明", "13 / 400", "text-[13px] text-fg-muted", "次要信息、字段提示、时间"],
+  ["标注", "12 / 500", "text-xs font-medium text-fg-faint", "标签、页脚、快捷键"],
+  ["数字", "等宽数字", "text-[26px] font-semibold tracking-tight tabular-nums", "1,284,630.50"],
+];
 const recipes = [
   ["列表页", "PageFrame → StatusLine → FilterBar → DataTable。快速查看用抽屉，可分享的详情用独立页。"],
   ["详情页", "PageFrame（操作放右上）→ Card → DescriptionList；相关记录用时间线或表格。"],
@@ -74,6 +83,13 @@ const recipes = [
         <Grid :cols="4" gap="sm">
           <div v-for="[name, use] in tokens" :key="name" class="flex items-center gap-3"><span class="size-9 shrink-0 rounded-md border border-line-strong" :style="{ background: `var(--${name})` }" /><span class="min-w-0"><b class="block truncate font-mono text-[13px] font-medium">{{ name }}</b><span class="text-xs text-fg-faint">{{ use }}</span></span></div>
         </Grid>
+      </Card>
+      <Card title="字体与层级" flush>
+        <ul>
+          <li v-for="[name, spec, cls, sample] in types" :key="name" class="grid items-baseline gap-1 border-t border-line px-4 py-3 first:border-t-0 sm:grid-cols-[120px_160px_1fr] sm:gap-4">
+            <b class="font-medium">{{ name }}</b><span class="font-mono text-[12px] text-fg-faint">{{ spec }}</span><span :class="cls">{{ sample }}</span>
+          </li>
+        </ul>
       </Card>
       <p class="text-fg-muted">圆角、疏密、侧栏风格和自定义品牌色在右上角的调色板里调。选定后把配色写进 <UiTag tone="code">src/app/app.config.ts</UiTag> 作为产品默认。</p>
     </template>

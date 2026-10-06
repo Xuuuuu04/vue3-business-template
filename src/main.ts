@@ -1,6 +1,7 @@
 import { createApp, nextTick } from "vue";
 import App from "./app/App.vue";
 import { router } from "./app/router";
+import "@fontsource-variable/inter/wght.css";
 import "./shared/ui/theme/tokens.css";
 import { initTheme, setDefaultTheme } from "./shared/ui/public";
 import { appConfig } from "./app/app.config";

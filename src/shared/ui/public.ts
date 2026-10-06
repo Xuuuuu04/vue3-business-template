@@ -5,6 +5,7 @@
 export { default as UiButton } from "./base/Button.vue";
 export { default as UiInput } from "./base/Input.vue";
 export { default as UiSelect } from "./base/Select.vue";
+export { default as UiPasswordInput } from "./base/PasswordInput.vue";
 export { default as UiSearchInput } from "./base/SearchInput.vue";
 export { default as UiCheckbox } from "./base/Checkbox.vue";
 export { default as UiTag } from "./base/Tag.vue";
@@ -19,6 +20,8 @@ export { default as UiFileDrop } from "./base/FileDrop.vue";
 export { default as UiPagination } from "./base/Pagination.vue";
 export { default as Toaster } from "./base/Toaster.vue";
 export { useToast } from "./lib/toast";
+export { notify, useNotices } from "./lib/notifications";
+export { syncFavicon } from "./lib/favicon";
 
 export { default as Stack } from "./layout/Stack.vue";
 export { default as Row } from "./layout/Row.vue";
@@ -30,6 +33,12 @@ export { default as StatusLine } from "./layout/StatusLine.vue";
 export { default as AppShell } from "./layout/AppShell.vue";
 export { default as AuthLayout } from "./layout/AuthLayout.vue";
 export { default as ThemePanel } from "./layout/ThemePanel.vue";
+export { default as BrandMark } from "./layout/BrandMark.vue";
+export { default as AppFooter } from "./layout/AppFooter.vue";
+export { default as CommandPalette } from "./layout/CommandPalette.vue";
+export { default as UserMenu } from "./layout/UserMenu.vue";
+export { default as NotificationBell } from "./layout/NotificationBell.vue";
+export { default as TopProgress } from "./layout/TopProgress.vue";
 export { default as StatusMessage } from "./StatusMessage.vue";
 
 export { default as DataTable } from "./data/DataTable.vue";

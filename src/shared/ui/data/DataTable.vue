@@ -53,6 +53,7 @@ const SELECT_WIDTH = 44;
 
 /** 行对象按列名取值；列名由页面声明，类型在这里放宽。 */
 function cell(row: T, key: string): unknown { return (row as Record<string, unknown>)[key]; }
+function rowIndex(row: T): number { return props.rows.indexOf(row); }
 function keyOf(row: T): string { return String(cell(row, props.rowKey)); }
 
 /** 固定列的位置：左固定列从勾选列之后依次排开，右固定列从右边依次排开。 */
@@ -226,7 +227,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
               </td>
             </tr>
             <template v-for="row in g.rows" :key="keyOf(row)">
-              <tr v-show="!collapsed.has(g.key)" class="group/row" :class="selected.includes(keyOf(row)) && 'is-selected'" @dblclick="slots['expanded'] && toggleExpand(row)">
+              <tr v-show="!collapsed.has(g.key)" class="group/row animate-[fade_.35s_ease-out_both]" :style="{ animationDelay: `${Math.min(rowIndex(row), 12) * 22}ms` }" :class="selected.includes(keyOf(row)) && 'is-selected'" @dblclick="slots['expanded'] && toggleExpand(row)">
                 <td v-if="selectable" class="sticky left-0 z-10 h-(--row-h) border-b border-line bg-surface pl-4 group-hover/row:bg-subtle group-[.is-selected]/row:bg-primary-soft">
                   <UiCheckbox :model-value="selected.includes(keyOf(row))" :aria-label="`选择第 ${keyOf(row)} 行`" @update:model-value="(v) => toggleRow(row, v)" />
                 </td>

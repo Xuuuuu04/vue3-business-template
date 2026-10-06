@@ -22,6 +22,12 @@
 - 用户选择保存在浏览器，换设备不会跟随。
 - 新增配色：在 `presets.ts` 加一项，再运行 `npx playwright test tests/browser/theme-contrast.spec.ts`。它检查每套配色在浅色、深色和三种侧栏下的文字对比度（正文 4.5:1，提示 3:1），不达标就失败。
 
+## 品牌与字体
+
+- 产品名称、logo、标语、产品亮点、公司名、备案号、联系方式都在 `src/app/app.config.ts`。`BrandMark` 会按尺寸（sm、md、lg、xl）显示图片 logo，没有图片就用一个字做成圆角方块。浏览器标签页图标跟随品牌色自动生成。
+- 字体：西文与数字用 Inter（随包提供，不依赖网络），中文用系统黑体。层级：展示 32、页面标题 22、区块标题 15、正文 14、说明 13、标注 12；标题字重 600、字距略收；数字一律等宽（`tabular-nums`）。实际效果见「设计预览 → 配色与主题」。
+- 法律与标识：登录页和应用页脚显示版权、备案号、用户协议、隐私政策与版本。协议文本在 `src/app/legal.ts`，是结构骨架，不是法律意见；`legal.reviewed` 改为 true 之前，协议页顶部会显示提醒。
+
 ## 组件
 
 基础控件带 `Ui` 前缀。
@@ -29,14 +35,15 @@
 | 用途 | 组件 |
 | --- | --- |
 | 操作 | `UiButton`（primary、secondary、ghost、danger-quiet、danger、link 行内操作、text 表格里可点开的名称；每个区域最多一个 primary） |
-| 输入 | `UiInput`、`UiSelect`、`UiCheckbox`、`UiFileDrop`，外面用 `Field` 加名称、提示、错误 |
+| 输入 | `UiInput`、`UiPasswordInput`（显示密码、大写提醒）、`UiSearchInput`、`UiSelect`、`UiCheckbox`、`UiFileDrop`，外面用 `Field` 加名称、提示、错误 |
 | 标记 | `UiTag`（状态用 ok、warn、bad；编码用 code）、`UiTabs`、`UiTip` |
 | 浮层 | `UiDialog`（短决定）、`UiDrawer`（从列表快速查看）、`UiMenu`、`useToast()` |
 | 读取与空 | `UiSkeleton`、`UiEmpty`、`StatusMessage`（动作失败或结果未知） |
 | 版式 | `PageFrame`、`Stack`、`Row`、`Grid`、`Card`、`StatusLine` |
 | 数据 | `DataTable`、`CellText`、`FilterBar`、`FilterItem`、`MetricStrip`、`DescriptionList`、`Timeline` |
 | 图表 | `LineChart`、`BarList`、`Sparkline` |
-| 外壳 | `AppShell`（可收起侧栏）、`AuthLayout`（登录等页面）、`ThemePanel` |
+| 外壳 | `AppShell`（可收起侧栏）、`AuthLayout`（登录页：品牌面板、亮点、页脚）、`BrandMark`、`AppFooter`、`TopProgress`（切页进度条） |
+| 全局 | `CommandPalette`（⌘K 搜索）、`UserMenu`、`NotificationBell`、`ThemePanel`；`notify()` 添加通知 |
 
 完整的实际效果看开发时的「设计预览」页（`/dev/design`），点配色即时切换。
 

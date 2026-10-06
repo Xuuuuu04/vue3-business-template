@@ -7,6 +7,7 @@ import { computed, ref, watch, type Component } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { PanelLeftClose, PanelLeftOpen, Menu } from "lucide-vue-next";
 import Tip from "../base/Tip.vue";
+import BrandMark from "./BrandMark.vue";
 import Button from "../base/Button.vue";
 
 const props = defineProps<{ brand: string; mark?: string; logo?: string; nav: { title?: string; items: { to: string; label: string; icon?: Component; badge?: number; exact?: boolean }[] }[]; section?: string }>();
@@ -19,7 +20,6 @@ const mobileOpen = ref(false);
 const route = useRoute();
 watch(() => route.fullPath, () => (mobileOpen.value = false));
 const title = computed(() => String(route.meta.title ?? ""));
-const initial = computed(() => props.mark ?? props.brand.slice(0, 1));
 function active(item: { to: string; exact?: boolean }) { return route.path === item.to || (!item.exact && route.path.startsWith(item.to + "/")); }
 </script>
 
@@ -28,10 +28,8 @@ function active(item: { to: string; exact?: boolean }) { return route.path === i
   <div class="grid h-screen overflow-hidden transition-[grid-template-columns] duration-300 ease-(--ease)" :class="collapsed ? 'md:grid-cols-[64px_1fr]' : 'md:grid-cols-[232px_1fr]'">
     <div v-if="mobileOpen" class="fixed inset-0 z-40 bg-(--overlay) md:hidden" @click="mobileOpen = false" />
     <aside class="fixed inset-y-0 left-0 z-50 flex w-[232px] -translate-x-full flex-col gap-1 border-r border-side-line bg-side p-2.5 transition-transform duration-300 ease-(--ease) md:static md:w-auto md:translate-x-0" :class="mobileOpen && 'translate-x-0'">
-      <div class="flex h-12 items-center gap-2.5 px-2 whitespace-nowrap">
-        <img v-if="logo" :src="logo" :alt="brand" class="size-7 shrink-0 rounded-md object-contain" />
-        <span v-else class="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-[15px] font-bold text-primary-ink">{{ initial }}</span>
-        <span v-show="!collapsed" class="truncate text-base font-semibold text-side-active">{{ brand }}</span>
+      <div class="-mx-0.5 flex h-16 items-center px-2 whitespace-nowrap" :class="collapsed && 'justify-center'">
+        <BrandMark :name="brand" :mark="mark" :logo="logo" size="md" :wordmark="!collapsed" class="min-w-0 text-side-active" />
       </div>
       <nav class="-mx-2.5 mt-2 flex min-h-0 flex-1 flex-col overflow-y-auto" aria-label="主要导航">
         <template v-for="(g, gi) in nav" :key="gi">
@@ -70,7 +68,7 @@ function active(item: { to: string; exact?: boolean }) { return route.path === i
         <span class="flex-1" />
         <slot name="topbar" />
       </header>
-      <main id="main" class="min-h-0 flex-1 overflow-auto" tabindex="-1"><slot /></main>
+      <main id="main" class="flex min-h-0 flex-1 flex-col overflow-auto" tabindex="-1"><div class="flex-1"><slot /></div><div v-if="$slots.footer" class="px-6 pt-4 pb-5"><slot name="footer" /></div></main>
     </div>
   </div>
 </template>

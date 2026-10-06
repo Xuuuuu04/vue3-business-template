@@ -24,7 +24,7 @@ try {
   await page.getByLabel("组织代码").fill(org);
   await page.getByLabel("账号", { exact: true }).fill(username);
   await page.getByLabel("密码", { exact: true }).fill(password);
-  await page.getByRole("button", { name: "登录账号", exact: true }).click();
+  await page.getByRole("button", { name: "登录", exact: true }).click();
   await expect(page).toHaveURL(frontend + "/files");
   await expect(
     page.getByRole("button", { name: "上传文件", exact: true }),
@@ -63,7 +63,7 @@ try {
     await page.getByLabel("组织代码").fill(org);
     await page.getByLabel("账号", { exact: true }).fill(reader);
     await page.getByLabel("密码", { exact: true }).fill(password);
-    await page.getByRole("button", { name: "登录账号", exact: true }).click();
+    await page.getByRole("button", { name: "登录", exact: true }).click();
     await expect(page).toHaveURL(frontend + "/files");
     await expect(
       page.getByRole("button", { name: "上传文件", exact: true }),
@@ -80,7 +80,7 @@ try {
     results.push("只读账号直接进入上传地址也被拒绝");
     await page.goto(frontend + "/files/upload");
     await expect(
-      page.getByRole("heading", { name: "登录账号", exact: true }),
+      page.getByRole("heading", { name: "登录", exact: true }),
     ).toBeVisible();
     results.push("刷新后登录状态失效，受限页面要求重新登录");
     const granted = await fetch(frontend + "/api/v1/access/login", {
