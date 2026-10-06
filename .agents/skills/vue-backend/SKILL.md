@@ -7,6 +7,17 @@ description: 前端要对接 FastAPI 后端、核对接口路径与字段、或�
 
 接口路径和响应类型写在包的 `api.ts` 与 `data.ts`，现在是手写的，要和后端保持一致。后端导出的 `doc/api/openapi.json`（FastAPI 模板里由 `fastapi-docs` 生成）是对照来源。
 
+## 对照与生成
+
+```bash
+# 检查所有业务包登记的接口：路径是否存在，返回字段的名称、必填、可空、类型是否一致
+npm run api -- check --openapi ../后端/doc/api/openapi.json [--module 包名]
+# 按路径前缀生成接口登记和 Zod 类型代码（输出到屏幕），作为写 api.ts、data.ts 的起点
+npm run api -- gen --openapi ../后端/doc/api/openapi.json --prefix /api/v1/orders --module orders
+```
+
+`check` 有问题时退出码为 1，可以放进交付前检查。它只比较文档声明，不能证明后端真的这样返回；真实返回仍以运行时的响应检查和 `test:backend` 为准。
+
 ## 新接一个接口
 
 1. 在后端 `doc/api/openapi.json` 找到这个接口：路径、方法、请求字段、响应字段、错误响应。
@@ -26,4 +37,4 @@ TEMPLATE_TEST_PASSWORD=*** npm run test:backend -- --frontend http://127.0.0.1:5
 
 ## 当前缺口
 
-接口登记还没有从 openapi 自动生成。后端字段变化只能靠人工对照与运行时报错发现。建议下一步做生成工具，从 `openapi.json` 产出 `api.ts` 与响应类型并在检查里比较差异。
+生成的代码要人工核对后再放进 `api.ts`、`data.ts`（字段中文含义、敏感字段、业务上更严格的约束由人补）。后端的字段级错误（`fields`）还没有接到表单字段上。
