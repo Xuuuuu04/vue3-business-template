@@ -6,7 +6,7 @@
 defineProps<{ title: string; narrow?: boolean }>();
 </script>
 <template>
-  <section class="w-full animate-[rise_.4s_var(--ease)] px-(--page-px) pt-5 pb-16" :class="narrow ? 'max-w-3xl' : 'max-w-[1440px]'" :aria-label="title">
+  <section class="w-full animate-[rise_.4s_var(--ease)] px-(--page-px) pt-5 pb-16" :class="narrow ? 'max-w-4xl' : 'max-w-[1440px]'" :aria-label="title">
     <header class="mb-4 flex min-h-9 flex-wrap items-center gap-3">
       <h1 class="min-w-0 flex-1 truncate text-xl leading-7 font-semibold tracking-tight">{{ title }}</h1>
       <div v-if="$slots.actions" class="flex flex-wrap items-center gap-2"><slot name="actions" /></div>

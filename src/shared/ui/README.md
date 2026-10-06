@@ -28,7 +28,7 @@
 
 | 用途 | 组件 |
 | --- | --- |
-| 操作 | `UiButton`（primary、secondary、ghost、danger、link；每个区域最多一个 primary） |
+| 操作 | `UiButton`（primary、secondary、ghost、danger-quiet、danger、link 行内操作、text 表格里可点开的名称；每个区域最多一个 primary） |
 | 输入 | `UiInput`、`UiSelect`、`UiCheckbox`、`UiFileDrop`，外面用 `Field` 加名称、提示、错误 |
 | 标记 | `UiTag`（状态用 ok、warn、bad；编码用 code）、`UiTabs`、`UiTip` |
 | 浮层 | `UiDialog`（短决定）、`UiDrawer`（从列表快速查看）、`UiMenu`、`useToast()` |

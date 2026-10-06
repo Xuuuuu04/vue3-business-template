@@ -33,12 +33,18 @@ function active(item: { to: string; exact?: boolean }) { return route.path === i
         <span v-else class="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-[15px] font-bold text-primary-ink">{{ initial }}</span>
         <span v-show="!collapsed" class="truncate text-base font-semibold text-side-active">{{ brand }}</span>
       </div>
-      <nav class="-mx-2.5 mt-2 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2.5" aria-label="主要导航">
+      <nav class="-mx-2.5 mt-2 flex min-h-0 flex-1 flex-col overflow-y-auto" aria-label="主要导航">
         <template v-for="(g, gi) in nav" :key="gi">
-          <p v-if="g.title && !collapsed" class="px-3 pt-4 pb-1.5 text-xs text-side-faint">{{ g.title }}</p>
-          <div v-else-if="gi && collapsed" class="mx-3 my-2 h-px bg-side-line" />
+          <p v-if="g.title && !collapsed" class="px-[18px] pt-4 pb-1.5 text-xs text-side-faint">{{ g.title }}</p>
+          <div v-else-if="gi && collapsed" class="my-2 h-px bg-side-line" />
           <Tip v-for="item in g.items" :key="item.to" :text="collapsed ? item.label : ''" side="right">
-            <RouterLink :to="item.to" class="relative flex h-9.5 items-center gap-3 rounded-md px-3 whitespace-nowrap text-side-fg transition-colors duration-150 hover:bg-side-hover" :class="active(item) && 'font-semibold !text-side-active before:absolute before:top-1/2 before:-left-2.5 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-(--side-bar)'" :aria-current="active(item) ? 'page' : undefined" :aria-label="collapsed ? item.label : undefined">
+            <RouterLink
+              :to="item.to"
+              class="relative flex h-10 w-full items-center gap-3 whitespace-nowrap text-side-fg transition-colors duration-150 hover:bg-side-hover"
+              :class="[collapsed ? 'justify-center px-0' : 'px-[18px]', active(item) && 'bg-side-hover font-semibold !text-side-active before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-(--side-bar)']"
+              :aria-current="active(item) ? 'page' : undefined"
+              :aria-label="collapsed ? item.label : undefined"
+            >
               <component :is="item.icon" v-if="item.icon" class="size-[18px] shrink-0" :class="active(item) && 'text-primary'" />
               <span v-show="!collapsed" class="flex-1 truncate">{{ item.label }}</span>
               <span v-if="item.badge && !collapsed" class="rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-ink tabular-nums">{{ item.badge }}</span>
@@ -46,7 +52,7 @@ function active(item: { to: string; exact?: boolean }) { return route.path === i
           </Tip>
         </template>
       </nav>
-      <slot name="sidebar-footer" :collapsed="collapsed" />
+      <div class="-mx-2.5"><slot name="sidebar-footer" :collapsed="collapsed" /></div>
     </aside>
 
     <div class="flex min-h-0 min-w-0 flex-col">
@@ -58,7 +64,7 @@ function active(item: { to: string; exact?: boolean }) { return route.path === i
           </Button>
         </Tip>
         <nav class="ml-1 flex min-w-0 items-center gap-2 text-fg-muted" aria-label="当前位置">
-          <span v-if="section" class="hidden sm:inline">{{ section }}</span><span v-if="section" class="hidden text-fg-faint sm:inline">/</span>
+          <span v-if="section && section !== title" class="hidden sm:inline">{{ section }}</span><span v-if="section && section !== title" class="hidden text-fg-faint sm:inline">/</span>
           <b class="truncate font-semibold text-fg">{{ title }}</b>
         </nav>
         <span class="flex-1" />

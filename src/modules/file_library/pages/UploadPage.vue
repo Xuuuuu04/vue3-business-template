@@ -72,7 +72,7 @@ async function submit() {
         <UiButton
           v-for="file in query.data.items"
           :key="file.id"
-          variant="link"
+          variant="text"
           @click="router.push(`/files/${encodeURIComponent(file.id)}`)"
           >{{ file.name }} · {{ fileSize(file.size) }}</UiButton
         >

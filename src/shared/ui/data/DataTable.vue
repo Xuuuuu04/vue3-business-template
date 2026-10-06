@@ -140,7 +140,7 @@ function widthStyle(c: DataColumn) {
 function deltaTone(v: unknown) { return typeof v === "number" ? (v > 0 ? "text-ok" : v < 0 ? "text-bad" : "text-fg-faint") : ""; }
 
 const colCount = computed(() => visibleColumns.value.length + (props.selectable ? 1 : 0));
-const hasToolbar = computed(() => props.title || props.meta || slots["toolbar"] || props.settings || props.fullscreenable);
+const hasToolbar = computed(() => props.title || props.meta || slots["toolbar"] || slots["search"] || props.settings || props.fullscreenable);
 const showFooter = computed(() => props.total !== undefined);
 function onKey(e: KeyboardEvent) { if (e.key === "Escape") fullscreen.value = false; }
 watch(fullscreen, (v) => { v ? document.addEventListener("keydown", onKey) : document.removeEventListener("keydown", onKey); });
@@ -150,6 +150,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
 <template>
   <section class="relative flex min-w-0 flex-col overflow-hidden border border-line bg-surface shadow-card" :class="fullscreen ? 'fixed inset-0 z-[60] rounded-none' : 'rounded-lg'" :aria-label="title ?? '数据表格'">
     <header v-if="hasToolbar" class="flex min-h-13 flex-wrap items-center gap-2 py-2 pr-3 pl-4">
+      <slot name="search" />
       <h2 v-if="title" class="text-[15px] font-semibold">{{ title }}</h2>
       <span v-if="meta" class="text-[13px] text-fg-faint tabular-nums">{{ meta }}</span>
       <span class="flex-1" />
@@ -180,7 +181,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       <table class="w-full min-w-max border-separate border-spacing-0">
         <thead>
           <tr>
-            <th v-if="selectable" class="sticky top-0 left-0 z-30 h-10 border-b border-line bg-subtle pl-4" :style="{ width: SELECT_WIDTH + 'px', minWidth: SELECT_WIDTH + 'px' }">
+            <th v-if="selectable" class="sticky top-0 left-0 z-30 h-10 border-b border-line bg-subtle pl-4 text-left" :style="{ width: SELECT_WIDTH + 'px', minWidth: SELECT_WIDTH + 'px' }">
               <UiCheckbox :model-value="allState" aria-label="选择当前页全部" @update:model-value="toggleAll" />
             </th>
             <th

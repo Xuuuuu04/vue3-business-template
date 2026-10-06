@@ -79,7 +79,6 @@ function openFile(id: string) {
       :sizes="[PAGE_SIZE]"
       :settings="false"
       :fullscreenable="false"
-      title="团队文件"
       :columns="columns"
       :rows="rows"
       row-key="id"
@@ -88,19 +87,21 @@ function openFile(id: string) {
       empty-title="这一页没有符合条件的文件"
       empty-hint="换个文件名，或清除搜索"
     >
-      <template #toolbar>
+      <template #search>
         <FilterItem size="lg"
           ><UiSearchInput
             v-model="filter"
             placeholder="在本页中查找文件名"
             aria-label="在本页中查找文件名"
         /></FilterItem>
+      </template>
+      <template #toolbar>
         <UiButton :loading="state.status === 'loading'" @click="load"
           >刷新</UiButton
         >
       </template>
       <template #cell-name="{ row }"
-        ><UiButton variant="link" @click="openFile(row.id)">{{
+        ><UiButton variant="text" @click="openFile(row.id)">{{
           row.name
         }}</UiButton></template
       >

@@ -16,6 +16,9 @@ const bare = computed(() => route.path === "/login");
 /** 开发者工具和产品界面分开：进入 /dev 后侧栏只显示开发者工具。 */
 const inDev = computed(() => route.path === "/dev" || route.path.startsWith("/dev/"));
 
+/** 业务页面的面包屑前一级：当前页面所属模块。 */
+const moduleTitle = computed(() => enabledModules.find((m) => m.name === route.meta.module)?.title);
+
 const nav = computed<NavGroup[]>(() =>
   inDev.value
     ? [
@@ -41,10 +44,10 @@ function leaveSession() {
 </script>
 <template>
   <RouterView v-if="bare" />
-  <AppShell v-else :brand="appConfig.name" :mark="appConfig.mark" :logo="appConfig.logo" :nav="nav" :section="inDev ? '开发者工具' : undefined">
+  <AppShell v-else :brand="appConfig.name" :mark="appConfig.mark" :logo="appConfig.logo" :nav="nav" :section="inDev ? '开发者工具' : moduleTitle">
     <template #sidebar-footer="{ collapsed }">
       <UiTip :text="collapsed ? '开发者工具（仅开发时可见）' : ''">
-        <RouterLink v-if="consoleEnabled && !inDev" to="/dev" class="flex h-9.5 items-center gap-3 rounded-md px-3 text-side-faint transition-colors hover:bg-side-hover hover:text-side-fg" aria-label="开发者工具">
+        <RouterLink v-if="consoleEnabled && !inDev" to="/dev" class="flex h-10 w-full items-center gap-3 px-[18px] text-side-faint transition-colors hover:bg-side-hover hover:text-side-fg" :class="collapsed && 'justify-center px-0'" aria-label="开发者工具">
           <Wrench class="size-[18px] shrink-0" /><span v-show="!collapsed" class="truncate">开发者工具</span>
         </RouterLink>
       </UiTip>
