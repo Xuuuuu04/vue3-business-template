@@ -4,6 +4,7 @@ import { Eye, FileQuestion } from "lucide-vue-next";
 import Button from "../base/Button.vue";
 import Skeleton from "../base/Skeleton.vue";
 import FileIcon from "../base/FileIcon.vue";
+import Markdown from "../ai/Markdown.vue";
 import { fileKind, formatBytes } from "../lib/format";
 /**
  * 文件预览：文本显示前 200 行，图片按比例显示；其他类型说明不能预览。
@@ -38,6 +39,9 @@ onBeforeUnmount(() => url.value && URL.revokeObjectURL(url.value));
         <tbody><tr v-for="(r, i) in table.slice(1)" :key="i" class="hover:bg-muted"><td v-for="(c, j) in r" :key="j" class="border-b border-line px-3 py-2 whitespace-nowrap tabular-nums" :class="/^-?[\d.,]+$/.test(c) && 'text-right'">{{ c }}</td></tr></tbody>
       </table>
     </div>
+    <article v-else-if="blob && kind.ext === 'MD'" class="overflow-auto bg-surface px-6 py-8" :class="fill ? 'min-h-0 flex-1' : 'max-h-[480px]'">
+      <div class="mx-auto w-full max-w-3xl"><Markdown :text="lines.join('\n')" variant="document" /></div>
+    </article>
     <ol v-else-if="blob" class="overflow-auto py-4 font-mono text-[14px] leading-6" :class="fill ? 'min-h-0 flex-1' : 'max-h-[480px]'">
       <li v-for="(l, i) in lines" :key="i" class="flex px-4 hover:bg-muted"><span class="w-10 shrink-0 pr-4 text-right text-fg-faint select-none tabular-nums">{{ i + 1 }}</span><span class="whitespace-pre-wrap break-all">{{ l || " " }}</span></li>
     </ol>

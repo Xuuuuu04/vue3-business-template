@@ -187,8 +187,8 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
 </script>
 
 <template>
-  <section class="relative flex min-h-0 min-w-0 flex-col overflow-hidden bg-surface" :class="[fullscreen ? 'fixed inset-0 z-[60]' : !flat && 'rounded-lg border border-line', fill && 'flex-1']" :aria-label="title ?? '数据表格'">
-    <header v-if="hasToolbar" class="flex min-h-12 shrink-0 flex-wrap items-center gap-3 pb-3" :class="!flat && 'px-4 pt-3'">
+  <section class="data-table relative flex min-h-0 min-w-0 flex-col overflow-hidden bg-surface" :class="[fullscreen ? 'fixed inset-0 z-[60]' : !flat && 'rounded-lg border border-line', fill && 'flex-1']" :aria-label="title ?? '数据表格'">
+    <header v-if="hasToolbar" class="flex min-h-12 shrink-0 flex-wrap items-center gap-3 pb-2" :class="!flat && 'px-4 pt-3'">
       <slot name="search" />
       <h2 v-if="title" class="text-[15px] font-semibold">{{ title }}</h2>
       <span v-if="meta" class="text-[13px] text-fg-faint tabular-nums">{{ meta }}</span>
@@ -225,7 +225,7 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
             </th>
             <th
               v-for="c in visibleColumns" :key="c.key" scope="col" :aria-sort="ariaSort(c)"
-              class="sticky top-0 h-10 border-b border-line bg-subtle px-(--cell-px) align-middle text-[13px] font-semibold whitespace-nowrap text-fg-muted"
+              class="sticky top-0 h-10 border-b border-line bg-subtle px-(--cell-px) align-middle text-[13px] font-medium whitespace-nowrap text-fg"
               :class="[cellClass(c), c.sticky ? 'z-30' : 'z-20', c.key === lastLeft && 'shadow-[1px_0_0_var(--line)]', c.key === firstRight && 'shadow-[-1px_0_0_var(--line)]', c.sortable && 'cursor-pointer select-none hover:text-fg']"
               :style="{ ...widthStyle(c), ...stickyStyle(c) }"
                :tabindex="c.sortable ? 0 : undefined"

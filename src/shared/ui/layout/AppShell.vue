@@ -139,7 +139,7 @@ function closeMobile(event: KeyboardEvent) {
         <template v-for="(g, gi) in nav" :key="gi">
           <p
             v-if="g.title && !compact"
-            class="px-6 pt-3 pb-2 text-[12px] font-medium tracking-wide text-side-faint"
+            class="px-6 pt-3 pb-1 text-[12px] font-medium tracking-wide text-side-faint"
           >
             {{ g.title }}
           </p>

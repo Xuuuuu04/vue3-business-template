@@ -1,5 +1,22 @@
 import { test, expect, type Page } from "@playwright/test";
 
+test("Markdown 文件显示文档标题与列表，文件中的 HTML 保持文字", async ({ page }) => {
+  await page.route("**/api/v1/files/demo-team/sample-7/download", (route) => route.fulfill({
+    contentType: "text/markdown",
+    body: '# 接口对接说明\n\n1. 所有接口使用同源 /api。\n2. 写入结果未知时先查询。\n\n<script>window.previewExecuted = true</script>\n<img src="invalid" onerror="window.previewExecuted = true">',
+  }));
+  await page.goto("/files/sample-7");
+  await page.getByRole("button", { name: "显示预览", exact: true }).click();
+  const document = page.getByRole("article");
+  await expect(document.getByRole("heading", { name: "接口对接说明", exact: true })).toBeVisible();
+  await expect(document.getByRole("listitem")).toHaveText([
+    "所有接口使用同源 /api。", "写入结果未知时先查询。",
+  ]);
+  await expect(document).toContainText('<script>window.previewExecuted = true</script>');
+  await expect(document.locator("script, img")).toHaveCount(0);
+  expect(await page.evaluate(() => "previewExecuted" in window)).toBe(false);
+});
+
 /** 只换 SPA 参数，不重新加载，确保复用原详情组件。 */
 async function switchDetail(page: Page, url: string) {
   await page.evaluate((next) => {

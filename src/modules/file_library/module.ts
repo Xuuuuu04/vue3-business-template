@@ -54,6 +54,7 @@ export default defineModule({
         "UiSearchInput",
         "UiEmpty",
         "UiFileIcon",
+        "UiTag",
         "UiTime",
         "UiTip",
         "UiDialog",

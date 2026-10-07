@@ -163,6 +163,8 @@
 @keyframes expand { from { height: 0; } to { height: var(--reka-accordion-content-height); } }
 @keyframes collapse { from { height: var(--reka-accordion-content-height); } to { height: 0; } }
 
+/* 行内控件为上下留白与边线预留 18px，避免额外撑高单行数据。 */
+.data-table tbody { --control-h: calc(var(--row-h) - 18px); --control-h-lg: var(--control-h); }
 /* 共用浮层和表单质感，尺寸由主题统一控制。 */
 .popup-surface { box-shadow: 0 8px 24px oklch(from var(--shadow-color) l c h / .10), 0 2px 6px oklch(from var(--shadow-color) l c h / .05); }
 .control-surface:is([data-invalid], [aria-invalid="true"]) { border-color: var(--bad); }
@@ -185,8 +187,8 @@
 .sidebar-row.is-compact .sidebar-target { justify-content: center; padding-inline: 0; }
 .sidebar-badge { padding: 1px 6px; background: var(--side-hover); border-radius: var(--r-sm); font-size: 12px; font-variant-numeric: tabular-nums; }
 /* 页头靠间距区分内容。工作区使用剩余高度，不减去猜测的像素数。 */
-.page-frame { display: flex; flex-direction: column; min-width: 0; padding: 0 var(--page-px) 24px; gap: 16px; }
-.page-heading { display: flex; flex: none; align-items: center; flex-wrap: wrap; gap: 12px; min-height: 84px; padding-block: 24px; }
+.page-frame { display: flex; flex-direction: column; min-width: 0; padding: 0 var(--page-px) 24px; gap: 12px; }
+.page-heading { display: flex; flex: none; align-items: center; flex-wrap: wrap; gap: 12px; min-height: 76px; padding-block: 20px; }
 .page-tabs { flex: none; }
 .page-status { display: flex; flex: none; flex-direction: column; gap: 8px; }
 .page-status:empty { display: none; }

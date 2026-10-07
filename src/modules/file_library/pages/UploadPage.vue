@@ -52,10 +52,9 @@ async function submit() {
         >保存文件</UiButton
       >
     </template>
-    <WorkArea fill>
+    <WorkArea form fill>
       <form id="file-upload" @submit.prevent="submit">
         <UiFileDrop
-          fill
           v-model="selected"
           :hint="`一次上传一个文件，单个不超过 ${formatBytes(LIMIT)}。保存后打开文件详情。`"
           :disabled="state.status === 'loading' || state.status === 'unknown'"

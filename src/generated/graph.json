@@ -42,6 +42,7 @@
           "UiSearchInput",
           "UiEmpty",
           "UiFileIcon",
+          "UiTag",
           "UiTime",
           "UiTip",
           "UiDialog",

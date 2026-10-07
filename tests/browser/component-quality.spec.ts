@@ -87,3 +87,18 @@ test("手机图表保持文字大小和可读高度，宽度跟随页面", async
   expect(size!.height).toBeGreaterThanOrEqual(230);
   expect(size!.x + size!.width).toBeLessThanOrEqual(390);
 });
+
+test("列表内的按钮不撑高数据行，切换疏密改变实际行高", async ({ page }) => {
+  await page.goto("/files");
+  const row = page.getByRole("row").filter({ hasText: "2026 第三季度经营报告.pdf" });
+  await expect(row).toBeVisible();
+  const height = () => row.evaluate((element) => element.getBoundingClientRect().height);
+  await expect.poll(height).toBeCloseTo(48, 0);
+  await page.getByRole("button", { name: "主题与外观", exact: true }).click();
+  await page.getByRole("button", { name: "紧凑", exact: true }).click();
+  await page.keyboard.press("Escape");
+  await expect.poll(height).toBeCloseTo(44, 0);
+  const download = row.getByRole("button", { name: "下载 2026 第三季度经营报告.pdf", exact: true });
+  await expect(download).toBeVisible();
+  await expect(download).toBeEnabled();
+});

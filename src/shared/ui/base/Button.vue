@@ -30,7 +30,7 @@ const styles = cva(
         danger: "border-bad bg-bad text-surface hover:opacity-90",
         "danger-quiet": "border-line bg-surface text-bad hover:border-bad hover:bg-bad-soft",
         link: "-mx-1 h-auto border-transparent px-1 text-primary-text hover:bg-primary-soft",
-        text: "-mx-1 h-auto border-transparent px-1 text-left font-normal text-fg hover:text-primary-text hover:underline",
+        text: "-mx-1 h-auto border-transparent px-1 text-left font-medium text-fg hover:text-primary-text hover:underline",
       },
       size: {
         sm: "h-8 px-3 text-[14px]",

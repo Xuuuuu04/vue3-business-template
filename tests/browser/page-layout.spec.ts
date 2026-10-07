@@ -30,6 +30,7 @@ for (const width of [1280, 1920]) {
 test("上传只显示一个表单，帮助贴近文件选择，主要入口只出现一次", async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 1440, height: 960 });
   await page.goto("/files/upload");
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
   await expect(
@@ -40,8 +41,12 @@ test("上传只显示一个表单，帮助贴近文件选择，主要入口只�
   await expect(page.getByLabel("选择文件")).toBeAttached();
   const content = await page.locator(".page-content").boundingBox();
   const drop = await page.locator('label:has(input[type="file"])').boundingBox();
-  expect(Math.abs(drop!.width - content!.width)).toBeLessThan(1);
-  expect(Math.abs(drop!.height - content!.height)).toBeLessThan(1);
+  // 工作区利用屏幕，文件选择区保持表单行宽，不为填屏扩大空框。
+  expect(drop!.x).toBeCloseTo(content!.x, 0);
+  expect(drop!.width).toBeLessThanOrEqual(760);
+  expect(drop!.height).toBeGreaterThanOrEqual(240);
+  expect(drop!.height).toBeLessThanOrEqual(320);
+  expect(content!.height).toBeGreaterThan(drop!.height);
 });
 
 test("文件详情优先展示当前文件，次要字段按需打开", async ({ page }) => {

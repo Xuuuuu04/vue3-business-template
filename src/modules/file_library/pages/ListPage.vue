@@ -12,6 +12,7 @@ import {
   UiSearchInput,
   UiEmpty,
   UiFileIcon,
+  UiTag,
   UiTime,
   UiTip,
   UiDialog,
@@ -216,6 +217,7 @@ async function downloadFile(file: FileView) {
           ></Row
         ></template
       >
+      <template #cell-kind="{ row }"><UiTag>{{ row.kind }}</UiTag></template>
       <template #cell-size="{ row }">{{ formatBytes(row.size) }}</template>
       <template #cell-created_at="{ row }"
         ><UiTime :value="row.created_at"
