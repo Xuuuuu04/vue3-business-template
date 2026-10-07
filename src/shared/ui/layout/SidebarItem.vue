@@ -33,7 +33,7 @@ function toggle() {
 </script>
 <template>
   <li class="min-w-0">
-    <Tip :text="compact ? item.label : ''" side="right">
+    <Tip :text="compact ? item.label : ''" side="right" class="w-full">
       <div
         class="sidebar-row"
         :class="{
@@ -57,7 +57,7 @@ function toggle() {
           <component
             :is="item.icon ?? Folder"
             v-if="!depth || item.icon"
-            class="size-[18px] shrink-0"
+            class="size-4 shrink-0"
           />
           <span v-if="!compact" class="min-w-0 flex-1 truncate">{{
             item.label

@@ -94,7 +94,7 @@ function closeMobile(event: KeyboardEvent) {
   >
   <div
     class="grid h-dvh overflow-hidden transition-[grid-template-columns] duration-300 ease-(--ease)"
-    :class="collapsed ? 'md:grid-cols-[64px_1fr]' : 'md:grid-cols-[240px_1fr]'"
+    :class="collapsed ? 'md:grid-cols-[64px_1fr]' : 'md:grid-cols-[256px_1fr]'"
   >
     <div
       v-if="mobileOpen"
@@ -107,11 +107,11 @@ function closeMobile(event: KeyboardEvent) {
       :aria-modal="mobileOpen ? true : undefined"
       :aria-label="mobileOpen ? '主要导航' : undefined"
       @keydown="closeMobile"
-      class="fixed inset-y-0 left-0 z-50 flex w-[240px] -translate-x-full flex-col gap-1 bg-side p-2.5 sidebar-surface transition-transform duration-300 ease-(--ease) md:static md:w-auto md:translate-x-0"
+      class="fixed inset-y-0 left-0 z-50 flex w-[256px] -translate-x-full flex-col gap-1 bg-side p-2 sidebar-surface transition-transform duration-300 ease-(--ease) md:static md:w-auto md:translate-x-0"
       :class="mobileOpen && 'translate-x-0'"
     >
       <div
-        class="-mx-0.5 flex h-16 items-center px-3 whitespace-nowrap"
+        class="-mx-2 flex h-16 items-center px-6 whitespace-nowrap"
         :class="compact && 'justify-center'"
       >
         <BrandMark
@@ -133,18 +133,18 @@ function closeMobile(event: KeyboardEvent) {
         ×
       </button>
       <nav
-        class="-mx-2.5 mt-1 flex min-h-0 flex-1 flex-col overflow-y-auto"
+        class="-mx-2 mt-1 flex min-h-0 flex-1 flex-col overflow-y-auto"
         aria-label="主要导航"
       >
         <template v-for="(g, gi) in nav" :key="gi">
           <p
             v-if="g.title && !compact"
-            class="px-5 pt-4 pb-2 text-[12px] font-medium tracking-wide text-side-faint"
+            class="px-6 pt-3 pb-2 text-[12px] font-medium tracking-wide text-side-faint"
           >
             {{ g.title }}
           </p>
           <div v-else-if="gi && compact" class="my-2 h-px bg-side-line" />
-          <ul class="flex flex-col gap-1 px-3">
+          <ul class="flex flex-col gap-1 px-4">
             <SidebarItem
               v-for="(item, i) in g.items"
               :key="`${item.to ?? item.label}-${i}`"
@@ -157,7 +157,7 @@ function closeMobile(event: KeyboardEvent) {
           </ul>
         </template>
       </nav>
-      <div class="-mx-2.5">
+      <div class="-mx-2">
         <slot name="sidebar-footer" :collapsed="compact" />
       </div>
     </aside>

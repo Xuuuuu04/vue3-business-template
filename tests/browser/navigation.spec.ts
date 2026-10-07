@@ -7,6 +7,15 @@ test("产品菜单：子页选中、目录展开、键盘和手机导航", async
     nav.getByRole("link", { name: "上传文件", exact: true }),
   ).toHaveAttribute("aria-current", "page");
   await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
+  // 提示气泡不能把菜单行缩到文字宽度，选中背景必须覆盖可用整行。
+  for (const label of ["文件管理", "上传文件"]) {
+    const row = nav.getByRole("link", { name: label, exact: true });
+    const unused = await row.evaluate((link) => {
+      const menu = link.closest(".sidebar-row")!;
+      return menu.closest("li")!.getBoundingClientRect().width - menu.getBoundingClientRect().width;
+    });
+    expect(Math.abs(unused)).toBeLessThan(1);
+  }
   await nav.getByRole("button", { name: "收起文件管理子菜单" }).click();
   await expect(nav.getByRole("link", { name: "上传文件", exact: true })).not.toBeVisible();
   const expand = nav.getByRole("button", { name: "展开文件管理子菜单" });

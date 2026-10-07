@@ -52,7 +52,8 @@
   --side-fg: oklch(0.82 calc(var(--n-c) * 0.6) var(--n-h));
   --side-fg-faint: oklch(0.6 calc(var(--n-c) * 0.6) var(--n-h));
   --side-active: oklch(0.8 calc(var(--b-c) * 0.7) var(--b-h));
-  --side-bar: var(--primary);                    /* 当前页左边的竖条 */
+  --side-selected: oklch(0.29 calc(var(--n-c) * 0.9) var(--n-h));
+  --side-selected-hover: oklch(0.32 calc(var(--n-c) * 0.9) var(--n-h));
 
   /* 圆角、疏密 */
   --r-sm: 6px; --r-md: 8px; --r-lg: 12px;
@@ -67,14 +68,17 @@
 [data-density="comfortable"] { --control-h: 36px; --control-h-lg: 44px; --row-h: 52px; --cell-px: 16px; --page-px: 24px; }
 /* 侧栏：浅色 / 品牌色 */
 [data-sidebar="light"] {
-  --side-bg: var(--surface); --side-hover: var(--muted); --side-line: var(--line);
-  --side-fg: var(--fg-muted); --side-fg-faint: var(--fg-faint); --side-active: var(--primary-text);
+  --side-bg: var(--surface); --side-hover: var(--subtle); --side-line: var(--line);
+  --side-selected: oklch(0.968 calc(var(--n-c) * 0.7) var(--n-h));
+  --side-selected-hover: oklch(0.95 calc(var(--n-c) * 0.7) var(--n-h));
+  --side-fg: var(--fg); --side-fg-faint: var(--fg-muted); --side-active: var(--fg);
 }
 [data-sidebar="brand"] {
   --side-bg: oklch(min(calc(var(--b-l) - 0.12), 0.4) calc(var(--b-c) * 0.9) var(--b-h));
   --side-hover: oklch(min(calc(var(--b-l) - 0.07), 0.46) calc(var(--b-c) * 0.9) var(--b-h));
   --side-line: oklch(min(calc(var(--b-l) - 0.04), 0.5) calc(var(--b-c) * 0.8) var(--b-h));
-  --side-fg: oklch(0.93 0.02 var(--b-h)); --side-fg-faint: oklch(0.78 0.04 var(--b-h)); --side-active: oklch(1 0 0); --side-bar: oklch(1 0 0);
+  --side-fg: oklch(0.93 0.02 var(--b-h)); --side-fg-faint: oklch(0.78 0.04 var(--b-h)); --side-active: oklch(1 0 0);
+  --side-selected: var(--side-hover); --side-selected-hover: var(--side-line);
 }
 
 /* 深色模式：只重写中性色、状态色与阴影，品牌色保持输入 */
@@ -101,6 +105,8 @@
   --side-bg: oklch(0.145 calc(var(--n-c) * 0.8) var(--n-h));
   --side-hover: oklch(0.2 calc(var(--n-c) * 0.8) var(--n-h));
   --side-line: oklch(0.25 calc(var(--n-c) * 0.8) var(--n-h));
+  --side-selected: oklch(0.235 calc(var(--n-c) * 0.8) var(--n-h));
+  --side-selected-hover: oklch(0.26 calc(var(--n-c) * 0.8) var(--n-h));
 }
 
 /* Tailwind 类名：bg-canvas bg-surface text-fg border-line bg-primary rounded-md 等 */
@@ -155,15 +161,16 @@
 .application-surface { margin: 8px 8px 8px 0; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-card); }
 .workspace-canvas { background: var(--surface); }
 .sidebar-surface { background: var(--side-bg); }
-.sidebar-row { display: flex; align-items: center; border-radius: var(--r-md); color: var(--side-fg); transition: background .15s, color .15s; }
+.sidebar-row { display: flex; width: 100%; align-items: center; border-radius: var(--r-md); color: var(--side-fg); transition: background .15s, color .15s; }
 .sidebar-row:hover { background: var(--side-hover); }
-.sidebar-row.is-current { background: var(--side-hover); color: var(--side-active); font-weight: 600; }
+.sidebar-row.is-current { background: var(--side-selected); color: var(--side-active); font-weight: 500; }
+.sidebar-row.is-current:hover { background: var(--side-selected-hover); }
 .sidebar-row.is-ancestor { color: var(--side-active); }
-.sidebar-target { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; min-height: 36px; padding: 8px 12px; text-align: left; font-size: 15px; text-decoration: none; }
-.sidebar-disclosure { display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--r-sm); margin-right: 4px; }
+.sidebar-target { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; min-height: 32px; padding: 6px 8px; text-align: left; font-size: 14px; line-height: 20px; text-decoration: none; }
+.sidebar-disclosure { display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--r-sm); margin-right: 4px; }
 .sidebar-disclosure:hover { background: var(--side-line); }
 .sidebar-children { display: flex; flex-direction: column; gap: 3px; margin: 6px 0 8px 20px; padding-left: 12px; border-left: 1px solid var(--side-line); }
-.sidebar-children .sidebar-target { min-height: 34px; font-size: 14px; }
+.sidebar-children .sidebar-target { min-height: 32px; font-size: 14px; }
 .sidebar-row.is-compact .sidebar-target { justify-content: center; padding-inline: 0; }
 .sidebar-badge { padding: 1px 6px; background: var(--side-hover); border-radius: var(--r-sm); font-size: 12px; font-variant-numeric: tabular-nums; }
 /* 页头靠间距区分内容。工作区使用剩余高度，不减去猜测的像素数。 */
