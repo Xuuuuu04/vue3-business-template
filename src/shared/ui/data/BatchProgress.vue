@@ -9,7 +9,7 @@ const count = (s: string) => props.items.filter((i) => i.status === s).length;
 </script>
 <template>
   <div class="flex flex-col gap-3">
-    <div class="flex items-center justify-between text-[13px]"><span class="font-medium tabular-nums">{{ done }} / {{ items.length }}</span>
+    <div class="flex items-center justify-between text-help"><span class="font-medium tabular-nums">{{ done }} / {{ items.length }}</span>
       <span class="flex gap-3 text-fg-muted"><span v-if="count('ok')" class="text-ok">{{ verb ?? "完成" }} {{ count("ok") }}</span><span v-if="count('failed')" class="text-bad">失败 {{ count("failed") }}</span><span v-if="count('unknown')" class="text-warn">未确认 {{ count("unknown") }}</span><span v-if="count('skipped')">未执行 {{ count("skipped") }}</span></span></div>
     <Progress :value="done" :max="items.length" :tone="count('unknown') ? 'warn' : count('failed') ? 'bad' : 'primary'" label="批量进度" />
     <ul class="max-h-64 overflow-auto rounded-lg border border-line">
@@ -20,7 +20,7 @@ const count = (s: string) => props.items.filter((i) => i.status === s).length;
         <CircleHelp v-else-if="it.status === 'unknown'" class="mt-0.5 size-4 shrink-0 text-warn" />
         <CircleMinus v-else-if="it.status === 'skipped'" class="mt-0.5 size-4 shrink-0 text-fg-faint" />
         <CircleDashed v-else class="mt-0.5 size-4 shrink-0 text-fg-faint" />
-        <span class="min-w-0 flex-1"><span class="block truncate">{{ it.label }}</span><span v-if="it.error" class="block text-[13px] text-fg-muted">{{ it.error }}</span><span v-else-if="it.status === 'skipped'" class="block text-[13px] text-fg-faint">前一项结果未确认，已停止</span></span>
+        <span class="min-w-0 flex-1"><span class="block truncate">{{ it.label }}</span><span v-if="it.error" class="block text-help text-fg-muted">{{ it.error }}</span><span v-else-if="it.status === 'skipped'" class="block text-help text-fg-faint">前一项结果未确认，已停止</span></span>
       </li>
     </ul>
   </div>

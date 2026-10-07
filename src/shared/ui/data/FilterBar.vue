@@ -17,7 +17,7 @@ const emit = defineEmits<{ query: []; reset: []; remove: [key: string] }>();
       <Button type="submit" variant="secondary" :loading="loading"><Search class="size-4" />查询</Button>
     </div>
     <div v-if="applied?.length" class="flex flex-wrap gap-1.5">
-      <span v-for="a in applied" :key="a.key" class="inline-flex h-6 items-center gap-1 rounded-md border border-line bg-subtle pr-1 pl-2.5 text-[13px] text-fg">
+      <span v-for="a in applied" :key="a.key" class="inline-flex h-6 items-center gap-1 rounded-md border border-line bg-subtle pr-1 pl-2.5 text-help text-fg">
         {{ a.label }}
         <button type="button" class="grid size-4 place-items-center rounded-sm hover:bg-muted" :aria-label="`移除条件：${a.label}`" @click="emit('remove', a.key)"><X class="size-3" /></button>
       </span>

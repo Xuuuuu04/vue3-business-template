@@ -19,7 +19,7 @@ defineProps<{
 </script>
 <template>
   <div
-    class="group flex w-full items-center overflow-hidden control-surface rounded-md border bg-surface transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_2px_var(--ring)] hover:border-line-strong"
+    class="group flex w-full items-center overflow-hidden control-surface rounded-md border bg-surface transition-[border-color,box-shadow] duration-(--motion-fast) focus-within:border-primary focus-within:shadow-[0_0_0_2px_var(--ring)] hover:border-line-strong"
     :data-invalid="invalid || undefined"
     :class="[
       size === 'lg' ? 'h-(--control-h-lg)' : 'h-(--control-h)',
@@ -42,6 +42,6 @@ defineProps<{
       class="h-full min-w-0 flex-1 bg-transparent px-2.5 text-fg outline-none placeholder:text-fg-faint tabular-nums"
       :class="align === 'right' && 'text-right'"
     />
-    <span v-if="$slots.suffix" class="flex h-full items-center px-2.5 text-[13px] text-fg-muted" :class="unit && 'border-l border-line bg-muted'"><slot name="suffix" /></span>
+    <span v-if="$slots.suffix" class="flex h-full items-center px-2.5 text-help text-fg-muted" :class="unit && 'border-l border-line bg-muted'"><slot name="suffix" /></span>
   </div>
 </template>

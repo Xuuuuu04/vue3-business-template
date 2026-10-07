@@ -41,7 +41,7 @@ const uid = Math.random().toString(36).slice(2, 8);
       <path v-for="(s, i) in [...series].reverse()" :key="s.name" :d="path(s.values)" fill="none" :stroke="colors[(series.length - 1 - i) % colors.length]" :stroke-width="series.length - 1 - i === 0 ? 2 : 1.5" :stroke-dasharray="s.dashed ? '4 4' : undefined" stroke-linejoin="round" stroke-linecap="round" />
       <g v-if="hover !== null"><line :x1="x(hover)" :x2="x(hover)" :y1="pad.t" :y2="H - pad.b" stroke="var(--line-strong)" /><circle v-for="(s, i) in series" :key="s.name" :cx="x(hover)" :cy="y(s.values[hover]!)" r="4" fill="var(--surface)" :stroke="colors[i % colors.length]" stroke-width="2" /></g>
     </svg>
-    <div v-if="hover !== null" class="pointer-events-none absolute top-2 min-w-32 rounded-lg border border-line bg-surface px-3 py-2 text-[13px] popup-surface" :style="{ left: `clamp(8px, calc(${(x(hover) / W) * 100}% + 12px), calc(100% - 150px))` }">
+    <div v-if="hover !== null" class="pointer-events-none absolute top-2 min-w-32 rounded-lg border border-line bg-surface px-3 py-2 text-help popup-surface" :style="{ left: `clamp(8px, calc(${(x(hover) / W) * 100}% + 12px), calc(100% - 150px))` }">
       <p class="mb-1 text-fg-faint">{{ labels[hover] }}</p>
       <p v-for="(s, i) in series" :key="s.name" class="flex items-center gap-2"><span class="size-2 rounded-full" :style="{ background: colors[i % colors.length] }" />{{ s.name }}<b class="ml-auto pl-3 font-semibold tabular-nums">{{ fmt(s.values[hover]!) }}</b></p>
     </div>

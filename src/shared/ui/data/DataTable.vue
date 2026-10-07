@@ -195,7 +195,7 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
     <header v-if="hasToolbar" class="flex min-h-12 shrink-0 flex-wrap items-center gap-3 pb-2" :class="!flat && 'px-4 pt-3'">
       <slot name="search" />
       <h2 v-if="title" class="text-[15px] font-semibold">{{ title }}</h2>
-      <span v-if="meta" class="text-[13px] text-fg-faint tabular-nums">{{ meta }}</span>
+      <span v-if="meta" class="text-help text-fg-faint tabular-nums">{{ meta }}</span>
       <span class="hidden flex-1 sm:block" />
       <slot name="toolbar" />
       <PopoverRoot v-if="settings">
@@ -205,7 +205,7 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
           </PopoverTrigger>
         </Tip>
         <PopoverPortal>
-          <PopoverContent align="end" :side-offset="6" class="z-[100] w-52 rounded-lg border border-line bg-surface p-2 popup-surface data-[state=open]:animate-[pop_.14s_var(--ease)]">
+          <PopoverContent :collision-padding="12" align="end" :side-offset="6" class="z-[100] w-52 rounded-lg border border-line bg-surface p-2 popup-surface data-[state=open]:animate-[pop_var(--motion-fast)_var(--ease-enter)]">
             <p class="px-2 pt-1 pb-2 text-xs text-fg-faint">显示的列</p>
             <div v-for="c in columns" :key="c.key" class="flex h-8 items-center rounded-md px-2 hover:bg-muted">
               <UiCheckbox :model-value="!hidden.has(c.key)" :label="c.title" @update:model-value="(v) => toggleColumn(c.key, v)" />
@@ -229,7 +229,7 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
             </th>
             <th
               v-for="c in visibleColumns" :key="c.key" scope="col" :aria-sort="ariaSort(c)"
-              class="sticky top-0 h-10 border-b border-line bg-subtle px-(--cell-px) align-middle text-[13px] font-medium whitespace-nowrap text-fg"
+              class="sticky top-0 h-10 border-b border-line bg-subtle px-(--cell-px) align-middle text-help font-medium whitespace-nowrap text-fg"
               :class="[cellClass(c), c.sticky ? ['z-20 sm:z-30', stickyPosition(c)] : 'z-20', c.key === lastLeft && 'sm:shadow-[1px_0_0_var(--line)]', c.key === firstRight && 'sm:shadow-[-1px_0_0_var(--line)]', c.sortable && 'cursor-pointer select-none hover:text-fg']"
               :style="{ ...widthStyle(c), ...stickyStyle(c) }"
                :tabindex="c.sortable ? 0 : undefined"
@@ -265,7 +265,7 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
             <tr v-if="groupBy" class="cursor-pointer select-none" :aria-expanded="!collapsed.has(g.key)" @click="toggleGroup(g.key)">
               <td :colspan="colCount" class="h-10 border-b border-line bg-subtle px-4 font-semibold hover:bg-muted">
                 <span class="inline-flex items-center gap-2">
-                  <ChevronDown class="size-4 text-fg-faint transition-transform duration-200" :class="collapsed.has(g.key) && '-rotate-90'" />
+                  <ChevronDown class="size-4 text-fg-faint transition-transform duration-(--motion-normal)" :class="collapsed.has(g.key) && '-rotate-90'" />
                   <slot name="group" :label="g.key" :rows="g.rows">{{ g.key }}</slot>
                   <span class="font-normal text-fg-faint tabular-nums">{{ g.rows.length }} 项</span>
                 </span>
@@ -299,15 +299,15 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
       </table>
     </div>
 
-    <Transition enter-from-class="opacity-0 translate-y-4" enter-active-class="transition duration-200 ease-(--ease)" leave-active-class="transition duration-150" leave-to-class="opacity-0 translate-y-4">
+    <Transition enter-from-class="opacity-0 translate-y-4" enter-active-class="transition duration-(--motion-normal) ease-(--ease)" leave-active-class="transition duration-(--motion-fast)" leave-to-class="opacity-0 translate-y-4">
       <div v-if="selectable && selected.length" class="fixed bottom-6 left-1/2 z-40 flex max-w-[calc(100vw-32px)] -translate-x-1/2 flex-wrap items-center justify-center gap-3 rounded-xl bg-fg py-2 pr-2 pl-4 text-surface popup-surface" role="toolbar" aria-label="批量操作">
         <span class="tabular-nums">已选 <b>{{ selected.length }}</b> 项</span>
         <span class="mx-1 h-5 w-px bg-surface/20" />
         <slot name="bulk" :count="selected.length" :clear="() => (selected = [])" />
-        <button type="button" class="h-7 rounded-md px-2.5 text-[13px] text-surface/70 hover:bg-surface/10 hover:text-surface" @click="selected = []">取消选择</button>
+        <button type="button" class="h-7 rounded-md px-2.5 text-help text-surface/70 hover:bg-surface/10 hover:text-surface" @click="selected = []">取消选择</button>
       </div>
     </Transition>
-    <footer v-if="showFooter" class="flex shrink-0 flex-wrap items-center gap-3 border-t border-line py-3 text-[13px] text-fg-muted" :class="!flat && 'px-4'">
+    <footer v-if="showFooter" class="flex shrink-0 flex-wrap items-center gap-3 border-t border-line py-3 text-help text-fg-muted" :class="!flat && 'px-4'">
       <span class="tabular-nums">{{ range }}</span>
       <slot name="footer" />
       <span class="flex-1" />

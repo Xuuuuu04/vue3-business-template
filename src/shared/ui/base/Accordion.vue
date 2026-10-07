@@ -9,10 +9,10 @@ defineProps<{ items: { value: string; title: string }[]; multiple?: boolean; def
     <AccordionItem v-for="it in items" :key="it.value" :value="it.value">
       <AccordionHeader>
         <AccordionTrigger class="group flex w-full items-center justify-between px-4 py-3 text-left font-medium hover:bg-subtle">
-          {{ it.title }}<ChevronDown class="size-4 text-fg-faint transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          {{ it.title }}<ChevronDown class="size-4 text-fg-faint transition-transform duration-(--motion-normal) group-data-[state=open]:rotate-180" />
         </AccordionTrigger>
       </AccordionHeader>
-      <AccordionContent class="overflow-hidden text-fg-muted data-[state=closed]:animate-[collapse_.2s_ease-out] data-[state=open]:animate-[expand_.2s_ease-out]">
+      <AccordionContent class="overflow-hidden text-fg-muted data-[state=closed]:animate-[collapse_var(--motion-normal)_var(--ease)] data-[state=open]:animate-[expand_var(--motion-normal)_var(--ease)]">
         <div class="px-4 pb-4"><slot :name="`item-${it.value}`" /></div>
       </AccordionContent>
     </AccordionItem>

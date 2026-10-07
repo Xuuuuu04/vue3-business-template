@@ -78,10 +78,10 @@ function swatch(p: (typeof palettes)[number]) {
     <WorkArea form fill>
       <template v-if="tab === 'appearance'">
         <div class="flex flex-col divide-y divide-line">
-          <section class="grid gap-3 pb-5 sm:grid-cols-[160px_1fr]">
+          <section class="grid gap-4 pb-6 sm:grid-cols-[160px_1fr]">
             <div>
               <h3 class="font-medium">配色</h3>
-              <p class="text-[13px] text-fg-faint">整个界面的主色和灰调</p>
+              <p class="text-help text-fg-muted">整个界面的主色和灰调</p>
             </div>
             <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
               <button
@@ -136,7 +136,7 @@ function swatch(p: (typeof palettes)[number]) {
           <section
             v-for="g in groups"
             :key="g.key"
-            class="grid items-center gap-3 py-4 last:pb-0 sm:grid-cols-[160px_1fr]"
+            class="grid items-center gap-4 py-6 last:pb-0 sm:grid-cols-[160px_1fr]"
           >
             <h3 class="font-medium">{{ g.title }}</h3>
             <div class="inline-flex w-fit gap-1 rounded-lg bg-subtle p-1">
@@ -191,7 +191,7 @@ function swatch(p: (typeof palettes)[number]) {
               { label: '公司', value: appConfig.company },
             ]"
           />
-          <p class="text-[13px] text-fg-faint">
+          <p class="text-help text-fg-muted">
             外观设置只保存在这台浏览器里，换电脑或清除浏览器数据后恢复默认。
           </p>
         </Stack>

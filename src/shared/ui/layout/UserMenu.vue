@@ -11,14 +11,14 @@ const { settings, update } = useTheme();
   <DropdownMenuRoot>
     <DropdownMenuTrigger as-child>
       <button type="button" class="ml-1 flex h-9 items-center gap-2 rounded-md pr-2 pl-1 transition-colors hover:bg-muted data-[state=open]:bg-muted" :aria-label="`用户菜单：${name}`">
-        <span class="grid size-7 place-items-center rounded-full bg-subtle text-[13px] font-medium text-fg ring-1 ring-line">{{ name.slice(0, 1) }}</span>
-        <span class="hidden max-w-28 truncate text-[14px] font-medium sm:inline">{{ name }}</span>
+        <span class="grid size-7 place-items-center rounded-full bg-subtle text-help font-medium text-fg ring-1 ring-line">{{ name.slice(0, 1) }}</span>
+        <span class="hidden max-w-28 truncate text-label font-medium sm:inline">{{ name }}</span>
         <ChevronDown class="hidden size-3.5 text-fg-faint sm:block" />
       </button>
     </DropdownMenuTrigger>
     <DropdownMenuPortal>
-      <DropdownMenuContent align="end" :side-offset="8" class="z-[100] w-60 rounded-lg border border-line bg-surface p-1 popup-surface data-[state=open]:animate-[pop_.14s_var(--ease)]">
-        <div class="px-2.5 py-2"><p class="font-semibold">{{ name }}</p><p v-if="org" class="text-[13px] text-fg-faint">{{ org }}</p></div>
+      <DropdownMenuContent :collision-padding="12" align="end" :side-offset="8" class="z-[100] w-60 rounded-lg border border-line bg-surface p-1 popup-surface data-[state=open]:animate-[pop_var(--motion-fast)_var(--ease-enter)]">
+        <div class="px-2.5 py-2"><p class="font-semibold">{{ name }}</p><p v-if="org" class="text-help text-fg-faint">{{ org }}</p></div>
         <DropdownMenuSeparator class="my-1 h-px bg-line" />
         <DropdownMenuItem class="flex h-9 cursor-pointer items-center gap-2.5 rounded-md px-2.5 outline-none select-none data-[highlighted]:bg-muted" @select.prevent="update({ mode: settings.mode === 'dark' ? 'light' : 'dark' })">
           <Sun v-if="settings.mode === 'dark'" class="size-4 text-fg-muted" /><Moon v-else class="size-4 text-fg-muted" />{{ settings.mode === "dark" ? "切换到浅色" : "切换到深色" }}

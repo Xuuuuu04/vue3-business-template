@@ -18,6 +18,6 @@ watch(() => props.active, (on) => {
 </script>
 <template>
   <div class="pointer-events-none fixed inset-x-0 top-0 z-[250] h-0.5" aria-hidden="true">
-    <div class="h-full bg-primary transition-[width,opacity] duration-200 ease-out" :style="{ width: width + '%', opacity: visible ? 1 : 0 }" />
+    <div class="h-full bg-primary transition-[width,opacity] duration-(--motion-normal) ease-out" :style="{ width: width + '%', opacity: visible ? 1 : 0 }" />
   </div>
 </template>

@@ -8,9 +8,9 @@ defineProps<{ title: string; description?: string; width?: "sm" | "md" | "lg" }>
 <template>
   <DialogRoot v-model:open="open">
     <DialogPortal>
-      <DialogOverlay class="fixed inset-0 z-50 bg-(--overlay) data-[state=open]:animate-[fade_.15s_ease-out]" />
+      <DialogOverlay class="fixed inset-0 z-50 bg-(--overlay) data-[state=open]:animate-[fade_var(--motion-fast)_linear] data-[state=closed]:animate-[fade-out_var(--motion-fast)_linear]" />
       <DialogContent
-        class="fixed top-1/2 left-1/2 z-50 flex max-h-[85vh] w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-line bg-surface popup-surface outline-none data-[state=open]:animate-[dialog-in_.2s_var(--ease)]"
+        class="fixed top-1/2 left-1/2 z-50 flex max-h-[85vh] w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-line bg-surface popup-surface outline-none data-[state=open]:animate-[dialog-in_var(--motion-normal)_var(--ease-enter)] data-[state=closed]:animate-[dialog-out_var(--motion-fast)_var(--ease-exit)]"
         :class="width === 'lg' ? 'max-w-2xl' : width === 'sm' ? 'max-w-sm' : 'max-w-md'"
       >
         <header class="flex items-start gap-3 px-6 pt-6">

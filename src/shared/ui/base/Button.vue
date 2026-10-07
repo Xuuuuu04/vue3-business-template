@@ -20,7 +20,7 @@ const props = withDefaults(
 );
 
 const styles = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border font-medium transition-[background-color,border-color,color,box-shadow] duration-150 select-none disabled:pointer-events-none disabled:opacity-45",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border font-medium transition-[background-color,border-color,color,box-shadow] duration-(--motion-fast) select-none disabled:pointer-events-none disabled:opacity-45",
   {
     variants: {
       variant: {
@@ -33,7 +33,7 @@ const styles = cva(
         text: "-mx-1 h-auto border-transparent px-1 text-left font-medium text-fg hover:text-primary-text hover:underline",
       },
       size: {
-        sm: "h-8 px-3 text-[14px]",
+        sm: "h-8 px-3 text-label",
         md: "h-(--control-h) px-3.5",
         lg: "h-(--control-h-lg) px-5 text-[16px]",
         icon: "h-(--control-h) w-(--control-h) px-0",

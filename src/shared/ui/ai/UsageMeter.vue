@@ -8,7 +8,7 @@ const fmt = (v: number) => (props.format ? props.format(v) : v.toLocaleString("z
 </script>
 <template>
   <div class="flex flex-col gap-1.5">
-    <div class="flex items-baseline justify-between gap-3"><span>{{ label }}</span><span class="text-[13px] text-fg-muted tabular-nums"><b class="font-semibold text-fg">{{ fmt(used) }}</b> / {{ fmt(limit) }}{{ unit }}</span></div>
+    <div class="flex items-baseline justify-between gap-3"><span>{{ label }}</span><span class="text-help text-fg-muted tabular-nums"><b class="font-semibold text-fg">{{ fmt(used) }}</b> / {{ fmt(limit) }}{{ unit }}</span></div>
     <Progress :value="used" :max="limit" :tone="pct >= 95 ? 'bad' : pct >= 80 ? 'warn' : 'primary'" :label="label" size="sm" />
   </div>
 </template>

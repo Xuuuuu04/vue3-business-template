@@ -24,9 +24,9 @@ watch(() => props.messages.map((m) => m.content.length).join(","), () => nextTic
       <div v-else class="group flex gap-3">
         <span class="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-ink"><Sparkles class="size-4" /></span>
         <div class="min-w-0 flex-1 pt-1">
-          <p class="mb-1 text-[13px] font-medium text-fg-muted">{{ assistantName ?? "助手" }}</p>
+          <p class="mb-1 text-help font-medium text-fg-muted">{{ assistantName ?? "助手" }}</p>
           <Markdown :text="m.content" :streaming="m.streaming" />
-          <p v-if="m.error" class="mt-2 rounded-md bg-bad-soft px-3 py-2 text-[13px] text-bad" role="alert">{{ m.error }}</p>
+          <p v-if="m.error" class="mt-2 rounded-md bg-bad-soft px-3 py-2 text-help text-bad" role="alert">{{ m.error }}</p>
           <div v-if="!m.streaming && m.content" class="mt-2 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100"><CopyButton :text="m.content" label="复制回答" /><slot name="actions" :message="m" /></div>
         </div>
       </div>

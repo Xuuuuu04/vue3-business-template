@@ -93,7 +93,7 @@ function closeMobile(event: KeyboardEvent) {
     >跳到主要内容</a
   >
   <div
-    class="grid h-dvh overflow-hidden transition-[grid-template-columns] duration-300 ease-(--ease)"
+    class="grid h-dvh overflow-hidden transition-[grid-template-columns] duration-(--motion-panel) ease-(--ease)"
     :class="collapsed ? 'md:grid-cols-[64px_1fr]' : 'md:grid-cols-[256px_1fr]'"
   >
     <div
@@ -107,7 +107,7 @@ function closeMobile(event: KeyboardEvent) {
       :aria-modal="mobileOpen ? true : undefined"
       :aria-label="mobileOpen ? '主要导航' : undefined"
       @keydown="closeMobile"
-      class="fixed inset-y-0 left-0 z-50 flex w-[256px] -translate-x-full flex-col gap-1 bg-side p-2 sidebar-surface transition-transform duration-300 ease-(--ease) md:static md:w-auto md:translate-x-0"
+      class="fixed inset-y-0 left-0 z-50 flex w-[256px] -translate-x-full flex-col gap-1 bg-side p-2 sidebar-surface transition-transform duration-(--motion-panel) ease-(--ease) md:static md:w-auto md:translate-x-0"
       :class="mobileOpen && 'translate-x-0'"
     >
       <div
@@ -188,7 +188,7 @@ function closeMobile(event: KeyboardEvent) {
           </Button>
         </Tip>
         <div class="ml-3 flex min-w-0 items-center"><slot name="search" /></div>
-        <span v-if="!$slots.search" class="ml-2 min-w-0 truncate text-[14px] text-fg-muted">{{
+        <span v-if="!$slots.search" class="ml-2 min-w-0 truncate text-label text-fg-muted">{{
           context ?? brand
         }}</span>
         <span class="flex-1" />

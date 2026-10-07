@@ -13,7 +13,7 @@ const hover = ref<number | null>(null);
     <div class="relative size-40 shrink-0">
       <svg viewBox="0 0 140 140" class="size-full -rotate-90" role="img" :aria-label="`${items.map((i) => i.label).join('、')}占比`">
         <circle cx="70" cy="70" :r="R" fill="none" stroke="var(--muted)" stroke-width="16" />
-        <circle v-for="(a, i) in arcs" :key="a.label" cx="70" cy="70" :r="R" fill="none" :stroke="a.color" :stroke-width="hover === i ? 20 : 16" :stroke-dasharray="a.dash" :stroke-dashoffset="a.offset" class="transition-[stroke-width] duration-150" @pointerenter="hover = i" @pointerleave="hover = null" />
+        <circle v-for="(a, i) in arcs" :key="a.label" cx="70" cy="70" :r="R" fill="none" :stroke="a.color" :stroke-width="hover === i ? 20 : 16" :stroke-dasharray="a.dash" :stroke-dashoffset="a.offset" class="transition-[stroke-width] duration-(--motion-fast)" @pointerenter="hover = i" @pointerleave="hover = null" />
       </svg>
       <div class="pointer-events-none absolute inset-0 grid place-content-center text-center">
         <b class="text-xl font-semibold tracking-tight tabular-nums">{{ hover === null ? total.toLocaleString("zh-CN") : items[hover]!.value.toLocaleString("zh-CN") }}</b>

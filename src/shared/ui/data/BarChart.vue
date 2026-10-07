@@ -25,7 +25,7 @@ const hover = ref<number | null>(null);
         <text :x="pad.l + i * band + band / 2" :y="H - 8" text-anchor="middle" font-size="12" fill="var(--fg-faint)">{{ l }}</text>
       </g>
     </svg>
-    <div v-if="hover !== null" class="pointer-events-none absolute top-1 rounded-lg border border-line bg-surface px-3 py-2 text-[13px] popup-surface" :style="{ left: `clamp(8px, calc(${((pad.l + (hover + 0.5) * band) / W) * 100}% - 60px), calc(100% - 140px))` }">
+    <div v-if="hover !== null" class="pointer-events-none absolute top-1 rounded-lg border border-line bg-surface px-3 py-2 text-help popup-surface" :style="{ left: `clamp(8px, calc(${((pad.l + (hover + 0.5) * band) / W) * 100}% - 60px), calc(100% - 140px))` }">
       <p class="mb-1 text-fg-faint">{{ labels[hover] }}</p>
       <p v-for="(s, k) in series" :key="s.name" class="flex items-center gap-2"><span class="size-2 rounded-sm" :style="{ background: colors[k % 2] }" />{{ s.name }}<b class="ml-auto pl-3 font-semibold tabular-nums">{{ fmt(s.values[hover]!) }}</b></p>
     </div>

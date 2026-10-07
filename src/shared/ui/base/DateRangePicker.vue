@@ -50,7 +50,7 @@ function pick(r: readonly [DateValue, DateValue]) { model.value = [r[0].toString
       <button v-if="shown" type="button" class="mr-2 grid size-6 shrink-0 place-items-center rounded-sm text-fg-muted hover:bg-muted hover:text-fg" aria-label="清除日期范围" @click="clear"><X class="size-3.5" /></button>
     </div>
     <PopoverPortal>
-      <PopoverContent align="start" :side-offset="6" class="z-[100] flex max-w-[calc(100vw-24px)] overflow-auto rounded-lg border border-line bg-surface popup-surface data-[state=open]:animate-[pop_.14s_var(--ease)]">
+      <PopoverContent :collision-padding="12" align="start" :side-offset="6" class="z-[100] flex max-w-[calc(100vw-24px)] overflow-auto rounded-lg border border-line bg-surface popup-surface data-[state=open]:animate-[pop_var(--motion-fast)_var(--ease-enter)]">
         <div class="hidden w-32 shrink-0 flex-col sm:flex gap-0.5 border-r border-line p-2">
           <button v-for="p in presets" :key="p.label" type="button" class="h-8 rounded-md px-2.5 text-left hover:bg-muted" @click="pick(p.range)">{{ p.label }}</button>
         </div>

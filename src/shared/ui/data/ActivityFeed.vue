@@ -25,7 +25,7 @@ const groups = computed(() => {
           <Avatar :name="it.actor" size="sm" />
           <div class="min-w-0 flex-1">
             <p><b class="font-medium">{{ it.actor }}</b> <span class="text-fg-muted">{{ it.action }}</span> <b v-if="it.target" class="font-medium">{{ it.target }}</b></p>
-            <p v-if="it.note" class="mt-0.5 rounded-md bg-subtle px-2.5 py-1.5 text-[13px] text-fg-muted">{{ it.note }}</p>
+            <p v-if="it.note" class="mt-0.5 rounded-md bg-subtle px-2.5 py-1.5 text-help text-fg-muted">{{ it.note }}</p>
           </div>
           <time class="shrink-0 text-xs text-fg-faint tabular-nums" :datetime="it.time">{{ formatRelative(it.time) }}</time>
         </li>

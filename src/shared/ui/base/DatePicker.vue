@@ -31,7 +31,7 @@ const shown = computed(() => (model.value ? model.value.replace(/^(\d+)-(\d+)-(\
       <button v-if="model" type="button" class="mr-2 grid size-6 shrink-0 place-items-center rounded-sm text-fg-muted hover:bg-muted hover:text-fg" aria-label="清除日期" @click="clear"><X class="size-3.5" /></button>
     </div>
     <PopoverPortal>
-      <PopoverContent align="start" :side-offset="6" class="z-[100] rounded-lg border border-line bg-surface p-3 popup-surface data-[state=open]:animate-[pop_.14s_var(--ease)]">
+      <PopoverContent :collision-padding="12" align="start" :side-offset="6" class="z-[100] rounded-lg border border-line bg-surface p-3 popup-surface data-[state=open]:animate-[pop_var(--motion-fast)_var(--ease-enter)]">
         <CalendarRoot v-slot="{ weekDays, grid }" v-model="value" locale="zh-CN" :week-starts-on="1" :placeholder="value ?? today(getLocalTimeZone())" :min-value="min ? parseDate(min) : undefined" :max-value="max ? parseDate(max) : undefined" fixed-weeks>
           <CalendarHeader class="mb-2 flex items-center justify-between">
             <CalendarPrev class="grid size-7 place-items-center rounded-md hover:bg-muted" aria-label="上个月"><ChevronLeft class="size-4" /></CalendarPrev>

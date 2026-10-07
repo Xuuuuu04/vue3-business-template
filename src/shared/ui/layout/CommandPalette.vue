@@ -27,8 +27,8 @@ function key(e: KeyboardEvent) {
 <template>
   <DialogRoot v-model:open="open">
     <DialogPortal>
-      <DialogOverlay class="fixed inset-0 z-50 bg-(--overlay) data-[state=open]:animate-[fade_.15s_ease-out]" />
-      <DialogContent class="fixed top-[16vh] left-1/2 z-50 w-[calc(100vw-32px)] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-line bg-surface popup-surface outline-none data-[state=open]:animate-[pop_.16s_var(--ease)]" @open-auto-focus.prevent>
+      <DialogOverlay class="fixed inset-0 z-50 bg-(--overlay) data-[state=open]:animate-[fade_var(--motion-fast)_linear]" />
+      <DialogContent class="fixed top-[16vh] left-1/2 z-50 w-[calc(100vw-32px)] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-line bg-surface popup-surface outline-none data-[state=open]:animate-[pop_var(--motion-fast)_var(--ease-enter)]" @open-auto-focus.prevent>
         <DialogTitle class="sr-only">全局搜索</DialogTitle>
         <DialogDescription class="sr-only">输入关键词，用上下键选择，回车执行</DialogDescription>
         <div class="flex items-center gap-3 border-b border-line px-4"><Search class="size-[18px] text-fg-faint" />

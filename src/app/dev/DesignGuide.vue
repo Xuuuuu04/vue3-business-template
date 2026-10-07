@@ -118,9 +118,9 @@ const tokens = [["canvas", "页面底色"], ["surface", "卡片、表格"], ["mu
 const types = [
   ["展示标题", "32 / 600 / 字距 -1%", "text-[32px] leading-tight font-semibold tracking-tight", "每一步都看得见结果"],
   ["页面标题", "24 / 600", "text-[24px] font-semibold tracking-tight", "文件管理 Files 1,284,630"],
-  ["区块标题", "17 / 600", "text-[17px] font-semibold", "团队文件与最近上传"],
+  ["区块标题", "18 / 600", "text-[18px] leading-6 font-semibold", "团队文件与最近上传"],
   ["正文", "16 / 400", "", "表格、表单与说明都使用这个大小，中文用系统黑体，数字与英文用 Inter。"],
-  ["辅助说明", "13 / 400", "text-[13px] text-fg-muted", "次要信息、字段提示、时间"],
+  ["辅助说明", "13 / 400", "text-help text-fg-muted", "次要信息、字段提示、时间"],
   ["标注", "12 / 500", "text-xs font-medium text-fg-faint", "标签、页脚、快捷键"],
   ["数字", "等宽数字", "text-[26px] font-semibold tracking-tight tabular-nums", "1,284,630.50"],
 ];
@@ -192,20 +192,20 @@ onBeforeUnmount(stop);
         <Grid :cols="3">
           <button v-for="p in palettes" :key="p.id" type="button" class="flex flex-col gap-3 rounded-md border bg-surface p-4 text-left transition-colors" :class="settings.palette === p.id ? 'border-primary bg-primary-soft' : 'border-line hover:border-line-strong'" :aria-pressed="settings.palette === p.id" @click="choosePalette(p.id)">
             <span class="flex items-center gap-2"><span class="size-4 rounded-full border border-line-strong" :style="{ background: `oklch(${p.brandLightness} ${Math.max(p.brandChroma, 0.04)} ${p.brandHue})` }" /><b class="font-medium">{{ p.name }}</b><UiTag v-if="settings.palette === p.id" class="ml-auto">当前</UiTag></span>
-            <span class="text-[14px] leading-6 text-fg-muted">{{ p.character }}</span>
+            <span class="text-label leading-6 text-fg-muted">{{ p.character }}</span>
           </button>
         </Grid>
-        <p class="text-[13px] text-fg-muted">选择后立即应用。产品默认配色在 <UiTag tone="code">src/app/app.config.ts</UiTag> 设置。</p>
+        <p class="text-help text-fg-muted">选择后立即应用。产品默认配色在 <UiTag tone="code">src/app/app.config.ts</UiTag> 设置。</p>
       </template>
       <template #tokens>
         <Grid :cols="3" gap="lg">
-          <div v-for="[name, use] in tokens" :key="name" class="flex items-center gap-3"><span class="size-10 shrink-0 rounded-md border border-line" :style="{ background: `var(--${name})` }" /><span class="min-w-0"><b class="block truncate font-mono text-[14px] font-medium">{{ name }}</b><span class="text-[13px] text-fg-muted">{{ use }}</span></span></div>
+          <div v-for="[name, use] in tokens" :key="name" class="flex items-center gap-3"><span class="size-10 shrink-0 rounded-md border border-line" :style="{ background: `var(--${name})` }" /><span class="min-w-0"><b class="block truncate font-mono text-label font-medium">{{ name }}</b><span class="text-help text-fg-muted">{{ use }}</span></span></div>
         </Grid>
       </template>
       <template #typography>
         <ul class="divide-y divide-line">
           <li v-for="[name, spec, cls, sample] in types" :key="name" class="grid items-baseline gap-2 py-5 first:pt-0 lg:grid-cols-[104px_150px_1fr] lg:gap-4">
-            <b class="text-[14px] font-medium">{{ name }}</b><span class="font-mono text-[12px] text-fg-muted">{{ spec }}</span><span :class="cls">{{ sample }}</span>
+            <b class="text-label font-medium">{{ name }}</b><span class="font-mono text-[12px] text-fg-muted">{{ spec }}</span><span :class="cls">{{ sample }}</span>
           </li>
         </ul>
       </template>
@@ -233,15 +233,15 @@ onBeforeUnmount(stop);
         <UiSegmented v-model="range" :options="[{ value: '7', label: '7 天' }, { value: '30', label: '30 天' }, { value: '90', label: '90 天' }]" aria-label="时间范围" />
       </Stack></template>
       <template #plans><UiRadioGroup v-model="plan" variant="card" :options="[{ value: 'personal', label: '个人版', hint: '1 人使用，5 GB 空间' }, { value: 'team', label: '团队版', hint: '最多 50 人，500 GB 空间' }, { value: 'enterprise', label: '企业版', hint: '不限人数，单点登录与审批' }]" aria-label="方案" /></template>
-      <template #form-sections>
+      <template #form-sections><Stack gap="none">
         <FormSection title="通知" text="什么时候提醒你"><UiSwitch v-model="notify" label="有新文件时通知我" /><UiSwitch :model-value="false" label="每周发送汇总邮件" /></FormSection>
         <FormSection title="默认查看范围" text="打开列表时默认显示的时间范围"><UiSegmented v-model="range" :options="[{ value: '7', label: '7 天' }, { value: '30', label: '30 天' }, { value: '90', label: '90 天' }]" aria-label="默认范围" /></FormSection>
-      </template>
+      </Stack></template>
       <template #upload><UiFileDrop v-model="file" hint="一次一个文件，最大 10 MB" /></template>
       <template #buttons><Stack>
         <Row><UiButton variant="primary">主要操作</UiButton><UiButton>次要操作</UiButton><UiButton variant="ghost">轻量操作</UiButton><UiButton variant="link">链接</UiButton></Row>
         <Row><UiButton variant="danger-quiet" icon="delete">删除</UiButton><UiButton variant="danger">确认删除</UiButton><UiButton disabled>不可用</UiButton><UiButton loading>处理中</UiButton></Row>
-        <Row><UiButton variant="primary" size="sm" icon="plus">小号</UiButton><UiButton size="lg" icon="download">大号</UiButton><UiTip text="下载"><UiButton size="icon" icon="download" aria-label="下载" /></UiTip><span class="text-[13px] text-fg-muted">快捷键 <UiKbd>⌘</UiKbd> <UiKbd>K</UiKbd></span></Row>
+        <Row><UiButton variant="primary" size="sm" icon="plus">小号</UiButton><UiButton size="lg" icon="download">大号</UiButton><UiTip text="下载"><UiButton size="icon" icon="download" aria-label="下载" /></UiTip><span class="text-help text-fg-muted">快捷键 <UiKbd>⌘</UiKbd> <UiKbd>K</UiKbd></span></Row>
       </Stack></template>
       <template #tags><Stack>
         <Row><UiTag>默认</UiTag><UiTag tone="primary">强调</UiTag><UiTag tone="ok" dot>成功</UiTag><UiTag tone="warn" dot>待处理</UiTag><UiTag tone="bad" dot>失败</UiTag><UiTag tone="info">提示</UiTag><UiTag tone="code">AX100245</UiTag></Row>
@@ -307,7 +307,7 @@ onBeforeUnmount(stop);
       <template #usage><Stack><UsageMeter label="对话次数" :used="8240" :limit="10000" /><UsageMeter label="Token" :used="1.92" :limit="2" unit=" M" :format="(v) => v.toFixed(2)" /><UsageMeter label="知识库文档" :used="126" :limit="500" unit=" 篇" /></Stack></template>
       <template #recipes>
         <dl class="divide-y divide-line"><div v-for="[name, how] in recipes" :key="name" class="grid gap-2 py-5 first:pt-0 sm:grid-cols-[104px_1fr] sm:gap-6"><dt class="font-medium">{{ name }}</dt><dd class="text-fg-muted">{{ how }}</dd></div></dl>
-        <p class="text-[13px] text-fg-muted">完整规则与用法见 <UiTag tone="code">src/shared/ui/README.md</UiTag>。</p>
+        <p class="text-help text-fg-muted">完整规则与用法见 <UiTag tone="code">src/shared/ui/README.md</UiTag>。</p>
       </template>
     </GalleryStage>
     <UiDialog v-model:open="dialog" title="确认操作示例" description="此处演示确认与反馈的交互，确认后关闭弹窗，示例价格保持原值。">

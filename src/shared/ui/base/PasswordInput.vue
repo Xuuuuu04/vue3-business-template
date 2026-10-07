@@ -19,6 +19,6 @@ function check(e: KeyboardEvent) { caps.value = e.getModifierState?.("CapsLock")
         </button>
       </template>
     </UiInput>
-    <p v-if="caps" class="flex items-center gap-1.5 text-[13px] text-warn" role="status"><TriangleAlert class="size-3.5" />大写锁定已开启</p>
+    <p v-if="caps" class="flex items-center gap-1.5 text-help text-warn" role="status"><TriangleAlert class="size-3.5" />大写锁定已开启</p>
   </div>
 </template>

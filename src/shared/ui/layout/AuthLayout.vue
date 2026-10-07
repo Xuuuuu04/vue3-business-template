@@ -19,8 +19,8 @@ defineProps<{
       </div>
       <ul v-if="highlights?.length" class="flex flex-col divide-y divide-auth-line">
         <li v-for="h in highlights" :key="h.title" class="grid grid-cols-[96px_1fr] gap-4 py-5">
-          <span class="text-[14px] font-medium">{{ h.title }}</span>
-          <span class="text-[14px] leading-6 text-auth-muted">{{ h.text }}</span>
+          <span class="text-label font-medium">{{ h.title }}</span>
+          <span class="text-label leading-6 text-auth-muted">{{ h.text }}</span>
         </li>
       </ul>
     </aside>

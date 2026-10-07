@@ -8,9 +8,9 @@ defineProps<{ title: string; width?: "md" | "lg" }>();
 <template>
   <DialogRoot v-model:open="open">
     <DialogPortal>
-      <DialogOverlay class="fixed inset-0 z-50 bg-(--overlay) data-[state=open]:animate-[fade_.2s_ease-out]" />
+      <DialogOverlay class="fixed inset-0 z-50 bg-(--overlay) data-[state=open]:animate-[fade_var(--motion-fast)_linear] data-[state=closed]:animate-[fade-out_var(--motion-fast)_linear]" />
       <DialogContent
-        class="fixed top-0 right-0 bottom-0 z-50 flex w-full flex-col border-l border-line bg-surface popup-surface outline-none data-[state=open]:animate-[drawer-in_.28s_var(--ease)] data-[state=closed]:animate-[drawer-out_.2s_ease-in]"
+        class="fixed top-0 right-0 bottom-0 z-50 flex w-full flex-col border-l border-line bg-surface popup-surface outline-none data-[state=open]:animate-[drawer-in_var(--motion-panel)_var(--ease)] data-[state=closed]:animate-[drawer-out_var(--motion-normal)_var(--ease)]"
         :class="width === 'lg' ? 'max-w-[640px]' : 'max-w-[460px]'"
       >
         <header class="flex items-center gap-3 border-b border-line px-6 py-5">
