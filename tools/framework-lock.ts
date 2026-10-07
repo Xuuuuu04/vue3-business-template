@@ -1,41 +1,48 @@
 /** 共用执行器、主题、工具与检查的版本保护；不是操作系统权限隔离。 */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { relative, resolve } from "node:path";
+import { relative } from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { filesBelow, direct } from "./lib";
+import { safeTemplatePath } from "./template-paths";
+const trees = [
+  "src/shared",
+  "src/app",
+  "deploy",
+  "tools",
+  "tests/framework",
+  "tests/architecture",
+  ".agents/skills",
+];
+const singles = [
+  "scaffold.json",
+  "src/env.d.ts",
+  "src/main.ts",
+  "vite.config.ts",
+  "vitest.config.ts",
+  "playwright.config.ts",
+  "tsconfig.json",
+  ".github/workflows/check.yml",
+];
+const productFiles = ["src/app/catalog.ts", "src/app/app.config.ts"];
+
+/** 旧版本清单也只能指向框架范围，不能把业务或任意文件交给更新器。 */
+export function isFrameworkPath(name: string) {
+  return (
+    !productFiles.includes(name) &&
+    (singles.includes(name) ||
+      trees.some((tree) => name.startsWith(tree + "/")))
+  );
+}
 export function protectedFiles(root = process.cwd()) {
-  return [
-    "src/shared",
-    "src/app",
-    "deploy",
-    "tools",
-    "tests/framework",
-    "tests/architecture",
-    ".agents/skills",
-  ]
-    .flatMap((name) => filesBelow(resolve(root, name)))
-    .filter(
-      (file) =>
-        !["src/app/catalog.ts", "src/app/app.config.ts"].includes(
-          relative(root, file),
-        ),
-    )
+  return trees
+    .flatMap((name) => filesBelow(safeTemplatePath(root, name)))
+    .filter((file) => !productFiles.includes(relative(root, file)))
     .concat(
-      [
-        "scaffold.json",
-        "src/env.d.ts",
-        "src/main.ts",
-        "vite.config.ts",
-        "vitest.config.ts",
-        "playwright.config.ts",
-        "tsconfig.json",
-        ".github/workflows/check.yml",
-      ]
-        .map((name) => resolve(root, name))
-        .filter(existsSync),
+      singles.map((name) => safeTemplatePath(root, name)).filter(existsSync),
     )
-    .sort();
+    .sort()
+    .map((file) => safeTemplatePath(root, relative(root, file)));
 }
 export function lockData(root = process.cwd()) {
   return Object.fromEntries(
@@ -46,7 +53,7 @@ export function lockData(root = process.cwd()) {
   );
 }
 export function verifyLock(root = process.cwd()) {
-  const path = resolve(root, "framework.lock");
+  const path = safeTemplatePath(root, "framework.lock");
   if (!existsSync(path)) return ["缺少 framework.lock"];
   const saved = JSON.parse(readFileSync(path, "utf8")) as Record<
     string,

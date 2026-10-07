@@ -7,9 +7,15 @@ import {
   rmSync,
 } from "node:fs";
 import { resolve } from "node:path";
-import { protectedFiles, lockData, verifyLock } from "./framework-lock";
+import {
+  protectedFiles,
+  lockData,
+  verifyLock,
+  isFrameworkPath,
+} from "./framework-lock";
 import { sourceFingerprint } from "./lib";
 import { relative } from "node:path";
+import { safeTemplatePath } from "./template-paths";
 const args = process.argv.slice(2);
 const at = args.indexOf("--source");
 const location = at >= 0 ? args[at + 1] : undefined;
@@ -19,6 +25,12 @@ if (!location)
   );
 const source = resolve(location);
 if (source === process.cwd()) throw new Error("新版模板目录不能是当前产品");
+const metadataFiles = [
+  ".template/base.json",
+  ".template/source.json",
+  "framework.lock",
+];
+for (const file of metadataFiles) safeTemplatePath(process.cwd(), file);
 if (!existsSync(".template/base.json"))
   throw new Error(
     "缺少原模板内容。请使用 start:project 创建产品，或先恢复其 .template/base.json。",
@@ -30,6 +42,8 @@ const base = JSON.parse(readFileSync(".template/base.json", "utf8")) as Record<
   string,
   string
 >;
+if (!base || typeof base !== "object" || Array.isArray(base))
+  throw new Error("原模板清单必须是文件内容对象");
 const incoming = Object.fromEntries(
   protectedFiles(source)
     .filter((file) => relative(source, file) !== "scaffold.json")
@@ -38,6 +52,11 @@ const incoming = Object.fromEntries(
 const changes: { file: string; content?: string }[] = [];
 const conflicts: string[] = [];
 for (const file of new Set([...Object.keys(base), ...Object.keys(incoming)])) {
+  safeTemplatePath(process.cwd(), file);
+  if (!isFrameworkPath(file))
+    throw new Error(`文件不属于可更新的框架：${file}`);
+  if (file in base && typeof base[file] !== "string")
+    throw new Error(`原模板文件内容无效：${file}`);
   if (file === "scaffold.json") continue;
   const current = existsSync(file) ? readFileSync(file, "utf8") : undefined;
   const old = base[file];
@@ -69,11 +88,7 @@ if (conflicts.length)
   );
 if (args.includes("--apply")) {
   const backup: Record<string, string | undefined> = {};
-  for (const file of [
-    ".template/base.json",
-    ".template/source.json",
-    "framework.lock",
-  ])
+  for (const file of metadataFiles)
     backup[file] = existsSync(file) ? readFileSync(file, "utf8") : undefined;
   try {
     for (const item of changes) {
