@@ -151,22 +151,24 @@
 @keyframes expand { from { height: 0; } to { height: var(--reka-accordion-content-height); } }
 @keyframes collapse { from { height: var(--reka-accordion-content-height); } to { height: 0; } }
 
+/* 整个应用只有一个完整工作表面；侧栏保持轻量，不另做卡片容器。 */
+.application-surface { margin: 8px 8px 8px 0; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-card); }
 .workspace-canvas { background: var(--surface); }
 .sidebar-surface { background: var(--side-bg); }
 .sidebar-row { display: flex; align-items: center; border-radius: var(--r-md); color: var(--side-fg); transition: background .15s, color .15s; }
 .sidebar-row:hover { background: var(--side-hover); }
-.sidebar-row.is-current { background: var(--side-hover); color: var(--side-active); box-shadow: inset 0 0 0 1px var(--side-line); font-weight: 600; }
+.sidebar-row.is-current { background: var(--side-hover); color: var(--side-active); font-weight: 600; }
 .sidebar-row.is-ancestor { color: var(--side-active); }
-.sidebar-target { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; min-height: 44px; padding: 10px 12px; text-align: left; font-size: 15px; text-decoration: none; }
+.sidebar-target { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; min-height: 36px; padding: 8px 12px; text-align: left; font-size: 15px; text-decoration: none; }
 .sidebar-disclosure { display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--r-sm); margin-right: 4px; }
 .sidebar-disclosure:hover { background: var(--side-line); }
 .sidebar-children { display: flex; flex-direction: column; gap: 3px; margin: 6px 0 8px 20px; padding-left: 12px; border-left: 1px solid var(--side-line); }
-.sidebar-children .sidebar-target { min-height: 38px; font-size: 14px; }
+.sidebar-children .sidebar-target { min-height: 34px; font-size: 14px; }
 .sidebar-row.is-compact .sidebar-target { justify-content: center; padding-inline: 0; }
 .sidebar-badge { padding: 1px 6px; background: var(--side-hover); border-radius: var(--r-sm); font-size: 12px; font-variant-numeric: tabular-nums; }
-/* 页头与内容共用边线。工作区不按屏幕高度减去猜测的像素数。 */
+/* 页头靠间距区分内容。工作区使用剩余高度，不减去猜测的像素数。 */
 .page-frame { display: flex; flex-direction: column; min-width: 0; padding: 0 var(--page-px) 24px; gap: 16px; }
-.page-heading { display: flex; flex: none; align-items: center; flex-wrap: wrap; gap: 12px; min-height: 76px; padding-block: 18px; border-bottom: 1px solid var(--line); }
+.page-heading { display: flex; flex: none; align-items: center; flex-wrap: wrap; gap: 12px; min-height: 84px; padding-block: 24px; }
 .page-tabs { flex: none; }
 .page-status { display: flex; flex: none; flex-direction: column; gap: 8px; }
 .page-status:empty { display: none; }
@@ -180,6 +182,7 @@
 .work-area-form > form { display: flex; flex-direction: column; gap: 24px; }
 .work-area-fill > form { display: flex; min-height: 0; flex: 1; flex-direction: column; gap: 24px; }
 @media (max-width: 767px) {
+  .application-surface { margin: 6px; border-radius: 12px; }
   .page-frame { padding-inline: 16px; gap: 12px; }
   .page-heading { min-height: 72px; gap: 8px; }
   .page-heading h1 { flex-basis: 50%; font-size: 20px; }

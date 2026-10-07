@@ -5,7 +5,7 @@ import { computed } from "vue";
  * 尺寸有四档：sm 侧栏收起与页脚，md 侧栏，lg 登录页，xl 品牌面板。
  */
 const props = defineProps<{ name: string; mark?: string; logo?: string; size?: "sm" | "md" | "lg" | "xl"; wordmark?: boolean }>();
-const px = computed(() => ({ sm: 28, md: 36, lg: 48, xl: 64 })[props.size ?? "md"]);
+const px = computed(() => ({ sm: 28, md: 32, lg: 48, xl: 64 })[props.size ?? "md"]);
 const letter = computed(() => props.mark ?? props.name.slice(0, 1));
 </script>
 <template>

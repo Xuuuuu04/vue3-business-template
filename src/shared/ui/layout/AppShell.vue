@@ -107,7 +107,7 @@ function closeMobile(event: KeyboardEvent) {
       :aria-modal="mobileOpen ? true : undefined"
       :aria-label="mobileOpen ? '主要导航' : undefined"
       @keydown="closeMobile"
-      class="fixed inset-y-0 left-0 z-50 flex w-[240px] -translate-x-full flex-col gap-1 border-r border-side-line bg-side p-2.5 sidebar-surface transition-transform duration-300 ease-(--ease) md:static md:w-auto md:translate-x-0"
+      class="fixed inset-y-0 left-0 z-50 flex w-[240px] -translate-x-full flex-col gap-1 bg-side p-2.5 sidebar-surface transition-transform duration-300 ease-(--ease) md:static md:w-auto md:translate-x-0"
       :class="mobileOpen && 'translate-x-0'"
     >
       <div
@@ -120,7 +120,7 @@ function closeMobile(event: KeyboardEvent) {
           :logo="logo"
           size="md"
           :wordmark="!compact"
-          class="min-w-0 text-side-active"
+          class="min-w-0 text-side-fg"
         />
       </div>
       <button
@@ -162,9 +162,9 @@ function closeMobile(event: KeyboardEvent) {
       </div>
     </aside>
 
-    <div :inert="mobileOpen" class="flex min-h-0 min-w-0 flex-col">
+    <div :inert="mobileOpen" class="application-surface flex min-h-0 min-w-0 flex-col">
       <header
-        class="z-30 flex h-14 shrink-0 items-center gap-1 border-b border-line bg-surface px-3 md:px-5"
+        class="z-30 flex h-16 shrink-0 items-center gap-1 bg-surface px-3 md:px-5"
       >
         <Button
           variant="ghost"
@@ -176,7 +176,7 @@ function closeMobile(event: KeyboardEvent) {
         /></Button>
         <Tip :text="collapsed ? '展开侧栏' : '收起侧栏'" class="max-md:hidden">
           <Button
-            variant="ghost"
+            variant="secondary"
             size="icon"
             :aria-label="collapsed ? '展开侧栏' : '收起侧栏'"
             @click="collapsed = !collapsed"
@@ -187,7 +187,8 @@ function closeMobile(event: KeyboardEvent) {
             /><PanelLeftClose v-else class="size-[18px]" />
           </Button>
         </Tip>
-        <span class="ml-2 min-w-0 truncate text-[14px] text-fg-muted">{{
+        <div class="ml-3 flex min-w-0 items-center"><slot name="search" /></div>
+        <span v-if="!$slots.search" class="ml-2 min-w-0 truncate text-[14px] text-fg-muted">{{
           context ?? brand
         }}</span>
         <span class="flex-1" />

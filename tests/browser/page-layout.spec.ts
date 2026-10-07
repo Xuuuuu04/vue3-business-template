@@ -65,9 +65,9 @@ test("从文件详情返回时，列表保留表体滚动位置", async ({ page 
   ).toBeAttached();
   const scrollport = page.locator("[data-table-scroll]");
   await scrollport.evaluate((node) => {
-    node.scrollTop = 350;
+    node.scrollTop = 200;
   });
-  await expect(scrollport).toHaveJSProperty("scrollTop", 350);
+  await expect(scrollport).toHaveJSProperty("scrollTop", 200);
   await page
     .getByRole("button", { name: "项目使用说明.txt", exact: true })
     .click();
@@ -75,5 +75,5 @@ test("从文件详情返回时，列表保留表体滚动位置", async ({ page 
     page.getByRole("heading", { name: "项目使用说明.txt", exact: true }),
   ).toBeVisible();
   await page.goBack();
-  await expect(scrollport).toHaveJSProperty("scrollTop", 350);
+  await expect(scrollport).toHaveJSProperty("scrollTop", 200);
 });

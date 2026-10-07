@@ -216,7 +216,7 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
       </Tip>
     </header>
 
-    <div ref="scrollport" data-table-scroll @scroll="saveScroll" class="min-h-0 flex-1 overflow-auto border-t border-line" :style="{ maxHeight: fullscreen || fill ? 'none' : (maxHeight ?? 'none') }">
+    <div ref="scrollport" data-table-scroll @scroll="saveScroll" class="min-h-0 flex-1 overflow-auto border border-line rounded-md" :style="{ maxHeight: fullscreen || fill ? 'none' : (maxHeight ?? 'none') }">
       <table class="w-full min-w-max border-separate border-spacing-0">
         <thead>
           <tr>

@@ -83,11 +83,13 @@ const build = (import.meta.env.VITE_CODE_VERSION as string | undefined)?.slice(0
         </RouterLink>
       </UiTip>
     </template>
-    <template #topbar>
+    <template #search>
       <button type="button" class="mr-2 hidden h-9 w-60 items-center gap-2 rounded-md border border-line bg-surface px-3 text-fg-faint shadow-card transition-colors hover:border-line-strong hover:text-fg-muted md:flex" aria-label="搜索页面和操作" @click="search = true">
         <Search class="size-4" /><span class="flex-1 text-left">搜索页面和操作</span><kbd class="rounded border border-line-strong px-1.5 font-mono text-[11px]">{{ isMac ? "⌘" : "Ctrl" }} K</kbd>
       </button>
       <UiTip text="搜索"><UiButton variant="ghost" size="icon" class="md:hidden" aria-label="搜索页面和操作" @click="search = true"><Search class="size-[18px]" /></UiButton></UiTip>
+    </template>
+    <template #topbar>
       <UiTip v-if="session.demo" text="当前是演示数据，没有连接后台"><UiTag tone="warn" class="mr-1">演示数据</UiTag></UiTip>
       <NotificationBell />
       <ThemePanel />

@@ -28,6 +28,6 @@ export const appConfig = {
   /** 法律页面。reviewed 改为 true 之前，协议页面顶部会显示“模板文本，需法务审核”的提醒。 */
   legal: { reviewed: false },
   /** 产品默认主题。用户在界面里改过之后以用户的选择为准。 */
-  theme: { palette: "graphite", mode: "dark", sidebar: "dark", density: "comfortable" } as Partial<ThemeSettings>,
+  theme: { palette: "ink", mode: "light", sidebar: "light", density: "comfortable" } as Partial<ThemeSettings>,
   version: pkg.version as string,
 };
