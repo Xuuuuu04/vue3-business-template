@@ -37,7 +37,7 @@ test("界面库：键盘确认、焦点返回与窄屏", async ({ page }) => {
 test("主题切换：配色、明暗与侧栏收起都立即生效并被记住", async ({ page }) => {
   await page.goto("/dev/design");
   const html = page.locator("html");
-  await expect(html).toHaveAttribute("data-mode", "light");
+  await expect(html).toHaveAttribute("data-mode", "dark");
   await page.getByRole("button", { name: "主题与外观" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "夜航" }).click();
   await expect(html).toHaveAttribute("data-mode", "dark");

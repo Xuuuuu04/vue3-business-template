@@ -5,9 +5,8 @@ import { saveDownload, useSession } from "@/shared/public";
 import {
   PageFrame,
   StatusMessage,
-  Card,
-  Grid,
-  Stack,
+  WorkArea,
+  UiAccordion,
   DescriptionList,
   FilePreview,
   UiButton,
@@ -56,8 +55,14 @@ const previewBlob = computed(() =>
 const fields = computed(() =>
   file.value
     ? [
-        { label: "类型", value: `${fileKind(file.value.name, file.value.content_type).label} · .${fileKind(file.value.name, file.value.content_type).ext.toLowerCase()}` },
-        { label: "大小", value: `${formatBytes(file.value.size)}（${file.value.size.toLocaleString("zh-CN")} 字节）` },
+        {
+          label: "类型",
+          value: `${fileKind(file.value.name, file.value.content_type).label} · .${fileKind(file.value.name, file.value.content_type).ext.toLowerCase()}`,
+        },
+        {
+          label: "大小",
+          value: `${formatBytes(file.value.size)}（${file.value.size.toLocaleString("zh-CN")} 字节）`,
+        },
         { label: "保存时间", value: formatDateTime(file.value.created_at) },
         { label: "文件编号", key: "id" },
         { label: "SHA-256", key: "sha" },
@@ -96,7 +101,7 @@ async function downloadCurrent() {
 }
 </script>
 <template>
-  <PageFrame :title="file?.name || '文件详情'" :back="returnTo">
+  <PageFrame :title="file?.name || '文件详情'" :back="returnTo" workspace>
     <template v-if="file" #icon
       ><UiFileIcon :name="file.name" :type="file.content_type"
     /></template>
@@ -117,50 +122,52 @@ async function downloadCurrent() {
         >下载原文件</UiButton
       ></template
     >
-    <StatusMessage :status="state.status" :error="state.error" />
-    <StatusMessage :status="downloading.status" :error="downloading.error" />
-    <StatusMessage :status="removal.status" :error="removal.error"
-      ><UiButton @click="detail.run({ org, id })"
-        >查询文件是否仍然存在</UiButton
+    <template #status>
+      <StatusMessage :status="state.status" :error="state.error" />
+      <StatusMessage :status="downloading.status" :error="downloading.error" />
+      <StatusMessage :status="removal.status" :error="removal.error"
+        ><UiButton @click="detail.run({ org, id })"
+          >查询文件是否仍然存在</UiButton
+        >
+        <p>
+          结果未确认时请不要再次删除。可返回列表查看最新结果。
+        </p></StatusMessage
       >
-      <p>结果未确认时请不要再次删除。可返回列表查看最新结果。</p></StatusMessage
-    >
-    <Grid v-if="file" ratio="2:1">
-      <Card title="预览">
+    </template>
+    <WorkArea fill>
+      <template v-if="file">
+        <UiAccordion :items="[{ value: 'info', title: '文件信息' }]">
+          <template #item-info>
+            <DescriptionList :items="fields" :columns="2">
+              <template #value-id
+                ><UiTag tone="code">{{ file.id }}</UiTag
+                ><UiCopy :text="file.id" label="复制文件编号"
+              /></template>
+              <template #value-sha
+                ><UiTag tone="code"
+                  >{{ file.sha256.slice(0, 10) }}…{{
+                    file.sha256.slice(-8)
+                  }}</UiTag
+                ><UiCopy :text="file.sha256" label="复制完整校验值"
+              /></template>
+            </DescriptionList>
+          </template>
+        </UiAccordion>
         <FilePreview
+          fill
           :name="file.name"
           :type="file.content_type"
           :size="file.size"
           :blob="previewBlob"
-          :loading="previewOf === id && preview.state.value.status === 'loading'"
+          :loading="
+            previewOf === id && preview.state.value.status === 'loading'
+          "
           :error="previewOf === id ? preview.state.value.error : undefined"
           @load="loadPreview"
-          ><template #unsupported
-            ><UiButton icon="download" @click="downloadCurrent"
-              >下载后查看</UiButton
-            ></template
-          ></FilePreview
-        >
-      </Card>
-      <Stack>
-        <Card title="文件信息">
-          <DescriptionList :items="fields"
-            ><template #value-id
-              ><UiTag tone="code">{{ file.id }}</UiTag
-              ><UiCopy :text="file.id" label="复制文件编号" /></template
-            ><template #value-sha
-              ><UiTag tone="code"
-                >{{ file.sha256.slice(0, 10) }}…{{ file.sha256.slice(-8) }}</UiTag
-              ><UiCopy :text="file.sha256" label="复制完整校验值"
-            /></template>
-          </DescriptionList>
-        </Card>
-      </Stack>
-    </Grid>
-    <Grid v-else-if="state.status === 'loading'" ratio="2:1">
-      <Card><UiSkeleton height="240px" /></Card>
-      <Card><Stack gap="sm"><UiSkeleton /><UiSkeleton width="80%" /><UiSkeleton width="60%" /></Stack></Card>
-    </Grid>
+        />
+      </template>
+      <UiSkeleton v-else-if="state.status === 'loading'" height="240px" />
+    </WorkArea>
     <UiDialog
       v-model:open="confirm"
       title="删除这个文件？"

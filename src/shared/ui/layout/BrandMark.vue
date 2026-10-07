@@ -13,8 +13,8 @@ const letter = computed(() => props.mark ?? props.name.slice(0, 1));
     <img v-if="logo" :src="logo" :alt="name" :style="{ height: px + 'px', width: 'auto', maxWidth: px * 3 + 'px' }" class="shrink-0 object-contain" />
     <span
       v-else
-      class="relative grid shrink-0 place-items-center font-bold text-primary-ink shadow-[0_1px_2px_oklch(0_0_0/0.18),inset_0_1px_0_oklch(1_0_0/0.35)]"
-      :style="{ width: px + 'px', height: px + 'px', borderRadius: px * 0.28 + 'px', fontSize: px * 0.5 + 'px', background: 'linear-gradient(145deg, color-mix(in oklch, var(--primary) 80%, white), var(--primary) 55%, color-mix(in oklch, var(--primary) 85%, black))' }"
+      class="relative grid shrink-0 place-items-center font-bold text-primary-ink bg-primary"
+      :style="{ width: px + 'px', height: px + 'px', borderRadius: px * 0.28 + 'px', fontSize: px * 0.5 + 'px', background: 'var(--primary)' }"
     >{{ letter }}</span>
     <span v-if="wordmark" class="truncate font-semibold tracking-tight" :style="{ fontSize: Math.round(px * 0.48) + 'px' }">{{ name }}</span>
   </span>

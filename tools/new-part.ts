@@ -64,7 +64,7 @@ if (kind === "page") {
     definition,
     "defineModule",
     "pages",
-    `{id:'${module}.${name}',title:${JSON.stringify(title)},path:'/${module}/${name}',file:'${file}',actions:[],components:['PageFrame'],load:()=>import('./${file}')}`,
+    `{id:'${module}.${name}',task:'填写此页唯一的用户任务',title:${JSON.stringify(title)},path:'/${module}/${name}',file:'${file}',actions:[],components:['PageFrame','WorkArea','UiEmpty'],load:()=>import('./${file}')}`,
   );
 } else {
   const ai = args.indexOf("--action");
@@ -120,7 +120,7 @@ definition = updateObject(
 );
 const content =
   kind === "page"
-    ? `<script setup lang="ts">\nimport { PageFrame } from '@/shared/ui/public';\n</script>\n<template><PageFrame title="${htmlTitle(title)}" /></template>\n`
+    ? `<script setup lang="ts">\nimport { PageFrame,WorkArea,UiEmpty } from '@/shared/ui/public';\n</script>\n<template><PageFrame title="${htmlTitle(title)}" workspace><WorkArea><UiEmpty title="页面尚未实现" /></WorkArea></PageFrame></template>\n`
     : `/** 该步骤已加入指定动作，填入真实业务之前明确失败。 */\nimport { defineStep } from '@/shared/public';\nfunction execute${name}(){throw new Error('步骤 ${name} 尚未实现');}\nexport const ${name}Step=defineStep({id:'${module}.${name}',title:${JSON.stringify(title)},rule:'R-待确认',reads:[],writes:[],uses:[],run:execute${name}});\n`;
 mkdirSync(target.slice(0, target.lastIndexOf("/")), { recursive: true });
 writeFileSync(target, content);

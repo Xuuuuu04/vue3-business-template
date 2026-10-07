@@ -57,18 +57,18 @@ const tokens = [["canvas", "页面底色"], ["surface", "卡片、表格"], ["mu
 const types = [
   ["展示标题", "32 / 600 / 字距 -1%", "text-[32px] leading-tight font-semibold tracking-tight", "每一步都看得见结果"],
   ["页面标题", "22 / 600", "text-[22px] font-semibold tracking-tight", "文件管理 Files 1,284,630"],
-  ["区块标题", "15 / 600", "text-[15px] font-semibold", "团队文件与最近上传"],
-  ["正文", "14 / 400", "", "表格、表单与说明都使用这个大小，中文用系统黑体，数字与英文用 Inter。"],
+  ["区块标题", "17 / 600", "text-[17px] font-semibold", "团队文件与最近上传"],
+  ["正文", "16 / 400", "", "表格、表单与说明都使用这个大小，中文用系统黑体，数字与英文用 Inter。"],
   ["辅助说明", "13 / 400", "text-[13px] text-fg-muted", "次要信息、字段提示、时间"],
   ["标注", "12 / 500", "text-xs font-medium text-fg-faint", "标签、页脚、快捷键"],
   ["数字", "等宽数字", "text-[26px] font-semibold tracking-tight tabular-nums", "1,284,630.50"],
 ];
 const recipes = [
-  ["列表页", "PageFrame → StatusLine → FilterBar → DataTable。快速查看用抽屉，可分享的详情用独立页。"],
-  ["详情页", "PageFrame（操作放右上）→ Card → DescriptionList；相关记录用时间线或表格。"],
-  ["表单页", "PageFrame narrow → Card → Stack → Field + 控件；提交按钮放右下。"],
-  ["总览页", "PageFrame → MetricStrip → 图表与排名并排 → 表格。"],
-  ["登录页", "AuthLayout → 标题 → Field + 大号输入 → 主按钮。名称、logo、文案在 app.config.ts 里改。"],
+  ["列表页", "PageFrame workspace → DataTable fill flat。一个列表占满主区，主要操作放右上，筛选放表格工具条。"],
+  ["详情页", "PageFrame workspace → WorkArea fill。围绕同一个对象展示，次要字段按需展开，主要操作只保留一个。"],
+  ["表单页", "PageFrame workspace → WorkArea form → 表单。说明贴近字段，保存入口放页头，不另做须知卡片。"],
+  ["设置页", "同一类设置使用一个主区；外观、账号、关于通过标签切换，不同时堆在首屏。"],
+  ["登录页", "AuthLayout → 字段 → 登录。只负责进入产品，品牌信息来自 app.config.ts。"],
 ];
 
 // —— 表单示例 ——

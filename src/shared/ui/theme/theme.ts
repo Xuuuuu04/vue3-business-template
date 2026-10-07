@@ -16,7 +16,7 @@ const STORAGE_KEY = "ui-theme";
 
 /** 产品默认主题。换产品时改这里，或在初始化时调用 setDefaultTheme。 */
 let defaults: ThemeSettings = {
-  palette: "graphite", mode: "light", radius: "soft", density: "compact", sidebar: "light", brandHue: null,
+  palette: "graphite", mode: "dark", radius: "soft", density: "comfortable", sidebar: "dark", brandHue: null,
 };
 const state = reactive<ThemeSettings>({ ...defaults });
 

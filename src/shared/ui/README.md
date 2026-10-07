@@ -1,6 +1,6 @@
 # 界面系统
 
-业务页面只从 `@/shared/ui/public` 取组件，不写颜色、字号、`style` 和局部样式。同一套组件在任何配色下都协调，所以页面怎么拼都好看。
+业务页面只从 `@/shared/ui/public` 取组件，不写颜色、字号、`style` 和局部样式。组件统一管理颜色和尺寸；页面是否清楚，还要根据用户任务安排内容。业务页必须通过单一任务的结构检查。
 
 ## 三层
 
@@ -22,10 +22,28 @@
 - 用户选择保存在浏览器，换设备不会跟随。
 - 新增配色：在 `presets.ts` 加一项，再运行 `npx playwright test tests/browser/theme-contrast.spec.ts`。它检查每套配色在浅色、深色和三种侧栏下的文字对比度（正文 4.5:1，提示 3:1），不达标就失败。
 
+## 多级侧栏与页面表面
+
+`AppShell` 的 `nav` 接受 `NavGroup[]`。每个 `NavItem` 可以有 `children`，目录可以只展开，也可以同时有 `to` 页面入口；可继续嵌套。当前页面自动展开全部祖先，链接与展开按钮分开操作，收起为图标后仍能重新打开目录。手机导航始终显示完整菜单，支持遮罩关闭、Esc 和键盘焦点返回。
+
+业务菜单在 `module.ts` 的 `navigation` 声明，`page` 引用已登记的固定页面编号，`children` 声明下级目录。未配置时沿用模块入口。应用按页面权限隐藏不可访问入口，没有可访问页面的目录会一并隐藏。参数详情页不进入菜单。
+
+```ts
+navigation: [{
+  label: "订单处理",
+  children: [
+    { label: "全部订单", page: "orders.list_page" },
+    { label: "新建订单", page: "orders.create_page" },
+  ],
+}]
+```
+
+默认外观为石墨深色、深色侧栏和宽松间距。页面使用实色表面、细边框和清晰的文字层级，不加背景纹理、光照或逐行出现的动画。原来保存过的主题继续保留，偏好设置里的“恢复默认”可查看新的默认效果。
+
 ## 品牌与字体
 
 - 产品名称、logo、标语、产品亮点、公司名、备案号、联系方式都在 `src/app/app.config.ts`。`BrandMark` 会按尺寸（sm、md、lg、xl）显示图片 logo，没有图片就用一个字做成圆角方块。浏览器标签页图标跟随品牌色自动生成。
-- 字体：西文与数字用 Inter（随包提供，不依赖网络），中文用系统黑体。层级：展示 32、页面标题 22、区块标题 15、正文 14、说明 13、标注 12；标题字重 600、字距略收；数字一律等宽（`tabular-nums`）。实际效果见「设计预览 → 配色与主题」。
+- 字体：西文与数字用 Inter（随包提供，不依赖网络），中文用系统黑体。层级：展示 32、页面标题 22、区块标题 17、默认正文与输入控件 16、说明 13、标注 12；标题字重 600、字距略收；数字一律等宽（`tabular-nums`）。实际效果见「设计预览 → 配色与主题」。
 - 法律与标识：登录页和应用页脚显示版权、备案号、用户协议、隐私政策与版本。协议文本在 `src/app/legal.ts`，是结构骨架，不是法律意见；`legal.reviewed` 改为 true 之前，协议页顶部会显示提醒。
 
 ## 组件
@@ -34,7 +52,7 @@
 
 | 用途 | 组件 |
 | --- | --- |
-| 操作 | `UiButton`（primary、secondary、ghost、danger-quiet、danger、link 行内操作、text 表格里可点开的名称；`icon="download"` 加图标；每个区域最多一个 primary）、`UiMenu`、`UiPopconfirm`（影响小的就近确认）、`UiKbd` |
+| 操作 | `UiButton`（primary、secondary、ghost、danger-quiet、danger、link 行内操作、text 表格里可点开的名称；`icon="download"` 加图标；整页最多一个 primary，独立确认弹层另算）、`UiMenu`、`UiPopconfirm`（影响小的就近确认）、`UiKbd` |
 | 文本输入 | `UiInput`、`UiPasswordInput`（显示密码、大写提醒）、`UiSearchInput`、`UiTextarea`（随内容长高、字数） |
 | 选择 | `UiSelect`（少于 10 项）、`UiCombobox`（可搜索、可多选）、`UiTagsInput`、`UiCheckbox`、`UiSwitch`（立即生效）、`UiRadioGroup`（含卡片样式）、`UiSegmented` |
 | 数字与日期 | `UiNumberInput`（加减、上下限、单位）、`UiDatePicker`、`UiDateRangePicker`（含常用范围）、`UiFileDrop` |
@@ -42,8 +60,8 @@
 | 标记 | `UiTag`（状态 ok、warn、bad；编码 code）、`UiAvatar`、`UiAvatarGroup`、`UiFileIcon`、`UiTime`（“3 小时前”，悬停看完整时间）、`UiCopy` |
 | 浮层 | `UiDialog`（短决定）、`UiDrawer`（从列表快速查看）、`useToast()`、`UiTip` |
 | 状态与反馈 | `UiAlert`（提示条）、`UiResult`（结果页）、`UiProgress`、`UiSteps`、`UiSkeleton`、`UiEmpty`、`StatusMessage`（动作失败或结果未知）、`BatchProgress`（批量逐项结果，配合 `useBatch`） |
-| 版式 | `PageFrame`（`back` 返回、`#icon`、`#actions`、`#tabs`、`#status`）、`Stack`、`Row`、`Grid`、`Card`、`StatusLine`、`UiTabs`、`UiAccordion` |
-| 数据 | `DataTable`、`CellText`、`FilterBar`、`FilterItem`、`MetricStrip`、`DescriptionList`、`Timeline`、`ActivityFeed`、`FilePreview`、`SelectList` |
+| 版式 | `PageFrame`（`back` 返回、`#icon`、`#actions`、`#tabs`、`#status`）、`Stack`、`Row`、`Grid`、`WorkArea`、`StatusLine`、`UiTabs`、`UiAccordion` |
+| 数据 | `DataTable`（`fill flat` 占满主区）、`CellText`、`FilterBar`、`FilterItem`、`MetricStrip`、`DescriptionList`、`Timeline`、`ActivityFeed`、`FilePreview`、`SelectList` |
 | 图表 | `LineChart`、`BarChart`、`DonutChart`、`BarList`、`Sparkline` |
 | AI 应用 | `ChatThread`（对话）、`PromptInput`（回车发送、停止生成）、`Markdown`（不执行 HTML）、`CodeBlock`、`UsageMeter` |
 | 外壳 | `AppShell`、`AuthLayout`、`BrandMark`、`AppFooter`、`TopProgress`、`CommandPalette`（⌘K）、`UserMenu`、`NotificationBell`（`notify()`）、`ThemePanel` |
@@ -52,24 +70,27 @@
 
 完整的实际效果看开发时的「设计预览」页（`/dev/design`），点配色即时切换。
 
-## 拼装规则
+## 单一任务的页面规则
 
-页面按下面的顺序拼，间距由组件决定，页面不调整：
+1. 在 `module.ts` 的页面登记中写 `task`，用一句话说明用户要完成什么。不能把互不相关的任务都叫“总览”。
+2. 页面只有一个 `PageFrame workspace`。标题由它提供，主操作放 `#actions`，整页最多一个 `primary`。独立确认弹层另算。
+3. 正文只有一个 `DataTable` 或 `WorkArea` 主区。业务页不能导入 `Card`，也不能在主区之前加说明段落或重复大标题。
+4. `#status` 只接受 `StatusMessage` 或 `StatusLine`。它表达实际失败、未知结果或必要业务状态，不承载页面宣传和开发说明。
+5. 低频信息按需展示：字段提示贴近字段，同一对象的补充信息用折叠区域，快速查看用抽屉；复杂处理用独立页。导航默认一到两层，需要更深时先说明实际用途。
+6. 主工作区使用可用宽高。表格只有表体滚动，分页留在底部；表单限制文字行宽，避免把输入框无限拉长。`Card` 保留供组件目录展示，不能作为业务布局入口。
 
-1. `PageFrame`：标题和主要操作。标题下面不放说明文字；需要让人知道的事实放进 `#status` 的 `StatusLine`（来源是否齐备、业务日、汇总数量）。
-2. 同一对象的相关内容用 `#tabs` 的 `UiTabs`。
-3. 内容用 `Stack` 竖排，横向并列用 `Grid`（等分或 3:2、2:1 比例）、`Row`（一排操作）。
-4. 需要独立浏览的一组信息放 `Card`；表格自带卡片，不再套 `Card`。
+生成器直接生成上述结构。`npm run check`、开发保存和打包检查会阻止卡片导入（包括改名导入）、多个主区、正文前的说明段落、重复 h1 和多个主要按钮。它检查结构，不能代替人判断任务是否清楚。
 
-常见页面：
-
-| 页面 | 拼法 |
+| 页面 | 推荐结构 |
 | --- | --- |
-| 列表 | `PageFrame` → `StatusLine` → `FilterBar` → `DataTable`；详情用 `UiDrawer` 或独立页 |
-| 详情 | `PageFrame back="上一级"`（标题左边放 `#icon`，操作放右上）→ `Grid ratio="2:1"`：左边主体（预览、内容），右边 `Card` + `DescriptionList`（编号、校验值配 `UiCopy`） |
-| 表单 | `PageFrame narrow` → `Card` → `Stack` → `Field` + 控件 → 提交按钮放 `Row justify="end"` |
-| 总览 | `PageFrame` → `MetricStrip` → `Grid ratio="3:2"`（`LineChart`、`BarList`）→ `DataTable` |
-| 登录 | `AuthLayout` → 标题 → `Field` 与 `UiInput size="lg"` → 主按钮 |
+| 列表 | `PageFrame workspace` → `DataTable fill flat`；筛选放表格工具条，新增入口放页头 |
+| 详情 | `PageFrame workspace` → `WorkArea fill`；围绕同一个对象，次要信息按需展开 |
+| 表单 | `PageFrame workspace` → `WorkArea form fill` → 表单；保存入口放页头，字段说明留在字段附近 |
+| 设置 | `PageFrame workspace` → 标签切换 → 一个 `WorkArea form fill` |
+| 总览 | 先明确是比较数据、查看地图还是处理异常，再选择一个主视图；不默认堆指标、图表和卡片 |
+| 登录 | `AuthLayout` → 登录字段 → 一个登录按钮 |
+
+可直接查看文件管理的列表、详情、上传页，以及 `/settings`。开发者组件目录为了比较组件而集中展示，不是业务页面布局样板。
 
 ## 按钮图标与模块图标
 

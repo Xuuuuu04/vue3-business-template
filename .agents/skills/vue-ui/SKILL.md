@@ -9,28 +9,29 @@ description: 新建、调整或评审页面，选择配色与组件，拼列表�
 
 ## 业务页面的规矩
 
-- 只从 `@/shared/ui/public` 取组件；用版式组件（`Stack`、`Row`、`Grid`、`Card`、`Field`）拼页面。
-- 不写 `style`、`class`、`<style>`、颜色值。检查会拦下，需要新样式就改界面系统，不在页面里绕。
-- 用到的组件名要登记进 `module.ts` 里该页面的 `components`。
-- 页面标题下面不放说明小字。需要让人知道的事实（来源是否齐备、业务日、汇总数量）放进 `#status` 的 `StatusLine`。
-- 每个区域最多一个 primary 按钮。页面上的删除入口用 `danger-quiet`，确认弹窗里最后一步才用 `danger`。
-- 字号 14px 起，辅助文字不小于 12px，由组件保证，页面不改。
+先写清页面登记里的 `task`：用户在此页要完成的唯一主要任务。侧栏按真实任务组织，默认一到两层；多级能力不意味着必须多级。
+
+- 页面使用一个 `PageFrame workspace`，正文只放一个 `DataTable` 或 `WorkArea`。禁止用 `Card` 拼业务页，也不在标题下面加说明段落。
+- 整页最多一个 `primary`，放在页头主要操作区；独立确认弹层另算。次要操作用 `secondary`、`ghost` 或 `link`。
+- `#status` 只放实际状态，不放产品介绍、使用说明或开发过程。帮助贴近操作；低频信息通过折叠区、抽屉或独立页按需提供。
+- 只从 `@/shared/ui/public` 取组件，用到的名字登记进 `module.ts` 的 `components`。不写 `style`、`class`、局部样式；需要新样式时修改公共界面系统。
+- 默认正文和控件 16px，辅助文字不小于 12px。实色表面、细边框、统一文字层级；不要追加背景纹理、发光、渐变装饰或逐行出现的动画。
 
 ## 拼页面
 
-| 页面 | 拼法 |
+| 页面 | 推荐结构 |
 | --- | --- |
-| 列表 | `PageFrame` → `StatusLine` → `FilterBar` → `DataTable`；快速查看用 `UiDrawer`，可分享的详情用独立页 |
-| 详情 | `PageFrame`（操作放右上）→ `Card` → `DescriptionList`；相关记录用 `Timeline`、`DataTable` |
-| 表单 | `PageFrame narrow` → `Card` → `Stack` → `Field` + 控件 → 提交按钮放 `Row justify="end"` |
-| 总览 | `PageFrame` → `MetricStrip` → `Grid ratio="3:2"`（`LineChart`、`BarList`）→ `DataTable` |
-| 登录 | `AuthLayout` → 标题 → `Field` + `UiInput size="lg"` → 主按钮 |
+| 列表 | `PageFrame workspace` → `DataTable fill flat`；筛选紧贴表格，新增入口放页头 |
+| 详情 | `PageFrame workspace` → `WorkArea fill`；一个对象占主区，次要字段按需展开 |
+| 表单 | `PageFrame workspace` → `WorkArea form fill` → 表单；保存入口放页头，说明贴近字段 |
+| 设置 | 标签切换对应任务，一个主区一次只显示一类设置 |
+| 总览 | 先确定用户要比较、查看还是处理什么，再选一个主视图；不默认堆指标与图表 |
 
-读取、空、失败、结果未知四种状态都要有表现：读取用 `loading`（表格骨架）；没有数据用 `UiEmpty` 或表格的空状态并给出下一步；失败和结果未知用 `StatusMessage`，补救按钮放在它的插槽里。筛选、分页、返回后的位置按 `vue-module` 的规则保持在 URL 里。
+对照真实业务页：`src/modules/file_library/pages/` 和 `/settings`。开发者工具里的组件目录是用于挑选组件的展示，不是可以直接复制的业务布局。
 
-## 表格
+读取用骨架、空状态给下一步、失败和未知结果保留输入并提供适用的恢复操作。筛选、分页和返回位置要保持。快速查看用 `UiDrawer`，复杂处理与可分享详情使用独立页。
 
-列用 `columns` 声明，特殊单元格用 `#cell-列名`。数字列 `kind: "number"`，涨跌 `kind: "delta"`，单位写 `unit`，固定列写 `sticky` 和 `width`。需要批量操作加 `selectable` 并用 `#bulk`，分组用 `group-by`，行内展开用 `#expanded`。表格自带卡片、列设置、全屏和分页，不再外套 `Card`。
+表格列用 `columns` 声明；数字右侧显示、单位写 `unit`；行内操作用插槽。一个表格直接占据主区，不套卡片。`npm run check` 会检查上述结构，视觉和任务是否清楚仍须在浏览器确认。
 
 ## 配色与主题
 

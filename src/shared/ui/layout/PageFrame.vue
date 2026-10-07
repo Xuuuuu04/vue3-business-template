@@ -1,22 +1,40 @@
 <script setup lang="ts">
-/**
- * 页面骨架：标题与操作、可选的标签页和状态行，然后是内容。
- * 标题下面不放说明文字；需要让人知道的状态放进 status 插槽。narrow 用于表单和详情，靠左对齐，与其他页面共用左边线。
- */
+/** 一页只围绕一个任务。workspace 固定页头、让主区占满剩余空间；文档页自然滚动。 */
 import { RouterLink } from "vue-router";
 import { ArrowLeft } from "lucide-vue-next";
-defineProps<{ title: string; narrow?: boolean; /** 返回的上一级地址，标题左边出现返回箭头。 */ back?: string }>();
+defineProps<{
+  title: string;
+  workspace?: boolean;
+  narrow?: boolean;
+  back?: string;
+}>();
 </script>
 <template>
-  <section class="w-full animate-[rise_.4s_var(--ease)] px-(--page-px) pt-6 pb-10" :class="narrow ? 'max-w-4xl' : 'max-w-[1680px]'" :aria-label="title">
-    <header class="mb-4 flex min-h-9 flex-wrap items-center gap-3">
-      <RouterLink v-if="back" :to="back" class="-ml-1.5 grid size-8 shrink-0 place-items-center rounded-md text-fg-muted transition-colors hover:bg-muted hover:text-fg" aria-label="返回"><ArrowLeft class="size-[18px]" /></RouterLink>
+  <section
+    class="page-frame"
+    :class="{ 'page-workspace': workspace }"
+    :aria-label="title"
+  >
+    <header class="page-heading">
+      <RouterLink
+        v-if="back"
+        :to="back"
+        class="grid size-8 shrink-0 place-items-center rounded-md text-fg-muted transition-colors hover:bg-muted hover:text-fg"
+        aria-label="返回"
+        ><ArrowLeft class="size-[18px]"
+      /></RouterLink>
       <slot name="icon" />
-      <h1 class="min-w-0 flex-1 truncate text-[22px] leading-8 font-semibold tracking-tight">{{ title }}</h1>
-      <div v-if="$slots.actions" class="flex flex-wrap items-center gap-2"><slot name="actions" /></div>
+      <h1 class="min-w-0 flex-1 truncate text-[22px] leading-8 font-semibold">
+        {{ title }}
+      </h1>
+      <div v-if="$slots.actions" class="flex flex-wrap items-center gap-2">
+        <slot name="actions" />
+      </div>
     </header>
-    <div v-if="$slots.tabs" class="mb-4"><slot name="tabs" /></div>
-    <div v-if="$slots.status" class="mb-3"><slot name="status" /></div>
-    <div class="flex flex-col gap-3"><slot /></div>
+    <div v-if="$slots.tabs" class="page-tabs"><slot name="tabs" /></div>
+    <div v-if="$slots.status" class="page-status"><slot name="status" /></div>
+    <div class="page-content" :class="{ 'page-content-narrow': narrow }">
+      <slot />
+    </div>
   </section>
 </template>

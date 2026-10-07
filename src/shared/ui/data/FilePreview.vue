@@ -9,7 +9,7 @@ import { fileKind, formatBytes } from "../lib/format";
  * 文件预览：文本显示前 200 行，图片按比例显示；其他类型说明不能预览。
  * 不自动读取文件内容，用户点“显示预览”才发出 load 事件，由页面去取内容后传回 blob。
  */
-const props = defineProps<{ name: string; type?: string; size: number; blob?: Blob; loading?: boolean; error?: string }>();
+const props = defineProps<{ name: string; type?: string; size: number; blob?: Blob; loading?: boolean; error?: string; fill?: boolean }>();
 const emit = defineEmits<{ load: [] }>();
 const kind = computed(() => fileKind(props.name, props.type));
 /** 超过这个大小的文本不预览，避免一次读入太多内容。 */
@@ -29,9 +29,9 @@ watch(() => props.blob, async (b) => {
 onBeforeUnmount(() => url.value && URL.revokeObjectURL(url.value));
 </script>
 <template>
-  <div class="overflow-hidden rounded-lg border border-line bg-subtle">
+  <div class="overflow-hidden border border-line bg-subtle" :class="fill ? 'flex min-h-64 flex-1 flex-col rounded-md' : 'rounded-lg'">
     <div v-if="loading" class="flex flex-col gap-2.5 p-5"><Skeleton width="70%" /><Skeleton width="90%" /><Skeleton width="50%" /><Skeleton width="80%" /></div>
-    <div v-else-if="blob && url" class="grid min-h-64 place-items-center bg-[repeating-conic-gradient(var(--muted)_0_25%,transparent_0_50%)] bg-[length:20px_20px] p-6"><img :src="url" :alt="name" class="max-h-[480px] max-w-full rounded-md shadow-card" /></div>
+    <div v-else-if="blob && url" class="grid min-h-64 flex-1 place-items-center bg-[repeating-conic-gradient(var(--muted)_0_25%,transparent_0_50%)] bg-[length:20px_20px] p-6"><img :src="url" :alt="name" class="max-h-[480px] max-w-full rounded-md shadow-card" /></div>
     <div v-else-if="blob && table" class="max-h-[480px] overflow-auto">
       <table class="w-full border-separate border-spacing-0 text-[13px]">
         <thead><tr><th v-for="(h, i) in table[0]" :key="i" class="sticky top-0 border-b border-line bg-muted px-3 py-2 text-left font-semibold whitespace-nowrap">{{ h }}</th></tr></thead>
@@ -41,7 +41,7 @@ onBeforeUnmount(() => url.value && URL.revokeObjectURL(url.value));
     <ol v-else-if="blob" class="max-h-[480px] overflow-auto py-3 font-mono text-[13px] leading-6">
       <li v-for="(l, i) in lines" :key="i" class="flex px-4 hover:bg-muted"><span class="w-10 shrink-0 pr-4 text-right text-fg-faint select-none tabular-nums">{{ i + 1 }}</span><span class="whitespace-pre-wrap break-all">{{ l || " " }}</span></li>
     </ol>
-    <div v-else class="flex min-h-64 flex-col items-center justify-center gap-3 p-8 text-center">
+    <div v-else class="flex min-h-64 flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
       <FileIcon :name="name" :type="type" size="lg" />
       <template v-if="canPreview">
         <p class="text-fg-muted">{{ kind.label }} · {{ formatBytes(size) }}</p>

@@ -6,6 +6,9 @@ export default defineModule({
   description: "按团队查看、上传、下载与删除文件",
   icon: "folder",
   dependsOn: [],
+  navigation: [
+    { label: "上传文件", page: "file_library.upload_page" },
+  ],
   files: [
     "README.md",
     "module.ts",
@@ -32,6 +35,7 @@ export default defineModule({
     {
       id: "file_library.list_page",
       title: "文件列表",
+      task: "查找并打开团队文件",
       path: "/files",
       permission: "file_library.read",
       file: "pages/ListPage.vue",
@@ -60,6 +64,7 @@ export default defineModule({
     {
       id: "file_library.detail_page",
       title: "文件详情",
+      task: "查看并下载当前文件",
       path: "/files/:id",
       permission: "file_library.read",
       file: "pages/DetailPage.vue",
@@ -71,10 +76,9 @@ export default defineModule({
       components: [
         "PageFrame",
         "StatusMessage",
-        "Card",
-        "Grid",
-        "Stack",
+        "WorkArea",
         "DescriptionList",
+        "UiAccordion",
         "FilePreview",
         "UiButton",
         "UiDialog",
@@ -88,6 +92,7 @@ export default defineModule({
     {
       id: "file_library.upload_page",
       title: "上传文件",
+      task: "保存一个文件到团队文件库",
       path: "/files/upload",
       permission: "file_library.write",
       file: "pages/UploadPage.vue",
@@ -95,10 +100,9 @@ export default defineModule({
       components: [
         "PageFrame",
         "StatusMessage",
-        "Card",
+        "WorkArea",
         "Stack",
         "Row",
-        "Grid",
         "UiButton",
         "UiFileDrop",
         "UiFileIcon",

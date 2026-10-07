@@ -1,3 +1,4 @@
+import { inspectPageLayout } from "./page-layout";
 /** 源码结构检查使用 TS 和 Vue 语法树，发现违规后拒绝启动与打包。 */
 import ts from "typescript";
 import { parse } from "@vue/compiler-sfc";
@@ -139,6 +140,7 @@ export function inspectModule(
         }
         visitTemplate(tree);
         const page = module.pages.find((p) => p.file === name);
+        if (page) errors.push(...inspectPageLayout(tree, scripts, page).map((message) => `${name}：${message}`));
         if (page)
           for (const component of used)
             if (!page.components.includes(component))

@@ -1,9 +1,13 @@
+<script lang="ts">
+/** 返回列表时恢复表体位置，仅保存本次页面会话内最近 50 个地址。 */
+const scrollPositions = new Map<string, number>();
+</script>
 <script setup lang="ts" generic="T extends object">
 /**
  * 数据表格：排序、勾选、固定列、行内展开、分组折叠、列设置、全屏、分页、批量操作条。
  * 列用 columns 声明；特殊单元格用 cell-列名 插槽；数据读取状态用 loading 与 empty 表达。
  */
-import { computed, ref, useSlots, watch, onBeforeUnmount } from "vue";
+import { computed, ref, useSlots, watch, onBeforeUnmount, onMounted, nextTick } from "vue";
 import { ArrowDown, ArrowUp, ChevronDown, ChevronsUpDown, Columns3, Maximize2, Minimize2 } from "lucide-vue-next";
 import { PopoverRoot, PopoverTrigger, PopoverPortal, PopoverContent } from "reka-ui";
 import type { DataColumn, SortState } from "../lib/types";
@@ -28,8 +32,14 @@ const props = withDefaults(
     groupBy?: string;
     /** 为 true 时点击表头只发出 sort 变化，由页面重新读取；默认在当前页内排序。 */
     serverSort?: boolean;
-    /** 表格区域最高多少；默认留出页头后占满一屏，表头和分页始终可见。写 "none" 跟随页面滚动。 */
+    /** 表体最高多少；fill 模式由父工作区决定高度，普通模式跟随内容。 */
     maxHeight?: string;
+    /** 在主工作区占满剩余高度，只有表体滚动。 */
+    fill?: boolean;
+    /** 一般传列表完整地址，筛选和分页分别保留位置。 */
+    scrollKey?: string;
+    /** 直接作为页面主区时不再包一层卡片边框。 */
+    flat?: boolean;
     emptyTitle?: string;
     emptyHint?: string;
     total?: number;
@@ -41,6 +51,19 @@ const props = withDefaults(
   }>(),
   { emptyTitle: "没有符合条件的数据", settings: true, fullscreenable: true },
 );
+const scrollport = ref<HTMLElement>();
+function saveScroll() {
+  if (!props.scrollKey || !scrollport.value) return;
+  scrollPositions.set(props.scrollKey, scrollport.value.scrollTop);
+  if (scrollPositions.size > 50) scrollPositions.delete(scrollPositions.keys().next().value!);
+}
+async function restoreScroll() {
+  await nextTick();
+  if (props.scrollKey && scrollport.value)
+    scrollport.value.scrollTop = scrollPositions.get(props.scrollKey) ?? 0;
+}
+onMounted(restoreScroll);
+watch([() => props.scrollKey, () => props.loading, () => props.rows.length], restoreScroll, { flush: "post" });
 const selected = defineModel<string[]>("selected", { default: () => [] });
 const sort = defineModel<SortState | null>("sort", { default: null });
 const expanded = defineModel<string[]>("expanded", { default: () => [] });
@@ -69,7 +92,6 @@ const SELECT_WIDTH = 44;
 
 /** 行对象按列名取值；列名由页面声明，类型在这里放宽。 */
 function cell(row: T, key: string): unknown { return (row as Record<string, unknown>)[key]; }
-function rowIndex(row: T): number { return props.rows.indexOf(row); }
 function keyOf(row: T): string { return String(cell(row, props.rowKey)); }
 
 /** 固定列的位置：左固定列从勾选列之后依次排开，右固定列从右边依次排开。 */
@@ -161,12 +183,12 @@ const hasToolbar = computed(() => props.title || props.meta || slots["toolbar"] 
 const showFooter = computed(() => props.total !== undefined);
 function onKey(e: KeyboardEvent) { if (e.key === "Escape") fullscreen.value = false; }
 watch(fullscreen, (v) => { v ? document.addEventListener("keydown", onKey) : document.removeEventListener("keydown", onKey); });
-onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
+onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", onKey); });
 </script>
 
 <template>
-  <section class="relative flex min-w-0 flex-col overflow-hidden border border-line bg-surface shadow-card" :class="fullscreen ? 'fixed inset-0 z-[60] rounded-none' : 'rounded-lg'" :aria-label="title ?? '数据表格'">
-    <header v-if="hasToolbar" class="flex min-h-13 flex-wrap items-center gap-2 py-2 pr-3 pl-4">
+  <section class="relative flex min-h-0 min-w-0 flex-col overflow-hidden bg-surface" :class="[fullscreen ? 'fixed inset-0 z-[60]' : !flat && 'rounded-lg border border-line', fill && 'flex-1']" :aria-label="title ?? '数据表格'">
+    <header v-if="hasToolbar" class="flex min-h-12 shrink-0 flex-wrap items-center gap-3 pb-3" :class="!flat && 'px-4 pt-3'">
       <slot name="search" />
       <h2 v-if="title" class="text-[15px] font-semibold">{{ title }}</h2>
       <span v-if="meta" class="text-[13px] text-fg-faint tabular-nums">{{ meta }}</span>
@@ -194,7 +216,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       </Tip>
     </header>
 
-    <div class="min-h-0 flex-1 overflow-auto border-t border-line" :style="{ maxHeight: fullscreen ? 'none' : (maxHeight ?? 'calc(100dvh - 330px)') }">
+    <div ref="scrollport" data-table-scroll @scroll="saveScroll" class="min-h-0 flex-1 overflow-auto border-t border-line" :style="{ maxHeight: fullscreen || fill ? 'none' : (maxHeight ?? 'none') }">
       <table class="w-full min-w-max border-separate border-spacing-0">
         <thead>
           <tr>
@@ -217,7 +239,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
                     <ChevronsUpDown v-else class="size-3.5 text-fg-faint" />
                   </template>
                 </span>
-                <span v-if="c.unit" class="text-[11px] leading-none font-normal text-fg-faint">{{ c.unit }}</span>
+                <span v-if="c.unit" class="text-[12px] leading-none font-normal text-fg-faint">{{ c.unit }}</span>
               </span>
             </th>
           </tr>
@@ -243,7 +265,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
               </td>
             </tr>
             <template v-for="row in g.rows" :key="keyOf(row)">
-              <tr v-show="!collapsed.has(g.key)" class="group/row animate-[fade_.35s_ease-out_both]" :style="{ animationDelay: `${Math.min(rowIndex(row), 12) * 22}ms` }" :class="[rowClickable && 'cursor-pointer', selected.includes(keyOf(row)) && 'is-selected']" @dblclick="slots['expanded'] && toggleExpand(row)" @click="clickRow($event, row)">
+              <tr v-show="!collapsed.has(g.key)" class="group/row" :class="[rowClickable && 'cursor-pointer', selected.includes(keyOf(row)) && 'is-selected']" @dblclick="slots['expanded'] && toggleExpand(row)" @click="clickRow($event, row)">
                 <td v-if="selectable" class="sticky left-0 z-10 h-(--row-h) border-b border-line bg-surface pl-4 group-hover/row:bg-subtle group-[.is-selected]/row:bg-primary-soft">
                   <UiCheckbox :model-value="selected.includes(keyOf(row))" :aria-label="`选择第 ${keyOf(row)} 行`" @update:model-value="(v) => toggleRow(row, v)" />
                 </td>
@@ -278,7 +300,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         <button type="button" class="h-7 rounded-md px-2.5 text-[13px] text-surface/70 hover:bg-surface/10 hover:text-surface" @click="selected = []">取消选择</button>
       </div>
     </Transition>
-    <footer v-if="showFooter" class="flex flex-wrap items-center gap-3 border-t border-line px-4 py-2.5 text-[13px] text-fg-muted">
+    <footer v-if="showFooter" class="flex shrink-0 flex-wrap items-center gap-3 border-t border-line py-3 text-[13px] text-fg-muted" :class="!flat && 'px-4'">
       <span class="tabular-nums">{{ range }}</span>
       <slot name="footer" />
       <span class="flex-1" />
