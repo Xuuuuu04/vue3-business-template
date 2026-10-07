@@ -18,7 +18,7 @@ watch(() => props.messages.map((m) => m.content.length).join(","), () => nextTic
   <div ref="box" class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-1 py-4" role="log" aria-live="polite" @scroll="onScroll">
     <template v-for="m in messages" :key="m.id">
       <div v-if="m.role === 'user'" class="flex justify-end gap-3">
-        <div class="max-w-[75%] rounded-2xl rounded-tr-md bg-primary-soft px-4 py-2.5 whitespace-pre-wrap">{{ m.content }}</div>
+        <div class="max-w-[75%] rounded-xl bg-subtle px-4 py-2.5 whitespace-pre-wrap">{{ m.content }}</div>
         <Avatar :name="userName ?? '我'" size="md" />
       </div>
       <div v-else class="group flex gap-3">

@@ -21,7 +21,7 @@ const router = useRouter();
       </PopoverTrigger>
     </Tip>
     <PopoverPortal>
-      <PopoverContent align="end" :side-offset="8" class="z-[100] w-[340px] overflow-hidden rounded-lg border border-line bg-surface shadow-pop data-[state=open]:animate-[pop_.14s_var(--ease)]">
+      <PopoverContent align="end" :side-offset="8" class="z-[100] w-[340px] overflow-hidden rounded-lg border border-line bg-surface popup-surface data-[state=open]:animate-[pop_.14s_var(--ease)]">
         <div class="flex items-center border-b border-line px-4 py-3"><b class="font-semibold">通知</b><button v-if="items.length" type="button" class="ml-auto text-[13px] text-fg-muted hover:text-fg" @click="clear">清空</button></div>
         <EmptyState v-if="!items.length" title="暂时没有通知" hint="有新的提醒会显示在这里"><template #icon><BellOff class="size-5" /></template></EmptyState>
         <ul v-else class="max-h-80 overflow-auto">

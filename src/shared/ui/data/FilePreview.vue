@@ -31,14 +31,14 @@ onBeforeUnmount(() => url.value && URL.revokeObjectURL(url.value));
 <template>
   <div class="overflow-hidden border border-line bg-subtle" :class="fill ? 'flex min-h-64 flex-1 flex-col rounded-md' : 'rounded-lg'">
     <div v-if="loading" class="flex flex-col gap-2.5 p-5"><Skeleton width="70%" /><Skeleton width="90%" /><Skeleton width="50%" /><Skeleton width="80%" /></div>
-    <div v-else-if="blob && url" class="grid min-h-64 flex-1 place-items-center bg-[repeating-conic-gradient(var(--muted)_0_25%,transparent_0_50%)] bg-[length:20px_20px] p-6"><img :src="url" :alt="name" class="max-h-[480px] max-w-full rounded-md shadow-card" /></div>
-    <div v-else-if="blob && table" class="max-h-[480px] overflow-auto">
-      <table class="w-full border-separate border-spacing-0 text-[13px]">
+    <div v-else-if="blob && url" class="flex min-h-64 flex-1 items-center justify-center overflow-hidden bg-[repeating-conic-gradient(var(--muted)_0_25%,transparent_0_50%)] bg-[length:20px_20px] p-6"><img :src="url" :alt="name" class="max-w-full rounded-md object-contain" :class="fill ? 'min-h-0 h-full max-h-full' : 'max-h-[480px]'" /></div>
+    <div v-else-if="blob && table" :class="fill ? 'min-h-0 flex-1 overflow-auto' : 'max-h-[480px] overflow-auto'">
+      <table class="w-full border-separate border-spacing-0 text-[14px]">
         <thead><tr><th v-for="(h, i) in table[0]" :key="i" class="sticky top-0 border-b border-line bg-muted px-3 py-2 text-left font-semibold whitespace-nowrap">{{ h }}</th></tr></thead>
         <tbody><tr v-for="(r, i) in table.slice(1)" :key="i" class="hover:bg-muted"><td v-for="(c, j) in r" :key="j" class="border-b border-line px-3 py-2 whitespace-nowrap tabular-nums" :class="/^-?[\d.,]+$/.test(c) && 'text-right'">{{ c }}</td></tr></tbody>
       </table>
     </div>
-    <ol v-else-if="blob" class="max-h-[480px] overflow-auto py-3 font-mono text-[13px] leading-6">
+    <ol v-else-if="blob" class="overflow-auto py-4 font-mono text-[14px] leading-6" :class="fill ? 'min-h-0 flex-1' : 'max-h-[480px]'">
       <li v-for="(l, i) in lines" :key="i" class="flex px-4 hover:bg-muted"><span class="w-10 shrink-0 pr-4 text-right text-fg-faint select-none tabular-nums">{{ i + 1 }}</span><span class="whitespace-pre-wrap break-all">{{ l || " " }}</span></li>
     </ol>
     <div v-else class="flex min-h-64 flex-1 flex-col items-center justify-center gap-3 p-8 text-center">

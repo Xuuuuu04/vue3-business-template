@@ -18,7 +18,7 @@ function swatch(id: string) { const p = palettes.find((x) => x.id === id)!; retu
       <PopoverTrigger as-child><Button variant="ghost" size="icon" aria-label="主题与外观"><PaletteIcon class="size-[18px]" /></Button></PopoverTrigger>
     </Tip>
     <PopoverPortal>
-      <PopoverContent align="end" :side-offset="8" class="z-[100] max-h-[80vh] w-[320px] overflow-auto rounded-lg border border-line bg-surface p-4 shadow-pop data-[state=open]:animate-[pop_.14s_var(--ease)]">
+      <PopoverContent align="end" :side-offset="8" class="z-[100] max-h-[80vh] w-[320px] overflow-auto rounded-lg border border-line bg-surface p-4 popup-surface data-[state=open]:animate-[pop_.14s_var(--ease)]">
         <div class="flex flex-col gap-4">
           <section>
             <h3 class="mb-2 text-[13px] font-semibold text-fg-muted">配色</h3>
@@ -30,14 +30,14 @@ function swatch(id: string) { const p = palettes.find((x) => x.id === id)!; retu
           </section>
           <section>
             <h3 class="mb-2 text-[13px] font-semibold text-fg-muted">明暗</h3>
-            <div class="grid grid-cols-2 gap-1 rounded-md bg-muted p-0.5">
+            <div class="grid grid-cols-2 gap-1 rounded-lg bg-subtle p-1">
               <button type="button" class="flex h-8 items-center justify-center gap-1.5 rounded-sm" :class="settings.mode === 'light' && 'bg-surface font-medium shadow-card'" @click="update({ mode: 'light' })"><Sun class="size-4" />浅色</button>
               <button type="button" class="flex h-8 items-center justify-center gap-1.5 rounded-sm" :class="settings.mode === 'dark' && 'bg-surface font-medium shadow-card'" @click="update({ mode: 'dark' })"><Moon class="size-4" />深色</button>
             </div>
           </section>
           <section v-for="[title, options, key] in ([['圆角', radii, 'radius'], ['疏密', densities, 'density'], ['侧栏', sidebars, 'sidebar']] as const)" :key="key">
             <h3 class="mb-2 text-[13px] font-semibold text-fg-muted">{{ title }}</h3>
-            <div class="flex gap-1 rounded-md bg-muted p-0.5">
+            <div class="flex gap-1 rounded-lg bg-subtle p-1">
               <button v-for="[v, label] in options" :key="v" type="button" class="h-8 flex-1 rounded-sm" :class="settings[key] === v && 'bg-surface font-medium shadow-card'" :aria-pressed="settings[key] === v" @click="update({ [key]: v })">{{ label }}</button>
             </div>
           </section>

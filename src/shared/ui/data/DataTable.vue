@@ -201,7 +201,7 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
           </PopoverTrigger>
         </Tip>
         <PopoverPortal>
-          <PopoverContent align="end" :side-offset="6" class="z-[100] w-52 rounded-lg border border-line bg-surface p-2 shadow-pop data-[state=open]:animate-[pop_.14s_var(--ease)]">
+          <PopoverContent align="end" :side-offset="6" class="z-[100] w-52 rounded-lg border border-line bg-surface p-2 popup-surface data-[state=open]:animate-[pop_.14s_var(--ease)]">
             <p class="px-2 pt-1 pb-2 text-xs text-fg-faint">显示的列</p>
             <div v-for="c in columns" :key="c.key" class="flex h-8 items-center rounded-md px-2 hover:bg-muted">
               <UiCheckbox :model-value="!hidden.has(c.key)" :label="c.title" @update:model-value="(v) => toggleColumn(c.key, v)" />
@@ -228,6 +228,9 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
               class="sticky top-0 h-10 border-b border-line bg-subtle px-(--cell-px) align-middle text-[13px] font-semibold whitespace-nowrap text-fg-muted"
               :class="[cellClass(c), c.sticky ? 'z-30' : 'z-20', c.key === lastLeft && 'shadow-[1px_0_0_var(--line)]', c.key === firstRight && 'shadow-[-1px_0_0_var(--line)]', c.sortable && 'cursor-pointer select-none hover:text-fg']"
               :style="{ ...widthStyle(c), ...stickyStyle(c) }"
+               :tabindex="c.sortable ? 0 : undefined"
+              @keydown.enter="toggleSort(c)"
+              @keydown.space.prevent="toggleSort(c)"
               @click="toggleSort(c)"
             >
               <span class="inline-flex flex-col" :class="(c.kind === 'number' || c.kind === 'delta' || c.align === 'right') && 'items-end'">
@@ -293,7 +296,7 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
     </div>
 
     <Transition enter-from-class="opacity-0 translate-y-4" enter-active-class="transition duration-200 ease-(--ease)" leave-active-class="transition duration-150" leave-to-class="opacity-0 translate-y-4">
-      <div v-if="selectable && selected.length" class="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-xl bg-fg py-2 pr-2 pl-4 text-surface shadow-pop" role="toolbar" aria-label="批量操作">
+      <div v-if="selectable && selected.length" class="fixed bottom-6 left-1/2 z-40 flex max-w-[calc(100vw-32px)] -translate-x-1/2 flex-wrap items-center justify-center gap-3 rounded-xl bg-fg py-2 pr-2 pl-4 text-surface popup-surface" role="toolbar" aria-label="批量操作">
         <span class="tabular-nums">已选 <b>{{ selected.length }}</b> 项</span>
         <span class="mx-1 h-5 w-px bg-surface/20" />
         <slot name="bulk" :count="selected.length" :clear="() => (selected = [])" />

@@ -11,6 +11,7 @@ const PAIRS: [string, string, number][] = [
   ["primary-ink", "primary", 4.5], ["primary-text", "primary-soft", 4.5], ["primary-text", "surface", 4.5],
   ["ok", "ok-soft", 4.5], ["warn", "warn-soft", 4.5], ["bad", "bad-soft", 4.5], ["info", "info-soft", 4.5],
   ["ok", "surface", 4.5], ["bad", "surface", 4.5],
+  ["auth-fg", "auth-bg", 4.5], ["auth-muted", "auth-bg", 4.5],
   ["side-fg", "side-bg", 4.5], ["side-active", "side-bg", 4.5], ["side-fg-faint", "side-bg", 3],
   ["side-active", "side-selected", 4.5], ["side-active", "side-selected-hover", 4.5], ["side-fg", "side-hover", 4.5],
 ];

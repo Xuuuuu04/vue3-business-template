@@ -5,7 +5,7 @@ import { ChevronDown } from "lucide-vue-next";
 defineProps<{ items: { value: string; title: string }[]; multiple?: boolean; defaultOpen?: string[] }>();
 </script>
 <template>
-  <AccordionRoot :type="multiple ? 'multiple' : 'single'" :default-value="multiple ? defaultOpen : defaultOpen?.[0]" collapsible class="divide-y divide-line rounded-lg border border-line">
+  <AccordionRoot :type="multiple ? 'multiple' : 'single'" :default-value="multiple ? defaultOpen : defaultOpen?.[0]" collapsible class="divide-y divide-line border-y border-line">
     <AccordionItem v-for="it in items" :key="it.value" :value="it.value">
       <AccordionHeader>
         <AccordionTrigger class="group flex w-full items-center justify-between px-4 py-3 text-left font-medium hover:bg-subtle">

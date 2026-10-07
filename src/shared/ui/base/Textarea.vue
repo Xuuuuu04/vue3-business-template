@@ -26,8 +26,8 @@ onMounted(fit);
       :placeholder="placeholder"
       :disabled="disabled"
       :aria-invalid="invalid || undefined"
-      class="block w-full resize-none rounded-md border bg-surface px-2.5 py-2 leading-relaxed text-fg transition-[border-color,box-shadow] duration-150 outline-none placeholder:text-fg-faint hover:border-fg-faint focus:border-primary focus:shadow-[0_0_0_3px_var(--ring)] disabled:opacity-50"
-      :class="[invalid ? 'border-bad' : 'border-line-strong', maxlength && 'pb-6']"
+      class="block w-full resize-none control-surface rounded-md border bg-surface px-2.5 py-2 leading-relaxed text-fg transition-[border-color,box-shadow] duration-150 outline-none placeholder:text-fg-faint hover:border-line-strong focus:border-primary focus:shadow-[0_0_0_2px_var(--ring)] disabled:opacity-50"
+      :class="[invalid ? 'border-bad' : 'border-line', maxlength && 'pb-6']"
     />
     <span v-if="maxlength" class="pointer-events-none absolute right-2.5 bottom-1.5 text-xs text-fg-faint tabular-nums">{{ model.length }} / {{ maxlength }}</span>
   </div>

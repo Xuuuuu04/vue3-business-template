@@ -56,7 +56,7 @@ const series = [{ name: "本月", values: a }, { name: "上月同期", values: a
 const tokens = [["canvas", "页面底色"], ["surface", "卡片、表格"], ["muted", "悬停、分隔"], ["line", "边框"], ["fg", "正文"], ["fg-muted", "次要文字"], ["primary", "品牌色"], ["primary-soft", "品牌浅底"], ["ok", "成功"], ["warn", "待处理"], ["bad", "失败"], ["info", "提示"]];
 const types = [
   ["展示标题", "32 / 600 / 字距 -1%", "text-[32px] leading-tight font-semibold tracking-tight", "每一步都看得见结果"],
-  ["页面标题", "22 / 600", "text-[22px] font-semibold tracking-tight", "文件管理 Files 1,284,630"],
+  ["页面标题", "24 / 600", "text-[24px] font-semibold tracking-tight", "文件管理 Files 1,284,630"],
   ["区块标题", "17 / 600", "text-[17px] font-semibold", "团队文件与最近上传"],
   ["正文", "16 / 400", "", "表格、表单与说明都使用这个大小，中文用系统黑体，数字与英文用 Inter。"],
   ["辅助说明", "13 / 400", "text-[13px] text-fg-muted", "次要信息、字段提示、时间"],
@@ -127,7 +127,7 @@ function stop() { clearInterval(timer); busy.value = false; const last = chat.va
     <template v-if="tab === 'theme'">
       <StatusLine :items="[{ text: '点一套配色，整个界面立即切换' }, { text: '用户的选择保存在浏览器里' }]" />
       <Grid :cols="3">
-        <button v-for="p in palettes" :key="p.id" type="button" class="flex flex-col gap-2 rounded-lg border bg-surface p-4 text-left shadow-card transition-all hover:-translate-y-0.5" :class="settings.palette === p.id ? 'border-primary shadow-[0_0_0_3px_var(--ring)]' : 'border-line hover:border-line-strong'" :aria-pressed="settings.palette === p.id" @click="choosePalette(p.id)">
+        <button v-for="p in palettes" :key="p.id" type="button" class="flex flex-col gap-2 rounded-lg border bg-surface p-4 text-left shadow-card transition-colors" :class="settings.palette === p.id ? 'border-primary shadow-[0_0_0_3px_var(--ring)]' : 'border-line hover:border-line-strong'" :aria-pressed="settings.palette === p.id" @click="choosePalette(p.id)">
           <span class="flex items-center gap-2"><span class="size-5 rounded-full border border-line-strong" :style="{ background: `oklch(${p.brandLightness} ${Math.max(p.brandChroma, 0.04)} ${p.brandHue})` }" /><b class="font-semibold">{{ p.name }}</b><UiTag v-if="settings.palette === p.id" tone="primary" class="ml-auto">当前</UiTag></span>
           <span class="text-fg-muted">{{ p.character }}</span>
         </button>

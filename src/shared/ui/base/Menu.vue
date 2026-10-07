@@ -9,7 +9,7 @@ const emit = defineEmits<{ select: [key: string] }>();
   <DropdownMenuRoot>
     <DropdownMenuTrigger as-child><slot /></DropdownMenuTrigger>
     <DropdownMenuPortal>
-      <DropdownMenuContent :align="align ?? 'end'" :side-offset="6" class="z-[100] min-w-40 rounded-lg border border-line bg-surface p-1 shadow-pop data-[state=open]:animate-[pop_.14s_var(--ease)]">
+      <DropdownMenuContent :align="align ?? 'end'" :side-offset="6" class="z-[100] max-w-[calc(100vw-24px)] min-w-40 max-h-[min(360px,var(--reka-dropdown-menu-content-available-height))] overflow-auto rounded-lg border border-line bg-surface p-1 popup-surface data-[state=open]:animate-[pop_.14s_var(--ease)]">
         <DropdownMenuItem
           v-for="item in items"
           :key="item.key"

@@ -26,9 +26,11 @@ export function applyTheme(settings: ThemeSettings, root: HTMLElement = document
   set("--n-h", String(p.neutralHue));
   set("--n-c", String(p.neutralChroma));
   set("--b-h", String(settings.brandHue ?? p.brandHue));
-  set("--b-c", String(settings.brandHue === null ? p.brandChroma : Math.max(p.brandChroma, 0.14)));
-  set("--b-l", String(p.brandLightness));
-  set("--on-primary", p.onPrimary);
+  // 墨黑在深色界面改用亮底按钮，主要入口仍能从工作表面中清楚显现。
+  const inverseInk = p.id === "ink" && settings.mode === "dark" && settings.brandHue === null;
+  set("--b-l", String(inverseInk ? 0.92 : p.brandLightness));
+  set("--b-c", String(inverseInk ? 0.006 : settings.brandHue === null ? p.brandChroma : Math.max(p.brandChroma, 0.14)));
+  set("--on-primary", inverseInk ? "oklch(0.2 0.01 265)" : p.onPrimary);
   root.dataset.mode = settings.mode;
   root.dataset.radius = settings.radius;
   root.dataset.density = settings.density;

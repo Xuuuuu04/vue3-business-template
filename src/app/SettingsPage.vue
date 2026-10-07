@@ -91,7 +91,7 @@ function swatch(p: (typeof palettes)[number]) {
                 class="group relative flex flex-col gap-2 overflow-hidden rounded-lg border p-2 text-left transition-colors"
                 :class="
                   settings.palette === p.id
-                    ? 'border-primary ring-2 ring-(--ring)'
+                    ? 'border-primary bg-subtle'
                     : 'border-line hover:border-line-strong'
                 "
                 :aria-pressed="settings.palette === p.id"
@@ -139,7 +139,7 @@ function swatch(p: (typeof palettes)[number]) {
             class="grid items-center gap-3 py-4 last:pb-0 sm:grid-cols-[160px_1fr]"
           >
             <h3 class="font-medium">{{ g.title }}</h3>
-            <div class="inline-flex w-fit gap-1 rounded-md bg-muted p-0.5">
+            <div class="inline-flex w-fit gap-1 rounded-lg bg-subtle p-1">
               <button
                 v-for="[v, label] in g.options"
                 :key="v"

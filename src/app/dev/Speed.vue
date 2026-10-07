@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useRecords } from "@/shared/records/store";
 import { usePerformance } from "@/shared/records/performance";
 import { endpointLabel } from "./endpoint";
-import { PageFrame, StatusLine, MetricStrip, Grid, Card, BarList, DataTable, UiEmpty, type DataColumn } from "@/shared/ui/public";
+import { PageFrame, StatusLine, WorkArea, UiTabs, UiAccordion, MetricStrip, BarList, DataTable, UiEmpty, type DataColumn } from "@/shared/ui/public";
 
+const tab = ref("browser");
 const { items } = useRecords();
 const { signals, gaps } = usePerformance();
 const ms = (v: number) => (v < 10 ? v.toFixed(1) : String(Math.round(v)));
@@ -39,21 +40,23 @@ const columns: DataColumn[] = [
 ];
 </script>
 <template>
-  <PageFrame title="页面速度">
+  <PageFrame title="页面速度" workspace>
     <template #status><StatusLine :items="[{ text: `基于最近 ${finished.length} 次操作与浏览器记录` }, ...gaps.map((g) => ({ text: g, tone: 'warn' as const }))]" /></template>
-    <MetricStrip :items="metrics" />
-    <Grid :cols="2">
-      <Card title="最慢的操作"><BarList v-if="slowOps.length" :items="slowOps" /><UiEmpty v-else title="还没有数据" hint="在产品页面做几次操作后回来看。" /></Card>
-      <Card title="最慢的接口（平均等待）"><BarList v-if="slowApis.length" :items="slowApis" /><UiEmpty v-else title="还没有数据" hint="在产品页面做几次操作后回来看。" /></Card>
-    </Grid>
-    <DataTable title="浏览器记录" meta="最近 30 条" :columns="columns" :rows="rows" row-key="id" :settings="false" :fullscreenable="false" empty-title="浏览器还没有记录" />
-    <Card title="怎么读这些数字">
+    <template #tabs><UiTabs v-model="tab" :items="[{ value: 'browser', label: '浏览器记录' }, { value: 'operations', label: '操作耗时' }, { value: 'requests', label: '接口等待' }]" /></template>
+    <WorkArea fill>
+      <DataTable v-if="tab === 'browser'" fill flat :columns="columns" :rows="rows" row-key="id" :settings="false" :fullscreenable="false" empty-title="浏览器还没有记录" />
+      <template v-else-if="tab === 'operations'"><BarList v-if="slowOps.length" :items="slowOps" /><UiEmpty v-else title="还没有操作数据" hint="在产品页面做几次操作后回来看。" /></template>
+      <template v-else><BarList v-if="slowApis.length" :items="slowApis" /><UiEmpty v-else title="还没有接口数据" hint="在产品页面做几次操作后回来看。" /></template>
+      <UiAccordion :items="[{ value: 'summary', title: '测量概况与说明' }]"><template #item-summary>
+        <MetricStrip :items="metrics" />
+
       <ul class="flex list-disc flex-col gap-1.5 pl-5 text-fg-muted marker:text-fg-faint">
         <li>接口等待包含了后台处理的时间，所以不能和后台步骤耗时相加。</li>
         <li>“页面切换”只表示页面内容已经更新，不保证屏幕已经画好。</li>
         <li>慢在接口，就去后端看这次请求的运行编号；慢在页面卡顿，再用浏览器自带的性能面板细查。</li>
         <li>没有测量到的部分显示“—”，不会用估算数字填上。</li>
       </ul>
-    </Card>
+      </template></UiAccordion>
+    </WorkArea>
   </PageFrame>
 </template>

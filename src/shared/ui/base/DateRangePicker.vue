@@ -1,12 +1,27 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { PopoverRoot, PopoverTrigger, PopoverPortal, PopoverContent, RangeCalendarRoot, RangeCalendarHeader, RangeCalendarHeading, RangeCalendarPrev, RangeCalendarNext, RangeCalendarGrid, RangeCalendarGridHead, RangeCalendarGridRow, RangeCalendarHeadCell, RangeCalendarGridBody, RangeCalendarCell, RangeCalendarCellTrigger } from "reka-ui";
 import { parseDate, today, getLocalTimeZone, startOfMonth, type DateValue } from "@internationalized/date";
 import { CalendarRange, ChevronLeft, ChevronRight, X } from "lucide-vue-next";
-/** 日期范围：值为 ["YYYY-MM-DD", "YYYY-MM-DD"]，空数组表示未选。左边是常用范围，右边是两个月的日历。 */
+/** 日期范围：值为 ["YYYY-MM-DD", "YYYY-MM-DD"]，空数组表示未选。左边是常用范围，右边是日历；窄屏只显示一个月。 */
 const model = defineModel<string[]>({ default: () => [] });
 defineProps<{ placeholder?: string; ariaLabel?: string }>();
 const open = ref(false);
+const months = ref(2);
+let viewport: MediaQueryList | undefined;
+function adaptCalendar() { months.value = viewport?.matches ? 1 : 2; }
+onMounted(() => {
+  viewport = window.matchMedia("(max-width: 639px)");
+  adaptCalendar();
+  viewport.addEventListener("change", adaptCalendar);
+});
+onBeforeUnmount(() => viewport?.removeEventListener("change", adaptCalendar));
+const trigger = ref<HTMLButtonElement>();
+function clear() {
+  model.value = [];
+  open.value = false;
+  void nextTick(() => trigger.value?.focus());
+}
 type Range = { start: DateValue | undefined; end: DateValue | undefined };
 const value = computed<Range>({
   get: () => ({ start: model.value[0] ? parseDate(model.value[0]) : undefined, end: model.value[1] ? parseDate(model.value[1]) : undefined }),
@@ -25,19 +40,21 @@ function pick(r: readonly [DateValue, DateValue]) { model.value = [r[0].toString
 </script>
 <template>
   <PopoverRoot v-model:open="open">
-    <PopoverTrigger as-child>
-      <button type="button" :aria-label="ariaLabel ?? placeholder ?? '选择日期范围'" class="flex h-(--control-h) w-full items-center gap-2 rounded-md border border-line-strong bg-surface px-2.5 text-left transition-[border-color,box-shadow] hover:border-fg-faint data-[state=open]:border-primary data-[state=open]:shadow-[0_0_0_3px_var(--ring)]">
-        <CalendarRange class="size-4 text-fg-faint" />
-        <span class="flex-1 truncate tabular-nums" :class="!shown && 'text-fg-faint'">{{ shown || placeholder || "选择日期范围" }}</span>
-        <span v-if="shown" role="button" tabindex="-1" class="grid size-5 place-items-center rounded-sm text-fg-faint hover:bg-muted hover:text-fg" aria-label="清除日期范围" @click.stop="model = []"><X class="size-3.5" /></span>
-      </button>
-    </PopoverTrigger>
+    <div class="control-surface flex h-(--control-h) w-full items-center rounded-md border bg-surface transition-[border-color,box-shadow] hover:border-line-strong focus-within:shadow-[0_0_0_2px_var(--ring)]" :class="open ? 'border-primary' : 'border-line'">
+      <PopoverTrigger as-child>
+        <button ref="trigger" type="button" :aria-label="ariaLabel ?? placeholder ?? '选择日期范围'" class="flex h-full min-w-0 flex-1 items-center gap-2 rounded-md px-2.5 text-left">
+          <CalendarRange class="size-4 shrink-0 text-fg-faint" />
+          <span class="min-w-0 flex-1 truncate tabular-nums" :class="!shown && 'text-fg-faint'">{{ shown || placeholder || "选择日期范围" }}</span>
+        </button>
+      </PopoverTrigger>
+      <button v-if="shown" type="button" class="mr-2 grid size-6 shrink-0 place-items-center rounded-sm text-fg-muted hover:bg-muted hover:text-fg" aria-label="清除日期范围" @click="clear"><X class="size-3.5" /></button>
+    </div>
     <PopoverPortal>
-      <PopoverContent align="start" :side-offset="6" class="z-[100] flex rounded-lg border border-line bg-surface shadow-pop data-[state=open]:animate-[pop_.14s_var(--ease)]">
-        <div class="flex w-32 flex-col gap-0.5 border-r border-line p-2">
+      <PopoverContent align="start" :side-offset="6" class="z-[100] flex max-w-[calc(100vw-24px)] overflow-auto rounded-lg border border-line bg-surface popup-surface data-[state=open]:animate-[pop_.14s_var(--ease)]">
+        <div class="hidden w-32 shrink-0 flex-col sm:flex gap-0.5 border-r border-line p-2">
           <button v-for="p in presets" :key="p.label" type="button" class="h-8 rounded-md px-2.5 text-left hover:bg-muted" @click="pick(p.range)">{{ p.label }}</button>
         </div>
-        <RangeCalendarRoot v-slot="{ weekDays, grid }" v-model="value" locale="zh-CN" :week-starts-on="1" :number-of-months="2" :placeholder="value.start ?? now.subtract({ months: 1 })" fixed-weeks class="p-3">
+        <RangeCalendarRoot v-slot="{ weekDays, grid }" v-model="value" locale="zh-CN" :week-starts-on="1" :number-of-months="months" :placeholder="value.start ?? now.subtract({ months: 1 })" fixed-weeks class="p-3">
           <RangeCalendarHeader class="mb-2 flex items-center justify-between">
             <RangeCalendarPrev class="grid size-7 place-items-center rounded-md hover:bg-muted" aria-label="上个月"><ChevronLeft class="size-4" /></RangeCalendarPrev>
             <RangeCalendarHeading class="font-semibold" />
