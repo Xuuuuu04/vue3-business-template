@@ -9,13 +9,17 @@ description: 新建业务开发包、增加页面或步骤、调整包结构时�
 
 ```bash
 npm run new:module -- 包名 --title 中文名
-npm run new:page -- 包名 页面名 --title 中文名
+npm run new:page -- 包名 页面名 --title 中文名 --layout list --task "查找并打开业务对象"
 npm run new:step -- 包名 步骤名 --action 动作编号 --title 中文名
 npm run docs                       # 生成图和函数位置
 npm run check -- --module 包名
 ```
 
 新增步骤时必须指定所属动作。新增步骤的骨架会主动失败，直到你写入真实业务。
+
+`new:page` 的 `--layout` 可选 `blank`（默认空白）、`list`（占满主区的列表）、`form`（限制行宽的表单）、`detail`（单个对象的详情）。不传参数时仍生成空白页。页面只接受 `--title`、`--layout`、`--task`；未知参数、未知布局，以及参数缺值或重复，都在写文件前失败。
+
+用 `--task` 写此页唯一的用户任务；省略时登记为待填写。标题与任务含空格时加引号。生成器同步登记页面和组件；列表没有模拟数据，表单样板字段停用且没有保存入口，详情还没有对象查询。按真实规则替换字段与状态、接入动作后再提供主要操作，不能把这些起点当成已完成的功能。
 
 ## 固定文件
 

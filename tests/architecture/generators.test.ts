@@ -14,6 +14,9 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { parse } from "@vue/compiler-sfc";
+import { baseParse, NodeTypes } from "@vue/compiler-dom";
 import { lockData } from "../../tools/framework-lock";
 function clone() {
   const root = mkdtempSync(join(tmpdir(), "vue-generator-"));
@@ -48,6 +51,190 @@ function command(root: string, ...args: string[]) {
     timeout: 30000,
   });
 }
+/** 比较完整隔离副本，参数错误不能修改页面、登记、图或框架记录。 */
+function filesSnapshot(root: string) {
+  const files: Record<string, string> = {};
+  function visit(directory: string) {
+    for (const entry of readdirSync(join(root, directory), {
+      withFileTypes: true,
+    })) {
+      const name = join(directory, entry.name);
+      if (entry.isDirectory()) visit(name);
+      else if (entry.isFile())
+        files[name] = createHash("sha256")
+          .update(readFileSync(join(root, name)))
+          .digest("hex");
+    }
+  }
+  visit("");
+  return files;
+}
+test("页面生成器提供四种单一任务起点，并登记真实组件与传入任务", () => {
+  const root = clone();
+  try {
+    command(root, "tools/new-module.ts", "contacts", "--title", "联系人");
+    const task = '查看 "待联系" 对象的资料与下一步';
+    const title = '联系人 "资料" & <记录>';
+    command(root, "tools/new-part.ts", "page", "contacts", "blank_default");
+    for (const layout of ["blank", "list", "form", "detail"])
+      command(
+        root,
+        "tools/new-part.ts",
+        "page",
+        "contacts",
+        `${layout}_page`,
+        "--layout",
+        layout,
+        "--task",
+        task,
+        "--title",
+        title,
+      );
+    const pages = JSON.parse(
+      command(
+        root,
+        "--input-type=module",
+        "--eval",
+        "const {default:module}=await import('./src/modules/contacts/module.ts');console.log(JSON.stringify(module.pages));",
+      ),
+    ) as Array<{
+      id: string;
+      task: string;
+      title: string;
+      actions: string[];
+      components: string[];
+    }>;
+    expect(
+      pages.find((page) => page.id === "contacts.blank_default")?.task,
+    ).toBe("填写此页唯一的用户任务");
+    for (const layout of ["blank", "list", "form", "detail"]) {
+      const page = pages.find((item) => item.id === `contacts.${layout}_page`)!;
+      expect(page.task).toBe(task);
+      expect(page.title).toBe(title);
+      expect(page.actions).toEqual([]);
+      const source = readFileSync(
+        join(root, `src/modules/contacts/pages/${layout}_page.vue`),
+        "utf8",
+      );
+      const { descriptor, errors } = parse(source);
+      expect(errors).toEqual([]);
+      const template = baseParse(descriptor.template!.content);
+      const frame = template.children.find(
+        (node) => node.type === NodeTypes.ELEMENT,
+      );
+      expect(frame?.tag).toBe("PageFrame");
+      if (!frame) throw new Error("页面缺少主框架");
+      expect(
+        frame.props.some(
+          (prop) =>
+            prop.type === NodeTypes.ATTRIBUTE && prop.name === "workspace",
+        ),
+      ).toBe(true);
+      const main = frame.children.find(
+        (node) => node.type === NodeTypes.ELEMENT,
+      )!;
+      expect(main.tag).toBe(layout === "list" ? "DataTable" : "WorkArea");
+      expect(page.components).toContain(main.tag);
+      if (layout !== "blank")
+        expect(
+          main.props.some(
+            (prop) => prop.type === NodeTypes.ATTRIBUTE && prop.name === "fill",
+          ),
+        ).toBe(true);
+      if (layout === "list" || layout === "form")
+        expect(
+          main.props.some(
+            (prop) =>
+              prop.type === NodeTypes.ATTRIBUTE &&
+              prop.name === (layout === "list" ? "flat" : "form"),
+          ),
+        ).toBe(true);
+    }
+    command(root, "tools/export-docs.ts");
+    command(root, "tools/check.ts", "--structure");
+    execFileSync(resolve("node_modules/.bin/vue-tsc"), ["--noEmit"], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: "pipe",
+      timeout: 30000,
+    });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}, 60000);
+test("未知布局与不完整页面参数在写入前失败，隔离副本所有文件保持原样", () => {
+  const root = clone();
+  try {
+    command(root, "tools/new-module.ts", "contacts");
+    const before = filesSnapshot(root);
+    for (const options of [
+      ["--layout", "board"],
+      ["--layout=board"],
+      ["--layout"],
+      ["--layout", "--task", "查看联系人"],
+      ["--layout", "list", "--layout", "form"],
+      ["--title", "--layout"],
+      ["--title"],
+      ["--title", "   "],
+      ["--title", "历史", "--title", "记录"],
+      ["--task"],
+      ["--task", "  "],
+      ["--task", "查看联系人\n修改账单"],
+      ["--task", "查看联系人", "--task", "修改联系人"],
+      ["--unknown", "list"],
+      ["--layuot", "list"],
+      ["unexpected_argument"],
+    ]) {
+      expect(() =>
+        command(
+          root,
+          "tools/new-part.ts",
+          "page",
+          "contacts",
+          "invalid_page",
+          ...options,
+        ),
+      ).toThrow();
+      expect(filesSnapshot(root)).toEqual(before);
+    }
+    expect(() =>
+      command(
+        root,
+        "tools/new-part.ts",
+        "page",
+        "contacts",
+        "class",
+        "--layout",
+        "form",
+      ),
+    ).toThrow();
+    expect(filesSnapshot(root)).toEqual(before);
+    command(
+      root,
+      "tools/new-part.ts",
+      "page",
+      "contacts",
+      "history",
+      "--layout=detail",
+      "--task=查看联系人记录",
+    );
+    const after = filesSnapshot(root);
+    expect(() =>
+      command(
+        root,
+        "tools/new-part.ts",
+        "page",
+        "contacts",
+        "history",
+        "--layout",
+        "form",
+      ),
+    ).toThrow();
+    expect(filesSnapshot(root)).toEqual(after);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}, 60000);
 test("生成器产生真实可执行的开发包，重复名称不覆盖", () => {
   const root = clone();
   try {
