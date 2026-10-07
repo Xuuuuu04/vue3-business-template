@@ -1,6 +1,7 @@
 /** 按动作声明的敏感值清理说明和错误，不依赖业务字段的名字。 */
 import type { RunRecord } from "./store";
 import { ActionError } from "@/shared/http/client";
+import { fieldErrorsFrom } from "@/shared/http/field-errors";
 
 export class RecordPrivacy {
   private readonly secrets = new Set<string>();
@@ -48,7 +49,10 @@ export class RecordPrivacy {
   failure(error: unknown): Error {
     const message = error instanceof Error ? this.text(error.message) : "动作执行失败";
     return error instanceof ActionError
-      ? new ActionError(error.code, message, error.unknownResult)
+      ? new ActionError(error.code, message, error.unknownResult, fieldErrorsFrom(
+        Object.entries(error.fieldErrors).map(([field, problem]) => ({ field, problem })),
+        (text) => this.text(text),
+      ))
       : new Error(message);
   }
 

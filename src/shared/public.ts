@@ -8,6 +8,7 @@ export {
 export type { Action, Fields, Step, Condition } from "./actions/definitions";
 export { createTask } from "./state/task";
 export type { TaskState } from "./state/task";
+export type { FieldErrors } from "./http/field-errors";
 export { useBatch } from "./state/batch";
 export type { BatchOutcome } from "./state/batch";
 export { defineModule } from "./modules/definitions";

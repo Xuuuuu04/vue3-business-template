@@ -3,6 +3,7 @@ import type { z } from "zod";
 import type { RequestRecord } from "@/shared/records/store";
 import { readResponse, ResponseLimitExceeded } from "./response";
 import { endpointProblems } from "./endpoint";
+import { fieldErrorsFrom, type FieldErrors } from "./field-errors";
 
 export interface Endpoint {
   id: string;
@@ -26,6 +27,7 @@ export class ActionError extends Error {
     public code: string,
     message: string,
     public unknownResult = false,
+    public fieldErrors: FieldErrors = Object.freeze(Object.create(null)),
   ) {
     super(message);
   }
@@ -95,6 +97,7 @@ export async function sendRequest<T>(
           ? safeText(body.message)
           : `请求失败（${reply.status}）`,
         uncertain,
+        uncertain ? undefined : fieldErrorsFrom(body.fields, safeText),
       );
     }
     const blob = reply.status === 204 ? undefined : await readResponse(

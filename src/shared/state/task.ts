@@ -7,11 +7,13 @@ import {
   type Endpoint,
   type Transport,
 } from "@/shared/http/client";
+import type { FieldErrors } from "@/shared/http/field-errors";
 export type TaskStatus = "idle" | "loading" | "success" | "error" | "unknown";
 export interface TaskState<O> {
   status: TaskStatus;
   data?: O;
   error?: string;
+  fieldErrors?: FieldErrors;
 }
 export function createTask<I extends object, O>(
   action: Action<I, O>,
@@ -41,7 +43,7 @@ export function createTask<I extends object, O>(
     controller = new AbortController();
     const current = ++version;
     const signal = controller.signal;
-    state.value = { ...state.value, status: "loading", error: undefined };
+    state.value = { ...state.value, status: "loading", error: undefined, fieldErrors: undefined };
     try {
       const data = await execute(action, input, endpoints, signal, transport);
       if (current !== version || signal.aborted) return;
@@ -61,6 +63,7 @@ export function createTask<I extends object, O>(
             ? "unknown"
             : "error",
         error: error instanceof Error ? error.message : "操作失败",
+        fieldErrors: error instanceof ActionError && !error.unknownResult ? error.fieldErrors : undefined,
       };
     }
   }

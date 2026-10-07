@@ -11,9 +11,9 @@ const Reply = z.object({
 });
 const Input = z
   .object({
-    org_code: z.string().min(1),
-    username: z.string().min(1),
-    password: z.string().min(1),
+    org_code: z.string().min(1, "请填写组织代码"),
+    username: z.string().min(1, "请填写账号"),
+    password: z.string().min(1, "请填写密码"),
     otp_code: z.string(),
   })
   .strict();

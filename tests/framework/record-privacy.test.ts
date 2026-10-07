@@ -82,10 +82,12 @@ test("输入类型检查失败也不能记录 secret 原值", async () => {
     ...base,
     input: z.object({ privateValue: z.string().refine(() => false, `输入 ${marker} 无效`) }).strict(),
   });
-  await expect(execute(action, { privateValue: marker }, [], signal())).rejects.toThrow();
+  await expect(execute(action, { privateValue: marker }, [], signal())).rejects.toMatchObject({
+    message: "输入不符合要求，请修改对应字段。", fieldErrors: { privateValue: "输入不符合业务要求" },
+  });
   const record = useRecords().items.value[0]!;
   expect(record.status).toBe("failed");
-  expect(record.error).toContain("已隐藏");
+  expect(record.error).toBe("输入不符合要求，请修改对应字段。");
   expect(JSON.stringify(record)).not.toContain(marker);
 });
 
@@ -185,4 +187,65 @@ test("敏感输入碰巧与合法错误码相同，不改变调用方的错误�
   await expect(execute(action, { privateValue: "compute_failed" }, [], signal())).rejects.toMatchObject({
     code: "compute_failed", message: "公开计算失败", unknownResult: false,
   });
+});
+
+test.each(["default", "transform"] as const)("secret %s 的派生值在对象校验失败后也不泄漏", async (kind) => {
+  const marker = `synthetic_derived_${kind}_secret`;
+  const schema = kind === "default" ? z.string().default(marker) : z.string().transform(() => marker);
+  const base = privateAction((data) => { data.result = 1; });
+  const action = defineAction({ ...base,
+    input: z.object({ privateValue: schema }).superRefine((data, context) => {
+      context.addIssue({ code: "custom", path: ["privateValue", data.privateValue], message: `无法处理 ${data.privateValue}` });
+      context.addIssue({ code: "custom", path: [data.privateValue], message: `私有路径 ${data.privateValue}` });
+    }),
+    fields: { ...base.fields, privateValue: { title: "私有输入", schema, secret: true } },
+  });
+  const input = (kind === "default" ? {} : { privateValue: "synthetic_original_value" }) as { privateValue: string };
+  const task = createTask(action, [], "submit");
+  await task.run(input);
+  expect(task.state.value).toMatchObject({ status: "error", fieldErrors: { privateValue: "输入不符合业务要求" } });
+  expect(JSON.stringify(task.state.value)).not.toContain(marker);
+  const failure = await execute(action, input, [], signal()).then(() => null, (error: unknown) => error);
+  expect(JSON.stringify(failure)).not.toContain(marker);
+  expect(JSON.stringify(useRecords().items.value[0])).not.toContain(marker);
+});
+
+test.each(["default", "transform"] as const)("未列为输入的 secret %s 默认字段也不泄漏", async (kind) => {
+  const marker = `synthetic_unlisted_${kind}_secret`;
+  const schema = kind === "default" ? z.string().default(marker) : z.string().default("原始默认值").transform(() => marker);
+  const base = privateAction((data) => { data.result = 1; });
+  const action = defineAction({ ...base, inputFields: [],
+    input: z.object({ privateValue: schema }).superRefine((data, context) => {
+      context.addIssue({ code: "custom", path: [data.privateValue], message: `无法处理 ${data.privateValue}` });
+    }),
+    fields: { ...base.fields, privateValue: { title: "私有默认值", schema, secret: true } },
+  });
+  const input = {} as { privateValue: string };
+  const task = createTask(action, [], "submit");
+  await task.run(input);
+  expect(task.state.value.status).toBe("error");
+  expect(Object.keys(task.state.value.fieldErrors!)).toEqual([]);
+  expect(JSON.stringify(task.state.value)).not.toContain(marker);
+  const failure = await execute(action, input, [], signal()).then(() => null, (error: unknown) => error);
+  expect(JSON.stringify(failure)).not.toContain(marker);
+  expect(JSON.stringify(useRecords().items.value[0])).not.toContain(marker);
+});
+
+test.each(["default", "transform"] as const)("成功解析的非输入 secret %s 也不能进入步骤说明与异常", async (kind) => {
+  const marker = `synthetic_parsed_${kind}_secret`;
+  const schema = kind === "default" ? z.string().default(marker) : z.string().default("原始默认值").transform(() => marker);
+  const base = privateAction((data, tools) => {
+    tools.note(`说明 ${data.privateValue}`);
+    throw new Error(`失败 ${data.privateValue}`);
+  });
+  const action = defineAction({ ...base, inputFields: [], input: z.object({ privateValue: schema }),
+    fields: { ...base.fields, privateValue: { title: "私有默认值", schema, secret: true } },
+  });
+  const input = {} as { privateValue: string };
+  const task = createTask(action, [], "submit");
+  await task.run(input);
+  expect(task.state.value.error).toBe("失败 已隐藏");
+  expect(JSON.stringify(task.state.value)).not.toContain(marker);
+  await expect(execute(action, input, [], signal())).rejects.toThrow("失败 已隐藏");
+  expect(JSON.stringify(useRecords().items.value[0])).not.toContain(marker);
 });

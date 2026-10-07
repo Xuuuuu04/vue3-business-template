@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, nextTick, onMounted, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { Building2, User, ShieldCheck, Moon, Sun } from "lucide-vue-next";
-import { useSession } from "@/shared/public";
+import { useSession, type FieldErrors } from "@/shared/public";
+import { ActionError } from "@/shared/http/client";
 import { AuthLayout, AppFooter, Stack, Field, StatusMessage, UiInput, UiPasswordInput, UiCheckbox, UiButton, UiDialog, UiTip, useTheme } from "@/shared/ui/public";
 import { appConfig } from "./app.config";
 
@@ -14,7 +15,9 @@ const draft = reactive({ org_code: import.meta.env.VITE_ORG_ID || "", username: 
 const remember = ref(true);
 const useOtp = ref(false);
 const busy = ref(false);
+const resultUnknown = ref(false);
 const error = ref("");
+const fieldErrors = ref<FieldErrors>();
 const shake = ref(false);
 const forgot = ref(false);
 const hasSaved = ref(false);
@@ -38,9 +41,10 @@ const links = computed(() => [
   ...(appConfig.support.helpUrl ? [{ label: "帮助中心", href: appConfig.support.helpUrl }] : []),
 ]);
 async function submit() {
-  if (busy.value) return;
+  if (busy.value || resultUnknown.value) return;
   busy.value = true;
   error.value = "";
+  fieldErrors.value = undefined;
   try {
     await session.login({ ...draft });
     persist();
@@ -48,12 +52,23 @@ async function submit() {
     void router.push("/");
   } catch (reason) {
     error.value = reason instanceof Error ? reason.message : "登录失败";
+    resultUnknown.value = reason instanceof ActionError && reason.unknownResult;
+    if (resultUnknown.value) error.value = "登录状态还不能确认。请重新加载页面后登录。";
+    fieldErrors.value = reason instanceof ActionError && !reason.unknownResult ? reason.fieldErrors : undefined;
+    if (fieldErrors.value?.otp_code) useOtp.value = true;
     shake.value = true;
     setTimeout(() => (shake.value = false), 500);
   } finally {
     busy.value = false;
   }
+  await nextTick();
+  if (busy.value || !error.value) return;
+  const inputs = { org_code: "org", username: "username", password: "password", otp_code: "otp" };
+  for (const [field, id] of Object.entries(inputs)) {
+    if (fieldErrors.value?.[field]) { document.getElementById(id)?.focus(); break; }
+  }
 }
+function reload() { window.location.reload(); }
 </script>
 <template>
   <AuthLayout :brand="appConfig.name" :mark="appConfig.mark" :logo="appConfig.logo" :tagline="appConfig.tagline" :highlights="appConfig.highlights" :variant="appConfig.tagline || appConfig.highlights.length ? 'split' : 'centered'">
@@ -63,10 +78,10 @@ async function submit() {
     <h1 class="mb-8 text-[28px] leading-tight font-semibold tracking-tight">登录</h1>
     <form :class="shake && 'animate-[shake_.4s]'" @submit.prevent="submit">
       <Stack gap="md">
-        <Field label="组织代码" for="org"><UiInput id="org" v-model="draft.org_code" name="organization" size="lg" autocomplete="organization" placeholder="例如 acme"><template #prefix><Building2 class="size-4" /></template></UiInput></Field>
-        <Field label="账号" for="username"><UiInput id="username" v-model="draft.username" name="username" size="lg" autocomplete="username" placeholder="账号或邮箱" :autofocus="!hasSaved"><template #prefix><User class="size-4" /></template></UiInput></Field>
-        <Field label="密码" for="password"><UiPasswordInput id="password" v-model="draft.password" name="password" size="lg" placeholder="输入密码" /></Field>
-        <Field v-if="useOtp" label="两步验证码" for="otp"><UiInput id="otp" v-model="draft.otp_code" name="otp" size="lg" autocomplete="one-time-code" inputmode="numeric" placeholder="6 位验证码"><template #prefix><ShieldCheck class="size-4" /></template></UiInput></Field>
+        <Field label="组织代码" for="org" :error="fieldErrors?.org_code"><UiInput id="org" v-model="draft.org_code" name="organization" size="lg" :disabled="busy || resultUnknown" autocomplete="organization" placeholder="例如 acme"><template #prefix><Building2 class="size-4" /></template></UiInput></Field>
+        <Field label="账号" for="username" :error="fieldErrors?.username"><UiInput id="username" v-model="draft.username" name="username" size="lg" :disabled="busy || resultUnknown" autocomplete="username" placeholder="账号或邮箱" :autofocus="!hasSaved"><template #prefix><User class="size-4" /></template></UiInput></Field>
+        <Field label="密码" for="password" :error="fieldErrors?.password"><UiPasswordInput id="password" v-model="draft.password" name="password" size="lg" :disabled="busy || resultUnknown" placeholder="输入密码" /></Field>
+        <Field v-if="useOtp" label="两步验证码" for="otp" :error="fieldErrors?.otp_code"><UiInput id="otp" v-model="draft.otp_code" name="otp" size="lg" :disabled="busy || resultUnknown" autocomplete="one-time-code" inputmode="numeric" placeholder="6 位验证码"><template #prefix><ShieldCheck class="size-4" /></template></UiInput></Field>
         <div class="flex items-center justify-between">
           <UiCheckbox v-model="remember" label="记住账号" />
           <span class="flex items-center gap-3">
@@ -74,8 +89,9 @@ async function submit() {
             <button v-if="appConfig.support.email || appConfig.support.helpUrl" type="button" class="text-[13px] text-primary-text hover:underline" @click="forgot = true">忘记密码？</button>
           </span>
         </div>
-        <StatusMessage :status="error ? 'error' : 'idle'" :error="error" />
-        <UiButton type="submit" variant="primary" size="lg" :loading="busy">登录</UiButton>
+        <StatusMessage :status="resultUnknown ? 'unknown' : error ? 'error' : 'idle'" :error="error" />
+        <UiButton type="submit" variant="primary" size="lg" :loading="busy" :disabled="resultUnknown">登录</UiButton>
+        <UiButton v-if="resultUnknown" @click="reload">重新加载</UiButton>
         <p class="text-center text-[13px] text-fg-faint">登录即表示同意<RouterLink to="/legal/terms" class="mx-0.5 text-fg-muted underline-offset-2 hover:underline">《用户协议》</RouterLink>和<RouterLink to="/legal/privacy" class="mx-0.5 text-fg-muted underline-offset-2 hover:underline">《隐私政策》</RouterLink></p>
       </Stack>
     </form>
