@@ -171,7 +171,11 @@ function cellClass(c: DataColumn) {
 }
 function stickyStyle(c: DataColumn) {
   const o = offsets.value.get(c.key);
-  return o === undefined ? undefined : { [c.sticky === "right" ? "right" : "left"]: `${o}px` };
+  return o === undefined ? undefined : { "--sticky-offset": `${o}px` };
+}
+/** 窄屏让字段一起横向滚动，避免左右固定列盖住中间内容；勾选列仍留在左边。 */
+function stickyPosition(c: DataColumn) {
+  return c.sticky === "right" ? "sm:right-(--sticky-offset)" : "sm:left-(--sticky-offset)";
 }
 function widthStyle(c: DataColumn) {
   return { width: c.width ? `${c.width}px` : undefined, minWidth: c.minWidth ? `${c.minWidth}px` : c.width ? `${c.width}px` : undefined };
@@ -192,7 +196,7 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
       <slot name="search" />
       <h2 v-if="title" class="text-[15px] font-semibold">{{ title }}</h2>
       <span v-if="meta" class="text-[13px] text-fg-faint tabular-nums">{{ meta }}</span>
-      <span class="flex-1" />
+      <span class="hidden flex-1 sm:block" />
       <slot name="toolbar" />
       <PopoverRoot v-if="settings">
         <Tip text="列设置">
@@ -226,7 +230,7 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
             <th
               v-for="c in visibleColumns" :key="c.key" scope="col" :aria-sort="ariaSort(c)"
               class="sticky top-0 h-10 border-b border-line bg-subtle px-(--cell-px) align-middle text-[13px] font-medium whitespace-nowrap text-fg"
-              :class="[cellClass(c), c.sticky ? 'z-30' : 'z-20', c.key === lastLeft && 'shadow-[1px_0_0_var(--line)]', c.key === firstRight && 'shadow-[-1px_0_0_var(--line)]', c.sortable && 'cursor-pointer select-none hover:text-fg']"
+              :class="[cellClass(c), c.sticky ? ['z-20 sm:z-30', stickyPosition(c)] : 'z-20', c.key === lastLeft && 'sm:shadow-[1px_0_0_var(--line)]', c.key === firstRight && 'sm:shadow-[-1px_0_0_var(--line)]', c.sortable && 'cursor-pointer select-none hover:text-fg']"
               :style="{ ...widthStyle(c), ...stickyStyle(c) }"
                :tabindex="c.sortable ? 0 : undefined"
               @keydown.enter="toggleSort(c)"
@@ -275,7 +279,7 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
                 <td
                   v-for="c in visibleColumns" :key="c.key"
                   class="h-(--row-h) border-b border-line bg-surface px-(--cell-px) py-2 align-middle transition-colors group-hover/row:bg-subtle group-[.is-selected]/row:bg-primary-soft"
-                  :class="[cellClass(c), c.sticky && 'sticky z-10', c.key === lastLeft && 'shadow-[1px_0_0_var(--line)]', c.key === firstRight && 'shadow-[-1px_0_0_var(--line)]', c.kind === 'delta' && deltaTone(cell(row, c.key))]"
+                  :class="[cellClass(c), c.sticky && ['sm:sticky sm:z-10', stickyPosition(c)], c.key === lastLeft && 'sm:shadow-[1px_0_0_var(--line)]', c.key === firstRight && 'sm:shadow-[-1px_0_0_var(--line)]', c.kind === 'delta' && deltaTone(cell(row, c.key))]"
                   :style="stickyStyle(c)"
                 >
                   <slot :name="`cell-${c.key}`" :row="row" :value="cell(row, c.key)">

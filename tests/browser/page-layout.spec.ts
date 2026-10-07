@@ -82,3 +82,26 @@ test("从文件详情返回时，列表保留表体滚动位置", async ({ page 
   await page.goBack();
   await expect(scrollport).toHaveJSProperty("scrollTop", 200);
 });
+
+for (const width of [320, 390]) {
+  test(`${width}px 手机列表保留工具条和分页，滚动只发生在表体`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/files?size=10");
+    const next = page.getByRole("button", { name: "下一页", exact: true });
+    await expect(next).toBeEnabled();
+    const search = await page.getByRole("searchbox").boundingBox();
+    const refresh = await page.getByRole("button", { name: "刷新列表", exact: true }).boundingBox();
+    expect(Math.abs(search!.y - refresh!.y)).toBeLessThan(2);
+    const footer = await page.locator(".data-table > footer").boundingBox();
+    expect(footer!.y + footer!.height).toBeLessThan(844);
+    const scroll = page.locator("[data-table-scroll]");
+    await scroll.evaluate((node) => { node.scrollTop = 180; });
+    expect(await scroll.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+    const after = await page.getByRole("searchbox").boundingBox();
+    expect(after!.y).toBeCloseTo(search!.y, 0);
+    await next.click();
+    await expect(page).toHaveURL(/offset=10/);
+    await expect(page.getByRole("button", { name: "采购计划-十月.csv", exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+}

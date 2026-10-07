@@ -208,5 +208,4 @@
   .page-frame { padding-inline: 16px; gap: 12px; }
   .page-heading { min-height: 72px; gap: 8px; }
   .page-heading h1 { flex-basis: 50%; font-size: 20px; }
-  .page-workspace { min-height: min-content; }
 }

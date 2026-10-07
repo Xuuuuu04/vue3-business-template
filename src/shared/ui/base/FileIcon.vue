@@ -15,5 +15,5 @@ const icon = computed(() => {
 });
 </script>
 <template>
-  <component :is="icon" class="shrink-0" :class="[size === 'lg' ? 'size-10' : 'size-5', tone === 'color' ? 'text-(--file-icon)' : 'text-fg-muted']" :style="tone === 'color' ? { '--file-hue': kind.hue } : undefined" :title="kind.label" aria-hidden="true" />
+  <component :is="icon" class="shrink-0" :class="[size === 'lg' ? 'size-10' : 'size-[18px]', tone === 'color' ? 'text-(--file-icon)' : 'text-fg-muted']" :stroke-width="1.75" :style="tone === 'color' ? { '--file-hue': kind.hue } : undefined" :title="kind.label" aria-hidden="true" />
 </template>

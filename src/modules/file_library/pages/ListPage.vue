@@ -83,7 +83,7 @@ const columns: DataColumn[] = [
   { key: "kind", title: "类型", width: 140 },
   { key: "size", title: "大小", kind: "number", width: 120, sortable: true },
   { key: "created_at", title: "保存时间", width: 160, sortable: true },
-  { key: "actions", title: "", align: "right", width: 112 },
+  { key: "actions", title: "", align: "right", width: 64 },
 ];
 function load() {
   void list.run({ org, offset: offset.value, limit: size.value });
@@ -209,7 +209,7 @@ async function downloadFile(file: FileView) {
         /></UiTip>
       </template>
       <template #cell-name="{ row }"
-        ><Row gap="md" nowrap
+        ><Row gap="sm" nowrap
           ><UiFileIcon :name="row.name" :type="row.content_type" /><UiButton
             variant="text"
             @click="openFile(row)"
@@ -232,7 +232,7 @@ async function downloadFile(file: FileView) {
               :aria-label="`下载 ${row.name}`"
               :disabled="download.state.value.status === 'loading'"
               @click="downloadFile(row)" /></UiTip
-          ><UiButton variant="link" @click="openFile(row)">详情</UiButton></Row
+          ></Row
         ></template
       >
       <template #bulk

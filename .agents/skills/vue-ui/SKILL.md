@@ -5,7 +5,7 @@ description: 新建、调整或评审本模板的页面和公共组件时使用�
 
 # 界面系统
 
-读 `src/shared/ui/README.md`，查看 `/dev/design` 中相关组件及 `src/modules/file_library/pages/` 的实际页面。组件目录用于挑组件，不能照搬成业务页面。
+读 `src/shared/ui/README.md`，查看 `/dev/design` 中相关组件及 `src/modules/file_library/pages/` 的实际页面。目录一次展示一个示例，可用 `section` 与 `example` 地址参数直接打开并刷新，例如 `/dev/design?section=data&example=table`。组件目录用于操作和比较，业务页面仍按真实任务安排。
 
 先明确用户在此页要完成什么、要先看到什么、主要操作是什么。把唯一主要任务写进页面登记的 `task`。已有品牌要求和用户确认的参考优先，不擅自换成新的视觉风格。
 
