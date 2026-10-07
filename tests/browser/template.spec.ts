@@ -48,49 +48,6 @@ test("主题切换：配色、明暗与侧栏收起都立即生效并被记住",
   await page.getByRole("button", { name: "收起侧栏" }).click();
   await expect(page.getByRole("button", { name: "展开侧栏" })).toBeVisible();
 });
-test("功能地图显示操作的执行过程、接口与代码位置", async ({ page }) => {
-  await page.goto("/dev/map");
-  await expect(
-    page.getByRole("heading", { name: "功能地图", level: 1, exact: true }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: /查看文件列表/ }).click();
-  await expect(page.getByText("读取这一页的文件")).toBeVisible();
-  await expect(page.getByText("GET /api/v1/files/:org", { exact: true })).toBeVisible();
-  await expect(
-    page.getByText("src/modules/file_library/steps/read.ts:", { exact: false }),
-  ).toHaveCount(2);
-  await expect(page.getByText("/files", { exact: true }).first()).toBeVisible();
-});
-
-/** 功能地图是静态登记数据；业务实现不应随公共样板一起下载。 */
-test("功能地图可独立查看，进入业务页面才加载计算步骤", async ({ page }) => {
-  const stepRequests: string[] = [];
-  page.on("request", (request) => {
-    if (request.url().includes("/src/modules/file_library/steps/"))
-      stepRequests.push(request.url());
-  });
-  await page.goto("/dev/map");
-  await expect(
-    page.getByRole("heading", { name: "功能地图", level: 1, exact: true }),
-  ).toBeVisible();
-  expect(stepRequests).toEqual([]);
-  await page.getByRole("link", { name: "返回产品", exact: true }).click();
-  await expect(page).toHaveURL(/\/files$/);
-  await expect(
-    page.getByRole("heading", { name: "文件管理", level: 1, exact: true }),
-  ).toBeVisible();
-  expect(stepRequests.length).toBeGreaterThan(0);
-});
-test("开发者工具与产品导航分开，旧地址仍可用", async ({ page }) => {
-  await page.goto("/files");
-  const nav = page.getByRole("navigation", { name: "主要导航" });
-  await expect(nav.getByRole("link", { name: "文件管理" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "操作记录" })).toHaveCount(0);
-  await page.goto("/system/console");
-  await expect(page).toHaveURL(/\/dev\/map$/);
-  await expect(nav.getByRole("link", { name: "操作记录" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "文件管理" })).toHaveCount(0);
-});
 
 test("登录页：记住账号不保存密码，协议与密码显示可用", async ({ page }) => {
   // 演示服务没有登录接口，这里替换成一个返回令牌的接口。
@@ -110,7 +67,8 @@ test("登录页：记住账号不保存密码，协议与密码显示可用", as
   await expect(password).toHaveAttribute("type", "text");
   // 演示服务接受任意账号；登录后账号被记住，密码不会写入浏览器存储。
   await page.getByRole("button", { name: "登录", exact: true }).click();
-  await expect(page).toHaveURL(/\/files$/);
+  await expect(page).not.toHaveURL(/\/login$/);
+  await expect(page.getByRole("button", { name: /用户菜单/ })).toBeVisible();
   const saved = await page.evaluate(() => JSON.stringify({ ...localStorage }));
   expect(saved).toContain("lin");
   expect(saved).not.toContain("secret-1");
@@ -121,7 +79,7 @@ test("登录页：记住账号不保存密码，协议与密码显示可用", as
   await expect(page.getByRole("heading", { name: "用户协议", level: 1 })).toBeVisible();
 });
 test("全局搜索与用户菜单：⌘K 跳转页面，关于显示版本", async ({ page }) => {
-  await page.goto("/files");
+  await page.goto("/dev/design");
   await page.keyboard.press("Control+k");
   await page.getByRole("combobox", { name: "搜索页面和操作" }).fill("设计");
   await expect(page.getByRole("option", { name: /开发者工具/ })).toHaveCount(0);

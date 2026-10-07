@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test("色相滑条有完整点击区域和焦点，点击、拖动与键盘都能选色", async ({ page }) => {
-  await page.goto("/files");
+  await page.goto("/dev/design");
   await page.getByRole("button", { name: "主题与外观", exact: true }).click();
   const slider = page.getByRole("slider", { name: "品牌色色相", exact: true });
   await slider.evaluate(async (node) => { await Promise.all(node.closest(".popup-surface")!.getAnimations({ subtree: true }).map((animation) => animation.finished)); });
@@ -58,7 +58,7 @@ test("减少动态效果时，弹层和持续加载动画不反复播放", async
 
 test("320px 手机的主题和通知浮层保留两侧 12px 空间", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 });
-  await page.goto("/files");
+  await page.goto("/dev/design");
   for (const name of ["主题与外观", "通知"]) {
     await page.getByRole("button", { name, exact: true }).click();
     const panel = page.locator(".popup-surface");

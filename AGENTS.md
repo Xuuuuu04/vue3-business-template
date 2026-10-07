@@ -27,7 +27,7 @@
 - doc/包名：需求、规则和生成的流程说明。
 - design：模板设计目的与取舍。
 - tools：生成、检查、查询、产品初始化和模板更新。
-- tests：框架错误场景、架构限制与浏览器行为。
+- tests：框架错误场景、架构限制与浏览器行为；tests/demo 与 tests/browser/demo 只放样例业务用例，初始化新产品时整体移除，公共检查及 tests/framework/fixtures 中的已知输入继续保留。
 - var：本机检查结果，不提交。
 - .agents：本机进度与证据，不提交，项目 Skill 除外。
 

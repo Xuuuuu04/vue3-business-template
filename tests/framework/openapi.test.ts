@@ -1,45 +1,33 @@
 /** 前后端接口对照：字段缺失、必填变可选、可空、接口不存在都要被发现；生成的代码可以作为 api.ts 的起点。 */
 import { expect, test } from "vitest";
-import { checkEndpoints, generateApi, type OpenApi } from "../../tools/openapi";
-import { endpoints } from "../../src/modules/file_library/api";
+import { checkEndpoints, generateApi } from "../../tools/openapi";
+import { z, type Endpoint } from "../../src/shared/public";
+import { fileOpenApi } from "./fixtures/file-openapi";
 
-function spec(): OpenApi {
-  const file = {
-    type: "object",
-    required: ["id", "org_id", "name", "size", "sha256", "content_type", "created_at"],
-    properties: {
-      id: { type: "string", description: "文件编号" },
-      org_id: { type: "string" },
-      name: { type: "string", description: "文件名" },
-      size: { type: "integer", description: "字节数" },
-      sha256: { type: "string" },
-      content_type: { type: "string" },
-      created_at: { type: "string", format: "date-time" },
-    },
-  };
-  const ok = (ref: string) => ({ responses: { "200": { content: { "application/json": { schema: { $ref: `#/components/schemas/${ref}` } } } } } });
-  return {
-    paths: {
-      "/api/v1/files/{org}": { get: { operationId: "list_files", summary: "读取文件列表", ...ok("FilePage") }, post: { operationId: "upload_file", summary: "上传文件", ...ok("FileView") } },
-      "/api/v1/files/{org}/{id}/info": { get: { operationId: "file_info", summary: "文件详情", ...ok("FileView") } },
-      "/api/v1/files/{org}/{id}": { delete: { operationId: "delete_file", summary: "删除文件", responses: { "204": { description: "已删除" } } } },
-      "/api/v1/files/{org}/{id}/download": { get: { operationId: "download_file", summary: "下载文件", responses: { "200": { content: { "application/octet-stream": {} } } } } },
-    },
-    components: {
-      schemas: {
-        FileView: file,
-        FilePage: { type: "object", required: ["items", "total", "offset", "limit"], properties: { items: { type: "array", items: { $ref: "#/components/schemas/FileView" } }, total: { type: "integer" }, offset: { type: "integer" }, limit: { type: "integer" } } },
-      },
-    },
-  };
-}
+/** 合成的已知输入，只验证公共对照工具，不要求产品保留文件管理业务。 */
+const FileViewFixture = z.object({
+  id: z.string(), org_id: z.string(), name: z.string(),
+  size: z.number().int().nonnegative(), sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  content_type: z.string(), created_at: z.iso.datetime({ offset: true }),
+});
+const FilePageFixture = z.object({
+  items: z.array(FileViewFixture), total: z.number().int().nonnegative(),
+  offset: z.number().int().nonnegative(), limit: z.number().int().positive(),
+});
+const endpoints: Endpoint[] = [
+  { id: "fixture.list", title: "读取文件列表", method: "GET", path: "/api/v1/files/:org", response: FilePageFixture },
+  { id: "fixture.info", title: "读取文件详情", method: "GET", path: "/api/v1/files/:org/:id/info", response: FileViewFixture },
+  { id: "fixture.upload", title: "上传文件", method: "POST", path: "/api/v1/files/:org", response: FileViewFixture },
+  { id: "fixture.delete", title: "删除文件", method: "DELETE", path: "/api/v1/files/:org/:id", response: z.null() },
+  { id: "fixture.download", title: "下载文件", method: "GET", path: "/api/v1/files/:org/:id/download", responseKind: "blob", response: z.instanceof(Blob) },
+];
 
-test("前端登记的文件接口与文档完全一致时没有问题", () => {
-  expect(checkEndpoints(spec(), endpoints)).toEqual([]);
+test("隔离夹具中的文件接口与已知文档完全一致时没有问题", () => {
+  expect(checkEndpoints(fileOpenApi(), endpoints)).toEqual([]);
 });
 
 test("字段被删、必填变可选、允许为空、接口不存在都会报出来", () => {
-  const s = spec();
+  const s = fileOpenApi();
   const file = s.components!.schemas!.FileView as { required: string[]; properties: Record<string, unknown> };
   delete file.properties.sha256;
   file.required = file.required.filter((k) => k !== "size");
@@ -54,7 +42,7 @@ test("字段被删、必填变可选、允许为空、接口不存在都会报�
 });
 
 test("按路径前缀生成接口登记与类型代码", () => {
-  const code = generateApi(spec(), "/api/v1/files", "file_library");
+  const code = generateApi(fileOpenApi(), "/api/v1/files", "file_library");
   expect(code).toContain("export const FileView = z.object({");
   expect(code).toContain("/** 文件编号 */");
   expect(code).toContain('path: "/api/v1/files/:org/:id/info"');

@@ -1,16 +1,41 @@
 import { expect, test, type Page } from "@playwright/test";
 
-async function showFile(page: Page, name: string, body: string, declaredSize = Buffer.byteLength(body)) {
-  await page.route("**/api/v1/files/demo-team/safety-file/*", (route) => {
-    if (route.request().url().endsWith("/info")) return route.fulfill({
-      json: {
-        id: "safety-file", org_id: "demo-team", name, size: declaredSize,
-        sha256: "a".repeat(64), content_type: "text/plain", created_at: "2026-10-07T00:00:00Z",
-      },
-    });
-    return route.fulfill({ contentType: "text/plain", body });
-  });
-  await page.goto("/files/safety-file");
+async function showFile(
+  page: Page,
+  name: string,
+  body: string,
+  declaredSize = Buffer.byteLength(body),
+) {
+  await page.goto("/welcome");
+  // 用真实公共组件验证预览规则，不要求产品保留 file_library 样例。
+  await page.evaluate(
+    async ({ name, body, declaredSize }) => {
+      const path = "/src/shared/ui/data/FilePreview.vue";
+      const source = await (await fetch(path)).text();
+      const vuePath = source.match(/from "([^"]*\/vue\.js[^"]*)"/)![1]!;
+      const { createApp, h, ref } = await import(/* @vite-ignore */ vuePath);
+      const { default: FilePreview } = await import(/* @vite-ignore */ path);
+      const blob = ref(undefined as Blob | undefined);
+      const host = document.createElement("div");
+      host.dataset.previewSafetyFixture = "";
+      host.style.cssText =
+        "position:fixed;inset:84px 24px 24px;z-index:40;background:var(--surface);overflow:auto";
+      document.querySelector("main")!.append(host);
+      createApp({
+        render: () =>
+          h(FilePreview, {
+            name,
+            size: declaredSize,
+            type: "text/plain",
+            blob: blob.value,
+            onLoad: () => {
+              blob.value = new Blob([body], { type: "text/plain" });
+            },
+          }),
+      }).mount(host);
+    },
+    { name, body, declaredSize },
+  );
   await page.getByRole("button", { name: "显示预览", exact: true }).click();
 }
 
@@ -62,7 +87,8 @@ test("后台回显敏感登录值时，实际导出的操作记录已经清理",
   await page.getByRole("button", { name: "登录", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("已隐藏");
   await page.getByRole("button", { name: "登录", exact: true }).click();
-  await expect(page).toHaveURL(/\/files$/);
+  await expect(page).not.toHaveURL(/\/login$/);
+  await expect(page.getByRole("button", { name: /用户菜单/ })).toBeVisible();
   await page.getByRole("link", { name: "开发者工具", exact: true }).click();
   await page.getByRole("link", { name: "操作记录", exact: true }).click();
   await expect(page.locator("main")).not.toContainText(username);

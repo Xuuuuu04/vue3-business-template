@@ -31,6 +31,8 @@ function clone() {
     "tsconfig.json",
     "vitest.config.ts",
     "vite.config.ts",
+    "playwright.config.ts",
+    ".github",
     "framework.lock",
     "scaffold.json",
   ])
@@ -51,6 +53,39 @@ function command(root: string, ...args: string[]) {
     stdio: "pipe",
     timeout: 30000,
   });
+}
+/** 实际收集用例，不启动浏览器或演示服务；产品必须保留公共用例并去掉样例用例。 */
+function browserCases(root: string) {
+  interface Suite {
+    specs?: Array<{
+      title: string;
+      file: string;
+      tests: Array<{ projectName: string }>;
+    }>;
+    suites?: Suite[];
+  }
+  const report = JSON.parse(
+    execFileSync(
+      resolve("node_modules/.bin/playwright"),
+      ["test", "--list", "--reporter=json"],
+      { cwd: root, encoding: "utf8", stdio: "pipe", timeout: 30000 },
+    ),
+  ) as { suites: Suite[] };
+  const cases: Array<{ title: string; file: string; project: string }> = [];
+  function visit(suite: Suite) {
+    for (const spec of suite.specs ?? [])
+      for (const test of spec.tests)
+        cases.push({
+          title: spec.title,
+          file: spec.file.replaceAll("\\", "/"),
+          project: test.projectName,
+        });
+    for (const child of suite.suites ?? []) visit(child);
+  }
+  for (const suite of report.suites) visit(suite);
+  return cases.sort((left, right) =>
+    JSON.stringify(left).localeCompare(JSON.stringify(right)),
+  );
 }
 /** 比较完整隔离副本，参数错误不能修改页面、登记、图或框架记录。 */
 function filesSnapshot(root: string) {
@@ -287,8 +322,19 @@ test("产品初始化清理样板业务，框架三份比较遇到冲突不写�
   const parent = mkdtempSync(join(tmpdir(), "vue-product-"));
   const product = join(parent, "product");
   try {
+    const templateCases = browserCases(root);
+    const publicCases = templateCases.filter(
+      (item) => !item.file.startsWith("demo/"),
+    );
+    expect(templateCases.some((item) => item.file.startsWith("demo/"))).toBe(
+      existsSync(join(root, "tests/browser/demo")),
+    );
+    expect(publicCases.length).toBeGreaterThan(0);
     command(root, "tools/start-project.ts", product);
     expect(existsSync(join(product, "src/modules/file_library"))).toBe(false);
+    expect(existsSync(join(product, "tests/browser/demo"))).toBe(false);
+    expect(existsSync(join(product, "tests/demo"))).toBe(false);
+    expect(existsSync(join(product, "tests/framework/fixtures/file-openapi.ts"))).toBe(true);
     // 新产品带上项目 Skill，但不带本机的任务与记录。
     expect(existsSync(join(product, ".agents/skills/vue-guide/SKILL.md"))).toBe(
       true,
@@ -298,6 +344,7 @@ test("产品初始化清理样板业务，框架三份比较遇到冲突不写�
       readFileSync(join(product, "src/generated/graph.json"), "utf8"),
     ).toBe("[]\n");
     symlinkSync(resolve("node_modules"), join(product, "node_modules"), "dir");
+    expect(browserCases(product)).toEqual(publicCases);
     command(product, "tools/export-docs.ts");
     command(product, "tools/check.ts", "--structure");
     const file = "src/shared/ui/theme/tokens.css";

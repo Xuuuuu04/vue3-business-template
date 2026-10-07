@@ -2,7 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 
 interface TableExample { grouped?: boolean; rowClickable?: boolean; numeric?: boolean; align?: "left" | "center" | "right" }
 async function mountTable(page: Page, options: TableExample = {}) {
-  await page.goto("/files");
+  await page.goto("/dev/design");
   await page.evaluate(async (example) => {
     const tablePath = "/src/shared/ui/data/DataTable.vue";
     // 使用组件实际导入的版本地址，保证夹具与插槽共享同一份 Vue。
