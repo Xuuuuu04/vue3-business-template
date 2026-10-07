@@ -16,6 +16,7 @@ import {
   type RunRecord,
   type StepRecord,
 } from "@/shared/records/store";
+import { RecordPrivacy } from "@/shared/records/privacy";
 
 let authorization: (permission: string) => boolean = () => true;
 /** 仅应用入口配置权限提示，后台仍验证身份与数据范围。 */
@@ -35,7 +36,10 @@ export async function execute<I extends object, O>(
   const record = startRecord(action.id, action.title);
   const started = performance.now();
   const values: Record<string, unknown> = {};
+  const privacy = new RecordPrivacy();
   try {
+    for (const [key, field] of Object.entries(action.fields))
+      if (field.secret) privacy.add((input as Record<string, unknown>)[key]);
     if (action.permission && !authorization(action.permission))
       throw new ActionError("not_allowed", "当前账号没有执行此操作的权限");
     for (const key of Object.keys(input))
@@ -50,11 +54,15 @@ export async function execute<I extends object, O>(
           `输入字段 ${key} 类型不符合约定`,
         );
       values[key] = parsed.data;
+      if (action.fields[key]?.secret) privacy.add(parsed.data);
     }
     for (const [key, field] of Object.entries(action.fields)) {
       if (!(key in values)) {
         const parsed = field.schema.safeParse(undefined);
-        if (parsed.success) values[key] = parsed.data;
+        if (parsed.success) {
+          values[key] = parsed.data;
+          if (field.secret) privacy.add(parsed.data);
+        }
       }
     }
     for (const part of action.steps) {
@@ -66,6 +74,7 @@ export async function execute<I extends object, O>(
         endpoints,
         signal,
         record,
+        privacy,
         transport,
       );
     }
@@ -95,10 +104,11 @@ export async function execute<I extends object, O>(
           ? "cancelled"
           : "failed";
     record.error =
-      error instanceof Error ? error.message.slice(0, 300) : "动作执行失败";
+      error instanceof Error ? privacy.text(error.message) : "动作执行失败";
     throw error;
   } finally {
     record.elapsed = performance.now() - started;
+    privacy.clean(record);
     changed();
   }
 }
@@ -111,6 +121,7 @@ async function runStep(
   endpoints: Endpoint[],
   signal: AbortSignal,
   run: RunRecord,
+  privacy: RecordPrivacy,
   transport?: Transport,
 ): Promise<void> {
   const item: StepRecord = {
@@ -127,6 +138,8 @@ async function runStep(
   changed();
   const started = performance.now();
   const written = new Set<string>();
+  // 说明等到本步骤输出确定后再保存，才能清理刚刚产生的敏感值。
+  const notes: string[] = [];
   try {
     if (part.when) {
       item.condition = {
@@ -138,7 +151,7 @@ async function runStep(
       let outcome: unknown;
       try {
         outcome = part.when.run(
-          view(values, fields, part.when.reads, [], new Set()),
+          view(values, fields, part.when.reads, [], new Set(), privacy),
         );
       } finally {
         item.condition.elapsed = performance.now() - conditionStarted;
@@ -154,7 +167,7 @@ async function runStep(
     const tools: StepTools = {
       signal,
       note(message) {
-        if (item.outputs.length < 40) item.outputs.push(message.slice(0, 200));
+        if (notes.length < 40) notes.push(message);
         else if (!run.gaps.includes("步骤附加说明超过 40 条"))
           run.gaps.push("步骤附加说明超过 40 条");
       },
@@ -177,11 +190,12 @@ async function runStep(
             "单一步骤请求超过 40 次，请分页或拆分动作",
           );
         item.requests.push(request);
-        return sendRequest<T>(endpoint, options, signal, request, transport);
+        return sendRequest<T>(endpoint, options, signal, request, transport,
+          (message) => privacy.text(message));
       },
     };
     const returned = await part.run(
-      view(values, fields, part.reads, part.writes, written),
+      view(values, fields, part.reads, part.writes, written, privacy),
       tools,
     );
     if (returned !== undefined)
@@ -196,9 +210,10 @@ async function runStep(
   } catch (error) {
     item.status = signal.aborted ? "cancelled" : "failed";
     item.error =
-      error instanceof Error ? error.message.slice(0, 300) : "步骤执行失败";
+      error instanceof Error ? privacy.text(error.message) : "步骤执行失败";
     throw error;
   } finally {
+    item.outputs.push(...notes.map((message) => privacy.text(message, 200)));
     for (const key of written) {
       const field = fields[key]!;
       item.outputs.push(
@@ -206,6 +221,7 @@ async function runStep(
       );
     }
     item.elapsed = performance.now() - started;
+    privacy.clean(run);
     changed();
   }
 }
@@ -261,6 +277,7 @@ function view(
   reads: string[],
   writes: string[],
   written: Set<string>,
+  privacy: RecordPrivacy,
 ) {
   return new Proxy(values, {
     get(target, key) {
@@ -289,6 +306,7 @@ function view(
           `字段 ${key} 的值类型不符合约定`,
         );
       target[key] = parsed.data;
+      if (fields[key]?.secret) privacy.add(parsed.data);
       written.add(key);
       return true;
     },
