@@ -26,6 +26,7 @@ function clone() {
     "tests",
     "doc",
     "design",
+    "deploy",
     "package.json",
     "tsconfig.json",
     "vitest.config.ts",
