@@ -2,8 +2,9 @@ import { expect, test } from "vitest";
 import { z } from "zod";
 import { defineAction, defineStep } from "@/shared/actions/definitions";
 import { execute } from "@/shared/actions/runtime";
+import { createTask } from "@/shared/state/task";
 import { useRecords } from "@/shared/records/store";
-import type { Endpoint, StepTools } from "@/shared/http/client";
+import { ActionError, type Endpoint, type StepTools } from "@/shared/http/client";
 
 function privateAction(run: (data: { privateValue: string; result: number }, tools: StepTools) => void | Promise<void>) {
   return defineAction({
@@ -118,4 +119,70 @@ test("secret 字段的默认值也按敏感数据处理", async () => {
   });
   await execute(action, {}, [], signal());
   expect(JSON.stringify(useRecords().items.value[0])).not.toContain(marker);
+});
+
+
+test("本地计算失败传给页面的错误已清理，公开内容继续保留", async () => {
+  const marker = "synthetic_visible_secret_8842";
+  const action = privateAction((data) => { throw new Error(`公开失败：${data.privateValue}`); });
+  const task = createTask(action, [], "latest");
+  await task.run({ privateValue: marker });
+  expect(task.state.value.status).toBe("error");
+  expect(task.state.value.error).toBe("公开失败：已隐藏");
+  expect(JSON.stringify(useRecords().items.value[0])).not.toContain(marker);
+  const failure = await execute(action, { privateValue: marker }, [], signal()).then(() => null, (error: unknown) => error);
+  expect(failure).toMatchObject({ message: "公开失败：已隐藏" });
+  expect(failure).not.toHaveProperty("cause");
+});
+
+test("写入成功后的本地失败仍为结果未知，不泄漏凭据，也不允许再次提交", async () => {
+  const marker = "synthetic_after_write_private";
+  const base = privateAction((data) => { throw new Error(`后续计算失败 ${data.privateValue}`); });
+  const action = defineAction({ ...base, steps: [
+    defineStep<{ privateValue: string; result: number }>({
+      id: "privacy.save", title: "隔离保存", rule: "T-04", reads: [], writes: [], uses: ["privacy.save"],
+      async run(_data, tools) { await tools.request("privacy.save", { body: {} }); },
+    }), ...base.steps,
+  ] });
+  const endpoint: Endpoint = { id: "privacy.save", title: "隔离保存", method: "POST", path: "/api/privacy", response: z.null() };
+  let calls = 0;
+  const task = createTask(action, [endpoint], "submit", async () => { calls++; return Response.json(null); });
+  await task.run({ privateValue: marker });
+  expect(task.state.value.status).toBe("unknown");
+  expect(task.state.value.error).toContain("后续计算失败 已隐藏");
+  expect(task.state.value.error).toContain("已有后台写入操作成功");
+  expect(JSON.stringify(useRecords().items.value[0])).not.toContain(marker);
+  await task.run({ privateValue: marker });
+  expect(calls).toBe(1);
+  await expect(execute(action, { privateValue: marker }, [endpoint], signal(), async () => Response.json(null))).rejects.toMatchObject({ code: "after_write_failed", unknownResult: true });
+});
+
+test("请求编号和后台运行编号回显嵌套敏感值时，完整导出也已清理", async () => {
+  const marker = "synthetic_header_secret_5931";
+  const id = "d9410c0f-19a1-439d-9842-fcc5705143aa";
+  const action = defineAction({
+    id: "privacy.headers", title: "请求编号清理", input: z.object({ privateValue: z.object({ nested: z.string() }) }).strict(),
+    inputFields: ["privateValue"], result: "result",
+    fields: { privateValue: { title: "私有输入", schema: z.object({ nested: z.string() }), secret: true }, result: { title: "公开结果", schema: z.number() } },
+    steps: [defineStep<{ privateValue: { nested: string }; result: number }>({
+      id: "privacy.header_step", title: "读取公开结果", rule: "T-05", reads: [], writes: ["result"], uses: ["privacy.read"],
+      async run(data, tools) { data.result = await tools.request("privacy.read"); },
+    })],
+  });
+  const endpoint: Endpoint = { id: "privacy.read", title: "隔离请求", method: "GET", path: "/api/privacy", response: z.number() };
+  for (const value of [marker, id]) {
+    await execute(action, { privateValue: { nested: marker } }, [endpoint], signal(), async () => Response.json(1, { headers: { "X-Request-ID": value, "X-Run-ID": value } }));
+    const record = useRecords().items.value[0]!;
+    expect(JSON.stringify(record)).not.toContain(marker);
+    expect(record.steps[0]?.requests[0]?.requestId).toBe(value === marker ? "已隐藏" : id);
+    expect(record.steps[0]?.requests[0]?.backendRun).toBe(value === marker ? "已隐藏" : id);
+  }
+});
+
+
+test("敏感输入碰巧与合法错误码相同，不改变调用方的错误分类", async () => {
+  const action = privateAction(() => { throw new ActionError("compute_failed", "公开计算失败"); });
+  await expect(execute(action, { privateValue: "compute_failed" }, [], signal())).rejects.toMatchObject({
+    code: "compute_failed", message: "公开计算失败", unknownResult: false,
+  });
 });

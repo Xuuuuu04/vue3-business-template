@@ -4,8 +4,10 @@ interface TableExample { grouped?: boolean; rowClickable?: boolean; numeric?: bo
 async function mountTable(page: Page, options: TableExample = {}) {
   await page.goto("/files");
   await page.evaluate(async (example) => {
-    const vuePath = "/node_modules/.vite/deps/vue.js";
     const tablePath = "/src/shared/ui/data/DataTable.vue";
+    // 使用组件实际导入的版本地址，保证夹具与插槽共享同一份 Vue。
+    const source = await (await fetch(tablePath)).text();
+    const vuePath = source.match(/from "([^\"]*\/vue\.js[^\"]*)"/)![1]!;
     const { createApp, h } = await import(vuePath);
     const { default: DataTable } = await import(tablePath);
     const host = document.createElement("div");
@@ -116,3 +118,16 @@ for (const alignment of [undefined, "right", "center", "left"] as const) {
     else expect(geometry.right).toBeCloseTo(geometry.contentRight, 0);
   });
 }
+
+
+test("实际组件目录每行仅有一个展开入口，详情操作单独保留", async ({ page }) => {
+  await page.goto("/dev/design?section=data&example=table");
+  const row = page.getByRole("row").filter({ hasText: "矿泉水 550ml" });
+  await expect(row).toBeVisible();
+  await expect(row.locator("button[aria-expanded]")).toHaveCount(1);
+  await expect(row.getByRole("button", { name: "依据", exact: true })).toHaveCount(0);
+  await expect(row.getByRole("button", { name: "详情", exact: true })).toBeVisible();
+  const expand = row.locator("button[aria-expanded]");
+  await expand.click();
+  await expect(expand).toHaveAttribute("aria-expanded", "true");
+});

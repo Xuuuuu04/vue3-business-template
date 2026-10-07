@@ -44,7 +44,7 @@ export async function sendRequest<T>(
   signal: AbortSignal,
   record: RequestRecord,
   transport: Transport = fetch,
-  errorText: (message: string) => string = (message) => message.slice(0, 300),
+  safeText: (message: string) => string = (message) => message.slice(0, 300),
 ): Promise<T> {
   let prepared: ReturnType<typeof prepareRequest>;
   try {
@@ -69,8 +69,9 @@ export async function sendRequest<T>(
       body: prepared.body,
     });
     record.status = reply.status;
-    record.backendRun = reply.headers.get("X-Run-ID") ?? undefined;
-    record.requestId = reply.headers.get("X-Request-ID") ?? prepared.requestId;
+    const backendRun = reply.headers.get("X-Run-ID");
+    record.backendRun = backendRun ? safeText(backendRun) : undefined;
+    record.requestId = safeText(reply.headers.get("X-Request-ID") ?? prepared.requestId);
     if (!reply.ok) {
       const uncertain =
         endpoint.method !== "GET" &&
@@ -82,7 +83,7 @@ export async function sendRequest<T>(
       throw new ActionError(
         typeof body.code === "string" ? body.code : `http_${reply.status}`,
         typeof body.message === "string"
-          ? errorText(body.message)
+          ? safeText(body.message)
           : `请求失败（${reply.status}）`,
         uncertain,
       );

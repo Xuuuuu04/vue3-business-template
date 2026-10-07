@@ -50,7 +50,7 @@ test("后台回显敏感登录值时，实际导出的操作记录已经清理",
   await page.route("**/api/v1/access/login", (route) => {
     calls++;
     return calls === 1 ? route.fulfill({
-      status: 401, json: { message: `账号 ${username} 或密码 ${password} 无效` },
+      status: 401, headers: { "X-Request-ID": username, "X-Run-ID": password }, json: { message: `账号 ${username} 或密码 ${password} 无效` },
     }) : route.fulfill({
       json: { access_token: `h.${claims}.s`, token_type: "bearer", expires_in: 600, refresh_token: "synthetic_refresh", refresh_expires_in: 1200, user_id: 1, org_id: "demo-team" },
     });
@@ -65,6 +65,8 @@ test("后台回显敏感登录值时，实际导出的操作记录已经清理",
   await expect(page).toHaveURL(/\/files$/);
   await page.getByRole("link", { name: "开发者工具", exact: true }).click();
   await page.getByRole("link", { name: "操作记录", exact: true }).click();
+  await expect(page.locator("main")).not.toContainText(username);
+  await expect(page.locator("main")).not.toContainText(password);
   const downloaded = page.waitForEvent("download");
   await page.getByRole("button", { name: "导出记录", exact: true }).click();
   const stream = await (await downloaded).createReadStream();

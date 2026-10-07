@@ -3,9 +3,11 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { PopoverRoot, PopoverTrigger, PopoverPortal, PopoverContent, RangeCalendarRoot, RangeCalendarHeader, RangeCalendarHeading, RangeCalendarPrev, RangeCalendarNext, RangeCalendarGrid, RangeCalendarGridHead, RangeCalendarGridRow, RangeCalendarHeadCell, RangeCalendarGridBody, RangeCalendarCell, RangeCalendarCellTrigger } from "reka-ui";
 import { parseDate, today, getLocalTimeZone, startOfMonth, type DateValue } from "@internationalized/date";
 import { CalendarRange, ChevronLeft, ChevronRight, X } from "lucide-vue-next";
+import { useFieldControl } from "../lib/field";
 /** 日期范围：值为 ["YYYY-MM-DD", "YYYY-MM-DD"]，空数组表示未选。左边是常用范围，右边是日历；窄屏只显示一个月。 */
+defineOptions({ inheritAttrs: false });
 const model = defineModel<string[]>({ default: () => [] });
-defineProps<{ placeholder?: string; ariaLabel?: string }>();
+const props = defineProps<{ id?: string; placeholder?: string; ariaLabel?: string }>();
 const open = ref(false);
 const months = ref(2);
 let viewport: MediaQueryList | undefined;
@@ -37,12 +39,13 @@ const presets = [
   { label: "上个月", range: [startOfMonth(now.subtract({ months: 1 })), startOfMonth(now).subtract({ days: 1 })] },
 ] as const;
 function pick(r: readonly [DateValue, DateValue]) { model.value = [r[0].toString(), r[1].toString()]; open.value = false; }
+const { attributes, invalid: fieldInvalid, rootAttributes } = useFieldControl(() => ({ id: props.id, label: props.ariaLabel }));
 </script>
 <template>
   <PopoverRoot v-model:open="open">
-    <div class="control-surface flex h-(--control-h) w-full items-center rounded-md border bg-surface transition-[border-color,box-shadow] hover:border-line-strong focus-within:shadow-[0_0_0_2px_var(--ring)]" :class="open ? 'border-primary' : 'border-line'">
+    <div v-bind="rootAttributes()" :data-invalid="fieldInvalid() || undefined" class="control-surface flex h-(--control-h) w-full items-center rounded-md border bg-surface transition-[border-color,box-shadow] hover:border-line-strong focus-within:shadow-[0_0_0_2px_var(--ring)]" :class="open ? 'border-primary' : 'border-line'">
       <PopoverTrigger as-child>
-        <button ref="trigger" type="button" :aria-label="ariaLabel ?? placeholder ?? '选择日期范围'" class="flex h-full min-w-0 flex-1 items-center gap-2 rounded-md px-2.5 text-left">
+        <button ref="trigger" type="button" v-bind="attributes()" :aria-label="attributes()['aria-labelledby'] ? undefined : ariaLabel ?? placeholder ?? '选择日期范围'" class="flex h-full min-w-0 flex-1 items-center gap-2 rounded-md px-2.5 text-left">
           <CalendarRange class="size-4 shrink-0 text-fg-faint" />
           <span class="min-w-0 flex-1 truncate tabular-nums" :class="!shown && 'text-fg-faint'">{{ shown || placeholder || "选择日期范围" }}</span>
         </button>

@@ -287,7 +287,7 @@ onBeforeUnmount(stop);
           <template #toolbar><UiButton variant="primary" :disabled="!picked.length" @click="dialog = true">{{ picked.length ? `处理已选（${picked.length}）` : '处理已选' }}</UiButton></template>
           <template #cell-name="{ row }"><CellText :title="row.name">{{ row.store }}<UiTag tone="code">{{ row.sku }}</UiTag></CellText></template>
           <template #cell-act="{ row }"><div class="inline-flex flex-col items-end gap-0.5"><b class="font-medium">{{ row.act.toFixed(2) }}</b><UiTag tone="primary">{{ row.kind }}</UiTag></div></template>
-          <template #cell-actions="{ row }"><Row justify="end" gap="md" nowrap><UiButton variant="link" @click="inspect(row)">详情</UiButton><UiButton variant="link" @click="expanded = expanded.includes(row.id) ? expanded.filter((x) => x !== row.id) : [...expanded, row.id]">依据</UiButton></Row></template>
+          <template #cell-actions="{ row }"><Row justify="end" gap="md" nowrap><UiButton variant="link" @click="inspect(row)">详情</UiButton></Row></template>
           <template #expanded="{ row }"><DescriptionList :columns="2" :items="[{ label: '建议原因', value: '毛利率低于 30%' }, { label: '规则编号', value: 'R-03' }, { label: '同店排名', value: `第 ${Number(row.id) + 3} / 40` }, { label: '近 7 日均价', value: (row.act * 1.03).toFixed(2) + ' 元' }]" /></template>
         </DataTable>
       </template>

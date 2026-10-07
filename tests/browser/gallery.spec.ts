@@ -13,7 +13,7 @@ test("组件目录逐项展示，地址可分享和刷新，手机可以直接�
   await page.getByRole("option", { name: "文本输入", exact: true }).click();
   await expect(page).toHaveURL(/example=inputs/);
   await expect(page.getByRole("textbox", { name: "项目名称", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "选择日期", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "到货日期", exact: true })).toHaveCount(0);
   await expect(page.locator("[data-gallery-preview]")).toHaveCount(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

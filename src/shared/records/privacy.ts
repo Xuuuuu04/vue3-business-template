@@ -1,5 +1,6 @@
 /** 按动作声明的敏感值清理说明和错误，不依赖业务字段的名字。 */
 import type { RunRecord } from "./store";
+import { ActionError } from "@/shared/http/client";
 
 export class RecordPrivacy {
   private readonly secrets = new Set<string>();
@@ -43,12 +44,24 @@ export class RecordPrivacy {
     return message.slice(0, limit);
   }
 
+  /** 页面和调用方只接收清理后的失败，不携带可能含凭据的原始 cause。 */
+  failure(error: unknown): Error {
+    const message = error instanceof Error ? this.text(error.message) : "动作执行失败";
+    return error instanceof ActionError
+      ? new ActionError(error.code, message, error.unknownResult)
+      : new Error(message);
+  }
+
   /** 后来产生的敏感输出也不能留在此前保存的错误或说明里。 */
   clean(record: RunRecord): void {
     if (record.error) record.error = this.text(record.error);
     for (const step of record.steps) {
       if (step.error) step.error = this.text(step.error);
       step.outputs = step.outputs.map((message) => this.text(message, 200));
+      for (const request of step.requests) {
+        if (request.requestId) request.requestId = this.text(request.requestId);
+        if (request.backendRun) request.backendRun = this.text(request.backendRun);
+      }
     }
   }
 }

@@ -20,20 +20,20 @@ test("分段选择用方向键切换，焦点跟随选项且 Tab 只经过当前
 
 test("选中日期后，可单独用键盘清除，不会再次打开日历", async ({ page }) => {
   await openForms(page, "dates");
-  await page.getByRole("button", { name: "选择日期", exact: true }).click();
+  await page.getByRole("button", { name: "到货日期", exact: true }).click();
   await page.locator('[data-reka-calendar-cell-trigger][data-today]').click();
   const clear = page.getByRole("button", { name: "清除日期", exact: true });
   await clear.focus();
   await page.keyboard.press("Enter");
   await expect(clear).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "选择日期", exact: true })).toBeFocused();
-  await expect(page.getByRole("button", { name: "选择日期", exact: true })).toHaveText("选择日期");
+  await expect(page.getByRole("button", { name: "到货日期", exact: true })).toBeFocused();
+  await expect(page.getByRole("button", { name: "到货日期", exact: true })).toHaveText("选择日期");
   await expect(page.locator('[data-reka-calendar-cell-trigger]')).toHaveCount(0);
 });
 
 test("日期范围在手机完整显示，已选范围可以用键盘清除", async ({ page }) => {
   await openForms(page, "dates");
-  const picker = page.getByRole("button", { name: "选择日期范围", exact: true });
+  const picker = page.getByRole("button", { name: "统计区间", exact: true });
   await picker.click();
   await page.getByRole("button", { name: "最近 7 天", exact: true }).click();
   const clear = page.getByRole("button", { name: "清除日期范围", exact: true });

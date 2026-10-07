@@ -48,7 +48,7 @@
 ## 本项目的约定
 
 1. 新包使用 `npm run new:module -- 包名 --title 中文名`。
-2. 新页用 new:page，新步骤用 new:step 并指定所属动作。脚本登记文件，不手工补登记表。
+2. 新页用 new:page，可选 --layout blank|list|form|detail 和 --task 声明唯一任务；新步骤用 new:step 并指定所属动作。脚本登记文件，不手工补登记表。
 3. 先写业务规则、编号、异常情况与确认样例；未知规则标待确认。
 4. 固定文件分别负责清单、公开能力、数据、接口、流程、状态、步骤、页面、测试。
 5. 业务只导入 shared/public、shared/ui/public 和已声明依赖的其他包 public。

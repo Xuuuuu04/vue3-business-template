@@ -82,6 +82,7 @@ export async function execute<I extends object, O>(
     record.status = "ok";
     return values[action.result] as O;
   } catch (error) {
+    error = privacy.failure(error);
     // 后续失败不能抹掉本次已经保存的事实，也不能让页面重发整个动作。
     const saved = record.steps.some((step) =>
       step.requests.some(
@@ -94,7 +95,6 @@ export async function execute<I extends object, O>(
         `已有后台写入操作成功，但后续步骤失败：${error instanceof Error ? error.message : "动作执行失败"} 请先查询实际结果，不要再次提交整个操作。`,
         true,
       );
-      failure.cause = error;
       error = failure;
     }
     record.status =

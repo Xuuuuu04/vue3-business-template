@@ -3,9 +3,11 @@ import { computed, nextTick, ref } from "vue";
 import { PopoverRoot, PopoverTrigger, PopoverPortal, PopoverContent, CalendarRoot, CalendarHeader, CalendarHeading, CalendarPrev, CalendarNext, CalendarGrid, CalendarGridHead, CalendarGridRow, CalendarHeadCell, CalendarGridBody, CalendarCell, CalendarCellTrigger } from "reka-ui";
 import { parseDate, today, getLocalTimeZone, type DateValue } from "@internationalized/date";
 import { CalendarDays, ChevronLeft, ChevronRight, X } from "lucide-vue-next";
+import { useFieldControl } from "../lib/field";
 /** 日期选择：值为 "YYYY-MM-DD" 字符串，空字符串表示未选。周一开始，可清除。 */
+defineOptions({ inheritAttrs: false });
 const model = defineModel<string>({ default: "" });
-defineProps<{ placeholder?: string; ariaLabel?: string; min?: string; max?: string }>();
+const props = defineProps<{ id?: string; placeholder?: string; ariaLabel?: string; min?: string; max?: string }>();
 const open = ref(false);
 const trigger = ref<HTMLButtonElement>();
 function clear() {
@@ -18,12 +20,13 @@ const value = computed<DateValue | undefined>({
   set: (v) => { model.value = v ? v.toString() : ""; open.value = false; },
 });
 const shown = computed(() => (model.value ? model.value.replace(/^(\d+)-(\d+)-(\d+)$/, (_, y, m, d) => `${y}年${Number(m)}月${Number(d)}日`) : ""));
+const { attributes, invalid: fieldInvalid, rootAttributes } = useFieldControl(() => ({ id: props.id, label: props.ariaLabel }));
 </script>
 <template>
   <PopoverRoot v-model:open="open">
-    <div class="control-surface flex h-(--control-h) w-full items-center rounded-md border bg-surface transition-[border-color,box-shadow] hover:border-line-strong focus-within:shadow-[0_0_0_2px_var(--ring)]" :class="open ? 'border-primary' : 'border-line'">
+    <div v-bind="rootAttributes()" :data-invalid="fieldInvalid() || undefined" class="control-surface flex h-(--control-h) w-full items-center rounded-md border bg-surface transition-[border-color,box-shadow] hover:border-line-strong focus-within:shadow-[0_0_0_2px_var(--ring)]" :class="open ? 'border-primary' : 'border-line'">
       <PopoverTrigger as-child>
-        <button ref="trigger" type="button" :aria-label="ariaLabel ?? placeholder ?? '选择日期'" class="flex h-full min-w-0 flex-1 items-center gap-2 rounded-md px-2.5 text-left">
+        <button ref="trigger" type="button" v-bind="attributes()" :aria-label="attributes()['aria-labelledby'] ? undefined : ariaLabel ?? placeholder ?? '选择日期'" class="flex h-full min-w-0 flex-1 items-center gap-2 rounded-md px-2.5 text-left">
           <CalendarDays class="size-4 shrink-0 text-fg-faint" />
           <span class="min-w-0 flex-1 truncate tabular-nums" :class="!shown && 'text-fg-faint'">{{ shown || placeholder || "选择日期" }}</span>
         </button>
