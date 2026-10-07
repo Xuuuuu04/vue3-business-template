@@ -40,6 +40,11 @@ export const router = createRouter({
           { path: "/dev/records", component: () => import("./dev/Records.vue"), meta: { title: "操作记录" } },
           { path: "/dev/speed", component: () => import("./dev/Speed.vue"), meta: { title: "页面速度" } },
           { path: "/dev/design", component: () => import("./dev/DesignGuide.vue"), meta: { title: "设计预览" } },
+          { path: "/dev/examples", redirect: "/dev/examples/customers" },
+          { path: "/dev/examples/customers", component: () => import("./dev/examples/CustomersExample.vue"), meta: { title: "客户管理" } },
+          { path: "/dev/examples/campaign", component: () => import("./dev/examples/CampaignExample.vue"), meta: { title: "活动编辑" } },
+          { path: "/dev/examples/approval", component: () => import("./dev/examples/ApprovalExample.vue"), meta: { title: "采购审批" } },
+          { path: "/dev/examples/inbox", component: () => import("./dev/examples/InboxExample.vue"), meta: { title: "客服会话" } },
           { path: "/system/console", redirect: "/dev/map" },
           { path: "/system/components", redirect: "/dev/design" },
         ]

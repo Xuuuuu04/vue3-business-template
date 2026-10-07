@@ -1,7 +1,7 @@
 /** 未保存输入的退出提醒同时覆盖页面导航和浏览器关闭。 */
 import { onBeforeUnmount, onMounted, type Ref } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
-export function useUnsaved(dirty: Ref<boolean>) {
+export function useUnsaved(dirty: Ref<boolean>, message = "已选择的文件尚未上传。确认离开吗？") {
   const before = (event: BeforeUnloadEvent) => {
     if (dirty.value) {
       event.preventDefault();
@@ -11,7 +11,7 @@ export function useUnsaved(dirty: Ref<boolean>) {
   onMounted(() => window.addEventListener("beforeunload", before));
   onBeforeUnmount(() => window.removeEventListener("beforeunload", before));
   onBeforeRouteLeave(
-    () => !dirty.value || window.confirm("已选择的文件尚未上传。确认离开吗？"),
+    () => !dirty.value || window.confirm(message),
   );
 }
 /** 下载地址由框架回收，业务组件不自己管理浏览器资源。 */

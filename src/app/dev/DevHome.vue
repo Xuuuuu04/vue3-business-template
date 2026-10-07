@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
-import { Compass, History, Gauge, Palette, ChevronRight } from "lucide-vue-next";
+import { Compass, History, Gauge, Palette, ChevronRight, PanelsTopLeft } from "lucide-vue-next";
 import generatedGraph from "@/generated/graph.json";
 import { useSession } from "@/shared/public";
 import { PageFrame, StatusLine, WorkArea, Stack, UiTag } from "@/shared/ui/public";
@@ -15,6 +15,7 @@ const tools = [
   { to: "/dev/records", icon: History, name: "操作记录", text: "你在页面上做过的每次操作：成功还是失败、花了多久、请求了哪些接口。出问题时先看这里。" },
   { to: "/dev/speed", icon: Gauge, name: "页面速度", text: "页面切换、接口等待、最慢的操作。判断“慢”是慢在页面还是慢在后台。" },
   { to: "/dev/design", icon: Palette, name: "设计预览", text: "所有组件、七套配色和页面拼法的实际效果。选配色、挑组件时看这里。" },
+  { to: "/dev/examples", icon: PanelsTopLeft, name: "功能示例", text: "客户管理、活动编辑、采购审批和客服会话。体验完整页面的布局与操作。" },
 ];
 </script>
 <template>

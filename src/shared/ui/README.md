@@ -74,7 +74,7 @@ navigation: [{
 | 文本输入 | `UiInput`、`UiPasswordInput`（显示密码、大写提醒）、`UiSearchInput`、`UiTextarea`（随内容长高、字数） |
 | 选择 | `UiSelect`（少于 10 项）、`UiCombobox`（可搜索、可多选）、`UiTagsInput`、`UiCheckbox`、`UiSwitch`（立即生效）、`UiRadioGroup`（含卡片样式）、`UiSegmented` |
 | 数字与日期 | `UiNumberInput`（加减、上下限、单位）、`UiDatePicker`、`UiDateRangePicker`（含常用范围）、`UiFileDrop` |
-| 表单版式 | `Field`（名称、提示、错误）、`FormSection`（设置类：左标题右控件） |
+| 表单版式 | `Field`（名称、提示、错误）、`FormSection`（默认左标题右控件；`layout="stacked"` 用于整行详情） |
 | 标记 | `UiTag`（状态 ok、warn、bad；编码 code）、`UiAvatar`、`UiAvatarGroup`、`UiFileIcon`、`UiTime`（“3 小时前”，悬停看完整时间）、`UiCopy` |
 | 浮层 | `UiDialog`（短决定）、`UiDrawer`（从列表快速查看）、`useToast()`、`UiTip` |
 | 状态与反馈 | `UiAlert`（提示条）、`UiResult`（结果页）、`UiProgress`、`UiSteps`、`UiSkeleton`、`UiEmpty`、`StatusMessage`（动作失败或结果未知）、`BatchProgress`（批量逐项结果，配合 `useBatch`） |
@@ -87,6 +87,8 @@ navigation: [{
 批量操作用 `@/shared/public` 的 `useBatch`：按顺序逐个执行同一动作，明确失败继续，结果未知立即停止，任何一项都不自动重试。
 
 完整的实际效果看开发时的「设计预览」页（`/dev/design`），点配色即时切换。
+
+完整功能页面见 `/dev/examples` 和 [功能示例说明](../../../doc/ui-examples.md)。`SplitWorkspace` 提供同一任务的选择区与内容区：桌面并排，手机通过 `v-model:view="list|detail"` 切换，插槽为 `listHeader`、`list`、`heading`、默认内容与 `composer`。`ConversationList` 显示姓名、最后消息、未读和处理状态；`ConversationThread` 用纯文字展示人员消息并保留换行。`PromptInput` 可传 `ariaLabel` 命名输入，默认仍为输入问题。未读、草稿、权限和发送结果由页面或业务模块管理。
 
 ## 单一任务的页面规则
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** 采购审批的交互示例。金额以整数分计算，审批结果仅保留在本页内存中。 */
 import { computed, ref } from "vue";
+import { useUnsaved } from "@/shared/public";
 import {
   CellText,
   DataTable,
@@ -132,6 +133,7 @@ const returnAttempted = ref(false);
 const decisionTime = ref("");
 const decisionReason = ref("");
 const pending = computed(() => status.value === "pending");
+useUnsaved(computed(() => pending.value && Boolean(returnReason.value.trim())), "退回原因尚未提交。确认离开吗？");
 const statusLabel = computed(
   () =>
     ({ pending: "待你审批", approved: "已通过", returned: "已退回" })[
@@ -247,10 +249,10 @@ function resetExample(): void {
 
     <WorkArea fill>
       <Stack v-if="activeTab === 'details'" gap="none">
-        <FormSection title="申请信息">
+        <FormSection title="申请信息" layout="stacked">
           <DescriptionList :items="requestFields" :columns="2" />
         </FormSection>
-        <FormSection title="采购明细">
+        <FormSection title="采购明细" layout="stacked">
           <DataTable
             :columns="columns"
             :rows="items"
@@ -277,7 +279,7 @@ function resetExample(): void {
             >
           </DescriptionList>
         </FormSection>
-        <FormSection title="采购说明">
+        <FormSection title="采购说明" layout="stacked">
           <p>
             为新入职的两位产品设计师配置工作站，用于界面设计、原型制作和日常协作。现有设备已全部分配，没有可用的闲置设备。
           </p>
@@ -288,11 +290,11 @@ function resetExample(): void {
             ]"
           />
         </FormSection>
-        <FormSection v-if="!pending" title="审批结果">
+        <FormSection v-if="!pending" title="审批结果" layout="stacked">
           <DescriptionList :items="decisionFields" :columns="2" />
         </FormSection>
       </Stack>
-      <FormSection v-else title="审批记录">
+      <FormSection v-else title="审批记录" layout="stacked">
         <Timeline :items="history" />
       </FormSection>
     </WorkArea>

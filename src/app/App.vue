@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter, RouterView, RouterLink } from "vue-router";
-import { ArrowLeft, Wrench, Compass, History, Gauge, Palette, PlugZap, Search, Moon, Sun, LogOut, Info, Settings } from "lucide-vue-next";
+import { ArrowLeft, Wrench, Compass, History, Gauge, Palette, PlugZap, Search, Moon, Sun, LogOut, Info, Settings, PanelsTopLeft, Users, CalendarDays, ClipboardCheck, MessagesSquare } from "lucide-vue-next";
 import { useSession } from "@/shared/public";
 import {
   AppShell, AppFooter, ThemePanel, NotificationBell, UserMenu, CommandPalette, TopProgress, Toaster, BrandMark,
@@ -21,8 +21,20 @@ const { settings, update, choosePalette } = useTheme();
 const bare = computed(() => route.path === "/login" || route.path.startsWith("/legal/"));
 /** 开发者工具和产品界面分开：进入 /dev 后侧栏只显示开发者工具。 */
 const inDev = computed(() => route.path === "/dev" || route.path.startsWith("/dev/"));
+const inExamples = computed(() => route.path.startsWith("/dev/examples"));
 const nav = computed<NavGroup[]>(() =>
-  inDev.value
+  inExamples.value
+    ? [
+        { items: [{ to: "/dev", label: "返回开发者工具", icon: ArrowLeft, exact: true }] },
+        { title: "功能示例", items: [
+          { to: "/dev/examples/customers", label: "客户管理", icon: Users },
+          { to: "/dev/examples/campaign", label: "活动编辑", icon: CalendarDays },
+          { to: "/dev/examples/approval", label: "采购审批", icon: ClipboardCheck },
+          { to: "/dev/examples/inbox", label: "客服会话", icon: MessagesSquare },
+        ] },
+        { items: [{ to: "/dev/design", label: "组件与配色", icon: Palette }] },
+      ]
+    : inDev.value
     ? [
         { items: [{ to: "/", label: "返回产品", icon: ArrowLeft, exact: true }] },
         {
@@ -33,6 +45,7 @@ const nav = computed<NavGroup[]>(() =>
             { to: "/dev/records", label: "操作记录", icon: History },
             { to: "/dev/speed", label: "页面速度", icon: Gauge },
             { to: "/dev/design", label: "设计预览", icon: Palette },
+            { to: "/dev/examples", label: "功能示例", icon: PanelsTopLeft },
           ],
         },
       ]
@@ -75,7 +88,7 @@ const build = (import.meta.env.VITE_CODE_VERSION as string | undefined)?.slice(0
 <template>
   <TopProgress :active="loading" />
   <RouterView v-if="bare" />
-  <AppShell v-else :brand="appConfig.name" :mark="appConfig.mark" :logo="appConfig.logo" :nav="nav" :context="inDev ? '开发者工具' : identity.org">
+  <AppShell v-else :brand="appConfig.name" :mark="appConfig.mark" :logo="appConfig.logo" :nav="nav" :context="inExamples ? '功能示例' : inDev ? '开发者工具' : identity.org">
     <template #sidebar-footer="{ collapsed }">
       <UiTip :text="collapsed ? '开发者工具（仅开发时可见）' : ''">
         <RouterLink v-if="consoleEnabled && !inDev" to="/dev" class="flex h-10 w-full items-center gap-3 px-[18px] text-side-faint transition-colors hover:bg-side-hover hover:text-side-fg" :class="collapsed && 'justify-center px-0'" aria-label="开发者工具">

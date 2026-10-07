@@ -51,6 +51,7 @@ export { default as Row } from "./layout/Row.vue";
 export { default as Grid } from "./layout/Grid.vue";
 export { default as Field } from "./layout/Field.vue";
 export { default as WorkArea } from "./layout/WorkArea.vue";
+export { default as SplitWorkspace } from "./layout/SplitWorkspace.vue";
 export { default as PageFrame } from "./layout/PageFrame.vue";
 export { default as StatusLine } from "./layout/StatusLine.vue";
 export { default as AppShell } from "./layout/AppShell.vue";
@@ -67,6 +68,8 @@ export { default as StatusMessage } from "./StatusMessage.vue";
 
 export { default as DataTable } from "./data/DataTable.vue";
 export { default as SelectList } from "./data/SelectList.vue";
+export { default as ConversationList } from "./data/ConversationList.vue";
+export { default as ConversationThread } from "./data/ConversationThread.vue";
 export { default as FilePreview } from "./data/FilePreview.vue";
 export { default as BatchProgress } from "./data/BatchProgress.vue";
 export { default as CellText } from "./data/CellText.vue";
