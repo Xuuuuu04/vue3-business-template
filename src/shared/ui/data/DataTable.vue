@@ -76,6 +76,10 @@ function clickRow(e: MouseEvent, row: T) {
   if ((e.target as HTMLElement).closest("button, a, input, label, [role=checkbox]")) return;
   emit("row-click", row);
 }
+function doubleClickRow(e: MouseEvent, row: T) {
+  if (!slots["expanded"] || (e.target as Element).closest("button, a, input, label, [role=checkbox]")) return;
+  toggleExpand(row);
+}
 /** 当前页显示的是第几条到第几条。 */
 const range = computed(() => {
   const t = props.total ?? 0;
@@ -262,17 +266,17 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
         </tbody>
         <tbody v-else>
           <template v-for="g in groups" :key="g.key">
-            <tr v-if="groupBy" class="cursor-pointer select-none" :aria-expanded="!collapsed.has(g.key)" @click="toggleGroup(g.key)">
+            <tr v-if="groupBy">
               <td :colspan="colCount" class="h-10 border-b border-line bg-subtle px-4 font-semibold hover:bg-muted">
-                <span class="inline-flex items-center gap-2">
-                  <ChevronDown class="size-4 text-fg-faint transition-transform duration-(--motion-normal)" :class="collapsed.has(g.key) && '-rotate-90'" />
+                <button type="button" class="flex min-h-10 w-full items-center gap-2 text-left" :aria-expanded="!collapsed.has(g.key)" :aria-label="`${collapsed.has(g.key) ? '展开' : '收起'}${g.key || '未分组'}分组`" @click="toggleGroup(g.key)">
+                  <ChevronDown class="size-4 text-fg-faint transition-transform duration-(--motion-normal)" :class="collapsed.has(g.key) && '-rotate-90'" aria-hidden="true" />
                   <slot name="group" :label="g.key" :rows="g.rows">{{ g.key }}</slot>
                   <span class="font-normal text-fg-faint tabular-nums">{{ g.rows.length }} 项</span>
-                </span>
+                </button>
               </td>
             </tr>
             <template v-for="row in g.rows" :key="keyOf(row)">
-              <tr v-show="!collapsed.has(g.key)" class="group/row" :class="[rowClickable && 'cursor-pointer', selected.includes(keyOf(row)) && 'is-selected']" @dblclick="slots['expanded'] && toggleExpand(row)" @click="clickRow($event, row)">
+              <tr v-show="!collapsed.has(g.key)" class="group/row" :class="[rowClickable && 'cursor-pointer', selected.includes(keyOf(row)) && 'is-selected']" @dblclick="doubleClickRow($event, row)" @click="clickRow($event, row)">
                 <td v-if="selectable" class="sticky left-0 z-10 h-(--row-h) border-b border-line bg-surface pl-4 group-hover/row:bg-subtle group-[.is-selected]/row:bg-primary-soft">
                   <UiCheckbox :model-value="selected.includes(keyOf(row))" :aria-label="`选择第 ${keyOf(row)} 行`" @update:model-value="(v) => toggleRow(row, v)" />
                 </td>
@@ -282,12 +286,17 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
                   :class="[cellClass(c), c.sticky && ['sm:sticky sm:z-10', stickyPosition(c)], c.key === lastLeft && 'sm:shadow-[1px_0_0_var(--line)]', c.key === firstRight && 'sm:shadow-[-1px_0_0_var(--line)]', c.kind === 'delta' && deltaTone(cell(row, c.key))]"
                   :style="stickyStyle(c)"
                 >
-                  <slot :name="`cell-${c.key}`" :row="row" :value="cell(row, c.key)">
-                    <template v-if="c.kind === 'delta' && typeof cell(row, c.key) === 'number'">
-                      <span v-if="(cell(row, c.key) as number) !== 0" aria-hidden="true">{{ (cell(row, c.key) as number) > 0 ? "▲" : "▼" }} </span>{{ Math.abs(cell(row, c.key) as number).toFixed(1) }}
-                    </template>
-                    <template v-else>{{ show(c, row) }}</template>
-                  </slot>
+                  <div :class="slots['expanded'] && c.key === visibleColumns[0]?.key && 'flex items-center gap-2'">
+                    <button v-if="slots['expanded'] && c.key === visibleColumns[0]?.key" type="button" class="grid size-6 shrink-0 place-items-center rounded-md text-fg-muted hover:bg-muted hover:text-fg" :aria-label="`${expanded.includes(keyOf(row)) ? '收起' : '展开'}${show(c, row)}详情`" :aria-expanded="expanded.includes(keyOf(row))" @click.stop="toggleExpand(row)">
+                      <ChevronDown class="size-4 transition-transform duration-(--motion-normal)" :class="!expanded.includes(keyOf(row)) && '-rotate-90'" aria-hidden="true" />
+                    </button>
+                    <slot :name="`cell-${c.key}`" :row="row" :value="cell(row, c.key)">
+                      <template v-if="c.kind === 'delta' && typeof cell(row, c.key) === 'number'">
+                        <span v-if="(cell(row, c.key) as number) !== 0" aria-hidden="true">{{ (cell(row, c.key) as number) > 0 ? "▲" : "▼" }} </span>{{ Math.abs(cell(row, c.key) as number).toFixed(1) }}
+                      </template>
+                      <template v-else>{{ show(c, row) }}</template>
+                    </slot>
+                  </div>
                 </td>
               </tr>
               <tr v-if="slots['expanded'] && expanded.includes(keyOf(row)) && !collapsed.has(g.key)">
