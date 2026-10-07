@@ -28,6 +28,8 @@ function clone() {
     "design",
     "deploy",
     "package.json",
+    "index.html",
+    ".env.example",
     "tsconfig.json",
     "vitest.config.ts",
     "vite.config.ts",
@@ -330,7 +332,17 @@ test("产品初始化清理样板业务，框架三份比较遇到冲突不写�
       existsSync(join(root, "tests/browser/demo")),
     );
     expect(publicCases.length).toBeGreaterThan(0);
-    command(root, "tools/start-project.ts", product);
+    const sourceBrand = readFileSync(join(root, "src/app/app.config.ts"), "utf8");
+    command(root, "tools/start-project.ts", product, "--name", "客户联系工作台");
+    const productBrand = readFileSync(join(product, "src/app/app.config.ts"), "utf8");
+    expect(productBrand).toContain('name: "客户联系工作台"');
+    expect(productBrand).not.toContain("团队文件，清楚有序");
+    expect(productBrand).not.toContain("support@example.com");
+    expect(readFileSync(join(root, "src/app/app.config.ts"), "utf8")).toBe(sourceBrand);
+    expect(readFileSync(join(product, "index.html"), "utf8")).toContain("<title>客户联系工作台</title>");
+    expect(readFileSync(join(product, ".env.example"), "utf8")).toContain("VITE_API_MODE=real");
+    expect(readFileSync(join(product, ".env.example"), "utf8")).not.toContain("VITE_ORG_ID=demo-team");
+    expect(readFileSync(join(product, "README.md"), "utf8")).toContain("登录与业务接口尚未连接真实后台");
     expect(existsSync(join(product, "src/modules/file_library"))).toBe(false);
     expect(existsSync(join(product, "tests/browser/demo"))).toBe(false);
     expect(existsSync(join(product, "tests/demo"))).toBe(false);

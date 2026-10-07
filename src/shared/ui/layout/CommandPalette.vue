@@ -15,7 +15,7 @@ const shown = computed(() => {
   const q = query.value.trim().toLowerCase();
   return props.commands.filter((c) => !q || c.label.toLowerCase().includes(q) || (c.hint ?? "").toLowerCase().includes(q));
 });
-watch(open, (o) => { if (o) { query.value = ""; index.value = 0; void nextTick(() => input.value?.focus()); } });
+watch(open, (o) => { if (o) { query.value = ""; index.value = 0; void nextTick(() => input.value?.focus()); } }, { immediate: true });
 watch(shown, () => (index.value = 0));
 function run(c: { id: string; label: string; group: string; icon?: Component; hint?: string; run: () => void }) { open.value = false; void nextTick(() => c.run()); }
 function key(e: KeyboardEvent) {

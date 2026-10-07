@@ -43,6 +43,18 @@ const module: Module = {
 };
 
 describe("多级导航", () => {
+  it("模块只有一个同名公开入口时直接显示入口，避免重复目录与旧样板入口", () => {
+    const single: Module = {
+      ...module, title: "总额计算",
+      pages: [page("main", "/calculation"), page("form", "/calculation/form")],
+      navigation: [{ label: "总额计算", page: "form" }],
+    };
+    const nav = moduleNavigation(single, () => true)!;
+    expect(nav.label).toBe("总额计算");
+    expect(nav.to).toBe("/calculation/form");
+    expect(nav.children).toEqual([]);
+    expect(currentNavItem([nav], "/calculation/form")).toBe(nav);
+  });
   it("深层页只选中最具体的子项，保留全部祖先目录", () => {
     const nav = moduleNavigation(module, () => true)!;
     const current = currentNavItem([nav], "/orders/new");

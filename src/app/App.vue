@@ -64,6 +64,8 @@ watch(theme, () => requestAnimationFrame(() => syncFavicon(appConfig.mark, appCo
 
 // 全局搜索：⌘K / Ctrl+K
 const search = ref(false);
+const searchLoaded = ref(false);
+watch(search, (open) => { if (open) searchLoaded.value = true; });
 const about = ref(false);
 function onKey(e: KeyboardEvent) { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); search.value = !search.value; } }
 onMounted(() => document.addEventListener("keydown", onKey));
@@ -106,12 +108,12 @@ const build = (import.meta.env.VITE_CODE_VERSION as string | undefined)?.slice(0
       <UiTip v-if="session.demo" text="当前是演示数据，没有连接后台"><UiTag tone="warn" class="mr-1">演示数据</UiTag></UiTip>
       <NotificationBell />
       <ThemePanel />
-      <UserMenu :name="identity.signedIn ? identity.username : session.demo ? '演示用户' : '未登录'" :org="identity.org" :signed-in="identity.signedIn && !session.demo" @settings="router.push('/settings')" @help="help" @about="about = true" @logout="leave" />
+      <UserMenu :name="identity.signedIn ? identity.username : session.demo ? '演示用户' : '未登录'" :org="identity.org" :signed-in="identity.signedIn && !session.demo" :help-available="Boolean(appConfig.support.email || appConfig.support.helpUrl)" @settings="router.push('/settings')" @help="help" @about="about = true" @logout="leave" />
     </template>
     <RouterView />
     <template #footer><AppFooter :company="appConfig.company" :icp="appConfig.icp" :version="appConfig.version" :links="footerLinks" /></template>
   </AppShell>
-  <CommandPalette v-model:open="search" :commands="commands" />
+  <CommandPalette v-if="searchLoaded" v-model:open="search" :commands="commands" />
   <UiDialog v-model:open="about" title="关于" width="sm">
     <div class="flex flex-col items-center gap-3 py-2 text-center">
       <BrandMark :name="appConfig.name" :mark="appConfig.mark" :logo="appConfig.logo" size="xl" />

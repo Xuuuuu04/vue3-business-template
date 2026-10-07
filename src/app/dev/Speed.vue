@@ -31,12 +31,12 @@ const slowApis = computed(() => {
   for (const q of requests.value) { const k = endpointLabel(q.endpoint, q.method); const c = sum.get(k) ?? { n: 0, t: 0 }; c.n++; c.t += q.elapsed; sum.set(k, c); }
   return [...sum].map(([label, c]) => ({ label, value: c.t / c.n, text: `${ms(c.t / c.n)} ms · ${c.n} 次` })).sort((a, b) => b.value - a.value).slice(0, 5);
 });
-const kinds: Record<string, string> = { "navigation-dom": "页面切换", paint: "首次绘制", longtask: "页面卡顿", resource: "资源加载" };
+const kinds: Record<string, string> = { "navigation-dom": "页面切换", paint: "绘制时点", longtask: "页面卡顿", resource: "资源加载" };
 const rows = computed(() => signals.value.slice(-30).reverse().map((s, i) => ({ id: String(i), kind: kinds[s.kind] ?? s.kind, name: s.name.replace(location.origin, ""), duration: s.duration })));
 const columns: DataColumn[] = [
   { key: "kind", title: "类型", width: 120 },
   { key: "name", title: "内容", minWidth: 360 },
-  { key: "duration", title: "耗时", unit: "ms", kind: "number", width: 110, format: (v) => ms(v as number) },
+  { key: "duration", title: "时间", unit: "ms", kind: "number", width: 110, format: (v) => ms(v as number) },
 ];
 </script>
 <template>
@@ -53,6 +53,7 @@ const columns: DataColumn[] = [
       <ul class="flex list-disc flex-col gap-1.5 pl-5 text-fg-muted marker:text-fg-faint">
         <li>接口等待包含了后台处理的时间，所以不能和后台步骤耗时相加。</li>
         <li>“页面切换”只表示页面内容已经更新，不保证屏幕已经画好。</li>
+        <li>“绘制时点”从页面加载开始计算；首次绘制与首次内容绘制分别保留，其余行显示事件耗时。</li>
         <li>慢在接口，就去后端看这次请求的运行编号；慢在页面卡顿，再用浏览器自带的性能面板细查。</li>
         <li>没有测量到的部分显示“—”，不会用估算数字填上。</li>
       </ul>

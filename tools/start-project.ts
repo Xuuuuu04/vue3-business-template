@@ -7,16 +7,22 @@ import {
   readFileSync,
   readdirSync,
 } from "node:fs";
-import { resolve, relative } from "node:path";
+import { resolve, relative, basename } from "node:path";
 import { execFileSync } from "node:child_process";
 import { protectedFiles, lockData } from "./framework-lock";
 import { sourceFingerprint } from "./lib";
 import { sourceIndex } from "./inspect";
-import { assertFramework } from "./scaffold";
+import { assertFramework, htmlTitle } from "./scaffold";
 const destination = process.argv[2];
 if (!destination)
   throw new Error("用法：npm run start:project -- /绝对路径/新产品");
 const target = resolve(destination);
+const options = process.argv.slice(3);
+if (options.length && (options.length !== 2 || options[0] !== "--name"))
+  throw new Error("用法：npm run start:project -- /绝对路径/新产品 [--name 产品名称]");
+const productName = (options[1] ?? basename(target)).trim();
+if (!productName || productName.length > 80 || /[\r\n\u0000]/.test(productName))
+  throw new Error("产品名称需要 1–80 个字，不能换行");
 const source = process.cwd();
 assertFramework();
 if (
@@ -65,8 +71,39 @@ writeFileSync(
 );
 writeFileSync(
   resolve(target, "project-plan.json"),
-  JSON.stringify({ product: "待填写", businessLines: [] }, null, 2) + "\n",
+  JSON.stringify({ product: productName, businessLines: [] }, null, 2) + "\n",
 );
+/** 新产品有自己的身份，不继承样板业务宣传。 */
+const brandFile = resolve(target, "src/app/app.config.ts");
+let brand = readFileSync(brandFile, "utf8");
+const ts = (await import("typescript")).default;
+const tree = ts.createSourceFile("app.config.ts", brand, ts.ScriptTarget.Latest, true);
+const replacements: { start: number; end: number; text: string }[] = [];
+const values: Record<string, string> = {
+  name: JSON.stringify(productName), mark: JSON.stringify(Array.from(productName)[0]),
+  logo: "undefined as string | undefined", tagline: "''", highlights: "[] as { title: string; text: string }[]",
+  company: "''", icp: "''", support: "{ email: '', helpUrl: '' as string }",
+  legal: "{ reviewed: false }",
+};
+for (const statement of tree.statements) {
+  if (!ts.isVariableStatement(statement)) continue;
+  for (const declaration of statement.declarationList.declarations) {
+    if (declaration.name.getText(tree) !== "appConfig" || !declaration.initializer || !ts.isObjectLiteralExpression(declaration.initializer)) continue;
+    for (const property of declaration.initializer.properties) {
+      if (!ts.isPropertyAssignment(property)) continue;
+      const name = property.name.getText(tree);
+      if (values[name] !== undefined) replacements.push({ start: property.initializer.getStart(tree), end: property.initializer.end, text: values[name]! });
+    }
+  }
+}
+if (replacements.length !== Object.keys(values).length) throw new Error("产品品牌配置格式无法识别");
+for (const part of replacements.sort((a, b) => b.start - a.start)) brand = brand.slice(0, part.start) + part.text + brand.slice(part.end);
+writeFileSync(brandFile, brand);
+const htmlFile = resolve(target, "index.html");
+writeFileSync(htmlFile, readFileSync(htmlFile, "utf8").replace(/<title>[^<]*<\/title>/, `<title>${htmlTitle(productName)}</title>`));
+const sampleEnvironment = resolve(target, ".env.example");
+writeFileSync(sampleEnvironment, readFileSync(sampleEnvironment, "utf8").replace(/^VITE_API_MODE=.*$/m, "VITE_API_MODE=real").replace(/^VITE_ORG_ID=.*$/m, "VITE_ORG_ID="));
+writeFileSync(resolve(target, "README.md"), `# ${productName}\n\n当前没有业务模块，登录与业务接口尚未连接真实后台。产品计划见 project-plan.json，开发入口见 AGENTS.md，页面交付见 doc/delivery.md。\n\n## 启动\n\n使用 Node.js 22.12 以上的 22.x、24.x 或 26.x。\n\n\`\`\`sh\nnpm ci\ncp .env.example .env\nnpm run dev\n\`\`\`\n\n.env 中填写真实 API_PROXY_TARGET 与 VITE_ORG_ID。开发组件和任务示例在 /dev/design、/dev/examples，仅用于比较界面，不能当作后台保存。\n\n## 开发与检查\n\n先确认业务规则，再用 new:module、new:page 生成文件。运行 npm run project -- --json 看登记与实际检查。整批交付运行 npm run docs、npm run check、npm run test:browser 与 VITE_API_MODE=real npm run build。\n\n## 登录与品牌\n\n公共登录请求 POST /api/v1/access/login，输入 org_code、username、password、otp_code。响应需有非空 access_token、Bearer token_type、正整数 expires_in 与非空 org_id；额外的用户或刷新字段不要求。访问凭据只存内存，刷新后重新登录，不保存或自动使用刷新令牌。登录声明在 src/shared/session/login.ts，后台登录及资源权限由产品实现；更换代理地址不等于已接通。\n\n产品名称已写入 app.config.ts；公司、联系方式与法律文本需按真实产品填写。默认主题沿用模板，品牌说明为空，避免继承样板业务宣传。\n`);
 const originals: Record<string, string> = {};
 for (const file of protectedFiles(source)) {
   const name = relative(source, file);

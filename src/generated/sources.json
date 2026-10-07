@@ -40,8 +40,8 @@
     "symbol": "downloadFile"
   },
   "session.sign_in": {
-    "file": "src/shared/session/session.ts",
-    "line": 29,
+    "file": "src/shared/session/login.ts",
+    "line": 21,
     "symbol": "signIn"
   }
 }

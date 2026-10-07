@@ -2,6 +2,7 @@
  * 业务页面唯一的界面入口。
  * 基础控件带 Ui 前缀；其余是版式与数据组件。页面只组合它们，不写颜色、字号和局部样式。
  */
+import { defineAsyncComponent } from "vue";
 export { default as UiButton } from "./base/Button.vue";
 export { default as UiInput } from "./base/Input.vue";
 export { default as UiSelect } from "./base/Select.vue";
@@ -59,7 +60,7 @@ export { default as AuthLayout } from "./layout/AuthLayout.vue";
 export { default as ThemePanel } from "./layout/ThemePanel.vue";
 export { default as BrandMark } from "./layout/BrandMark.vue";
 export { default as AppFooter } from "./layout/AppFooter.vue";
-export { default as CommandPalette } from "./layout/CommandPalette.vue";
+export const CommandPalette = /* @__PURE__ */ defineAsyncComponent(() => import("./layout/CommandPalette.vue"));
 export { default as UserMenu } from "./layout/UserMenu.vue";
 export { default as NotificationBell } from "./layout/NotificationBell.vue";
 export { default as TopProgress } from "./layout/TopProgress.vue";

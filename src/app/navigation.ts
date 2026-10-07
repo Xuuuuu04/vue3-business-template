@@ -23,6 +23,8 @@ export function moduleNavigation(
     });
   }
   const children = build(module.navigation ?? []);
+  const only = children.length === 1 ? children[0] : undefined;
+  if (only && only.label === module.title && !only.children?.length) return only;
   const first = module.pages.find(
     (p) => !p.path.includes(":") && (!p.permission || can(p.permission)),
   );

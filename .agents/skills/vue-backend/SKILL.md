@@ -5,6 +5,8 @@ description: 前端要对接 FastAPI 后端、核对接口路径与字段、或�
 
 # 对接后端
 
+公共登录声明在 `src/shared/session/login.ts`，提交时按需加载。POST `/api/v1/access/login` 输入组织、账号、密码和验证码，响应至少有非空 `access_token`、Bearer `token_type`、正整数 `expires_in` 和非空 `org_id`。前端不保存或自动使用刷新令牌，不要求未使用的响应字段。实际后台必须验证身份与权限。
+
 接口路径和响应类型写在包的 `api.ts` 与 `data.ts`，现在是手写的，要和后端保持一致。后端导出的 `doc/api/openapi.json`（FastAPI 模板里由 `fastapi-docs` 生成）是对照来源。
 
 ## 对照与生成

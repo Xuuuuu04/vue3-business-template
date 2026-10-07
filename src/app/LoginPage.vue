@@ -56,7 +56,7 @@ async function submit() {
 }
 </script>
 <template>
-  <AuthLayout :brand="appConfig.name" :mark="appConfig.mark" :logo="appConfig.logo" :tagline="appConfig.tagline" :highlights="appConfig.highlights">
+  <AuthLayout :brand="appConfig.name" :mark="appConfig.mark" :logo="appConfig.logo" :tagline="appConfig.tagline" :highlights="appConfig.highlights" :variant="appConfig.tagline || appConfig.highlights.length ? 'split' : 'centered'">
     <template #topright>
       <UiTip :text="settings.mode === 'dark' ? '切换到浅色' : '切换到深色'"><UiButton variant="ghost" size="icon" :aria-label="settings.mode === 'dark' ? '切换到浅色' : '切换到深色'" @click="update({ mode: settings.mode === 'dark' ? 'light' : 'dark' })"><Sun v-if="settings.mode === 'dark'" class="size-[18px]" /><Moon v-else class="size-[18px]" /></UiButton></UiTip>
     </template>
@@ -71,7 +71,7 @@ async function submit() {
           <UiCheckbox v-model="remember" label="记住账号" />
           <span class="flex items-center gap-3">
             <button v-if="!useOtp" type="button" class="text-[13px] text-fg-muted hover:text-fg" @click="useOtp = true">有两步验证码？</button>
-            <button type="button" class="text-[13px] text-primary-text hover:underline" @click="forgot = true">忘记密码？</button>
+            <button v-if="appConfig.support.email || appConfig.support.helpUrl" type="button" class="text-[13px] text-primary-text hover:underline" @click="forgot = true">忘记密码？</button>
           </span>
         </div>
         <StatusMessage :status="error ? 'error' : 'idle'" :error="error" />
@@ -81,7 +81,9 @@ async function submit() {
     </form>
     <template #footer><AppFooter :company="appConfig.company" :icp="appConfig.icp" :version="appConfig.version" :links="links" /></template>
     <UiDialog v-model:open="forgot" title="忘记密码" description="出于安全考虑，密码由所在组织的管理员重置。">
-      <p class="text-fg-muted">请联系你的管理员，或发邮件到 <a :href="`mailto:${appConfig.support.email}`" class="text-primary-text hover:underline">{{ appConfig.support.email }}</a>，说明组织代码和账号。</p>
+      <p class="text-fg-muted">请联系所在组织的管理员重置密码，并提供组织代码和账号。</p>
+      <p v-if="appConfig.support.email" class="mt-3"><a :href="`mailto:${appConfig.support.email}`" class="text-primary-text hover:underline">{{ appConfig.support.email }}</a></p>
+      <p v-if="appConfig.support.helpUrl" class="mt-3"><a :href="appConfig.support.helpUrl" target="_blank" rel="noopener noreferrer" class="text-primary-text hover:underline">前往帮助中心</a></p>
       <template #footer><UiButton variant="primary" @click="forgot = false">知道了</UiButton></template>
     </UiDialog>
   </AuthLayout>
