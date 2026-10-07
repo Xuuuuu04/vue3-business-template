@@ -3,7 +3,7 @@
  * 应用外壳：可收起的侧栏 + 顶栏 + 内容区。窄屏侧栏变成从左滑出的面板。
  * 导航按“分组 → 多级菜单树”传入；当前页由路由决定。收起状态保存在浏览器里。
  */
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { NavGroup } from "../lib/types";
 import { currentNavItem } from "../lib/navigation";
 import SidebarItem from "./SidebarItem.vue";
@@ -40,6 +40,18 @@ watch(collapsed, (v) => {
   }
 });
 const mobileOpen = ref(false);
+const desktop = ref(false);
+let breakpoint: MediaQueryList;
+function resize() {
+  desktop.value = breakpoint.matches;
+  if (desktop.value) mobileOpen.value = false;
+}
+onMounted(() => {
+  breakpoint = window.matchMedia("(min-width: 768px)");
+  resize();
+  breakpoint.addEventListener("change", resize);
+});
+onBeforeUnmount(() => breakpoint?.removeEventListener("change", resize));
 const sidebar = ref<HTMLElement>();
 watch(mobileOpen, async (open) => {
   await nextTick();
@@ -47,7 +59,7 @@ watch(mobileOpen, async (open) => {
     sidebar.value
       ?.querySelector<HTMLButtonElement>('button[aria-label="关闭导航"]')
       ?.focus();
-  else
+  else if (!desktop.value)
     document
       .querySelector<HTMLButtonElement>('button[aria-label="打开导航"]')
       ?.focus();
@@ -103,9 +115,11 @@ function closeMobile(event: KeyboardEvent) {
     />
     <aside
       ref="sidebar"
-      :role="mobileOpen ? 'dialog' : undefined"
-      :aria-modal="mobileOpen ? true : undefined"
-      :aria-label="mobileOpen ? '主要导航' : undefined"
+      :inert="!desktop && !mobileOpen"
+      :aria-hidden="!desktop && !mobileOpen ? true : undefined"
+      :role="!desktop && mobileOpen ? 'dialog' : undefined"
+      :aria-modal="!desktop && mobileOpen ? true : undefined"
+      :aria-label="!desktop && mobileOpen ? '主要导航' : undefined"
       @keydown="closeMobile"
       class="fixed inset-y-0 left-0 z-50 flex w-[256px] -translate-x-full flex-col gap-1 bg-side p-2 sidebar-surface transition-transform duration-(--motion-panel) ease-(--ease) md:static md:w-auto md:translate-x-0"
       :class="mobileOpen && 'translate-x-0'"
@@ -162,7 +176,7 @@ function closeMobile(event: KeyboardEvent) {
       </div>
     </aside>
 
-    <div :inert="mobileOpen" class="application-surface flex min-h-0 min-w-0 flex-col">
+    <div :inert="!desktop && mobileOpen" class="application-surface flex min-h-0 min-w-0 flex-col">
       <header
         class="z-30 flex h-16 shrink-0 items-center gap-1 bg-surface px-3 md:px-5"
       >

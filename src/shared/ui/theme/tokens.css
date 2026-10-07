@@ -203,7 +203,9 @@
 .sidebar-badge { padding: 1px 6px; background: var(--side-hover); border-radius: var(--r-sm); font-size: 12px; font-variant-numeric: tabular-nums; }
 /* 页头靠间距区分内容。工作区使用剩余高度，不减去猜测的像素数。 */
 .page-frame { display: flex; flex-direction: column; min-width: 0; padding: 0 var(--page-px) var(--space-section); gap: 12px; }
-.page-heading { display: flex; flex: none; align-items: center; flex-wrap: wrap; gap: 12px; min-height: 76px; padding-block: 20px; }
+.page-heading { display: flex; flex: none; align-items: center; flex-wrap: wrap; gap: 12px; min-height: 64px; padding-block: 16px 8px; }
+.page-title { overflow-wrap: anywhere; }
+.page-heading-actions { margin-left: auto; }
 .page-tabs { flex: none; }
 .page-status { display: flex; flex: none; flex-direction: column; gap: 8px; }
 .page-status:empty { display: none; }
@@ -221,8 +223,9 @@
   .sidebar-target, .sidebar-children .sidebar-target { min-height: 44px; padding-block: 12px; }
   .sidebar-disclosure { width: 40px; height: 40px; }
   .page-frame { padding-inline: 16px; gap: 12px; }
-  .page-heading { min-height: 72px; gap: 8px; }
-  .page-heading h1 { flex-basis: 50%; font-size: 20px; }
+  .page-heading { min-height: 64px; gap: 12px; }
+  .page-heading h1 { flex-basis: 70%; font-size: 20px; }
+  .page-heading-actions { flex-basis: 100%; margin-left: 0; }
 }
 
 /* 色相是连续值，轨道可点击、拖动或用方向键调整。视觉轨道 8px，操作区域 32px。 */

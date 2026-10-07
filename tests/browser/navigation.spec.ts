@@ -1,5 +1,25 @@
 import { test, expect } from "@playwright/test";
 
+test("手机关闭的导航不能获得焦点，打开与 Esc 关闭保持键盘可用", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/dev/examples/customers");
+  const sidebar = page.locator("aside");
+  await expect(sidebar).toHaveAttribute("inert", "");
+  await sidebar.locator("a").first().evaluate((element) => (element as HTMLElement).focus());
+  expect(await sidebar.evaluate((element) => element.contains(document.activeElement))).toBe(false);
+  const open = page.getByRole("button", { name: "打开导航", exact: true });
+  await open.click();
+  const close = page.getByRole("button", { name: "关闭导航", exact: true });
+  await expect(close).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  expect(await sidebar.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+  await page.keyboard.press("Escape");
+  await expect(open).toBeFocused();
+  await expect(sidebar).toHaveAttribute("inert", "");
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(sidebar).not.toHaveAttribute("inert", "");
+});
+
 test("公共外壳支持三级目录，切换深层路由自动展开祖先", async ({ page }) => {
   await page.goto("/dev/design");
   // 直接加载真实公共组件，以独立路由演示三级目录；不向产品加入虚构业务。

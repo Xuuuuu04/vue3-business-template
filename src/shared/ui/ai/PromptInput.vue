@@ -11,7 +11,8 @@ const emit = defineEmits<{ send: [text: string]; stop: [] }>();
 const el = ref<HTMLTextAreaElement>();
 function fit() { if (!el.value) return; el.value.style.height = "auto"; el.value.style.height = Math.min(el.value.scrollHeight, 200) + "px"; }
 watch(model, () => nextTick(fit));
-function send() { const t = model.value.trim(); if (!t || props.busy || props.disabled) return; emit("send", t); model.value = ""; }
+/** 草稿由页面在确认发送成功后清空，失败或结果未知时继续保留。 */
+function send() { const t = model.value.trim(); if (!t || props.busy || props.disabled) return; emit("send", t); }
 function key(e: KeyboardEvent) { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } }
 </script>
 <template>

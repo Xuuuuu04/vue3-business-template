@@ -22,6 +22,7 @@ export const endpoints: Endpoint[] = [
     method: "POST",
     path: "/api/v1/files/:org",
     response: FileView,
+    timeoutMs: 120_000,
   },
   {
     id: "file_library.delete",
@@ -36,6 +37,7 @@ export const endpoints: Endpoint[] = [
     method: "GET",
     path: "/api/v1/files/:org/:id/download",
     responseKind: "blob",
+    timeoutMs: 120_000,
     response: z.instanceof(Blob),
   },
 ];

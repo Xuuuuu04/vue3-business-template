@@ -24,10 +24,10 @@ defineProps<{
         ><ArrowLeft class="size-[18px]"
       /></RouterLink>
       <slot name="icon" />
-      <h1 :title="title" class="min-w-0 flex-1 truncate text-[24px] leading-8 font-semibold">
+      <h1 :title="title" class="page-title min-w-0 flex-1 text-[24px] leading-8 font-semibold">
         {{ title }}
       </h1>
-      <div v-if="$slots.actions" class="flex flex-wrap items-center gap-2">
+      <div v-if="$slots.actions" class="page-heading-actions flex flex-wrap items-center gap-2">
         <slot name="actions" />
       </div>
     </header>

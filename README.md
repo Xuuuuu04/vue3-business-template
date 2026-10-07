@@ -51,6 +51,7 @@ npm run new:step -- file_library summarize --action file_library.list --title �
 - [生成的总图](doc/structure.md)：已登记业务包与页面。
 - [文件规则](doc/file_library/rules.md)和[计算图](doc/file_library/flows.md)。
 - [真实后台接入与部署](doc/deployment.md)。
+- [产品交付](doc/delivery.md)：任务版式、状态接入、视觉检查、安全与资源限制。
 - [检查证据说明](doc/verification.md)：本机测试、浏览器和真实后台分别说明。
 
 ## 检查与发布

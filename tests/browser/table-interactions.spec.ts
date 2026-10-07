@@ -1,6 +1,39 @@
 import { test, expect, type Page } from "@playwright/test";
 
-interface TableExample { grouped?: boolean; rowClickable?: boolean; numeric?: boolean; align?: "left" | "center" | "right" }
+test("可点击的普通数据行有键盘入口，行内按钮不额外触发跳转", async ({ page }) => {
+  const table = await mountTable(page);
+  const row = table.getByRole("row").filter({ has: page.getByRole("button", { name: "文件甲", exact: true }) });
+  await row.focus();
+  await page.keyboard.press("Enter");
+  await expect(table).toHaveAttribute("data-row-click-count", "1");
+  await page.keyboard.press("Space");
+  await expect(table).toHaveAttribute("data-row-click-count", "2");
+  await table.getByRole("button", { name: "文件甲", exact: true }).focus();
+  await page.keyboard.press("Enter");
+  await expect(table).toHaveAttribute("data-row-click-count", "2");
+});
+
+test("读取中保留页码，总数确定减少后回到有效页", async ({ page }) => {
+  const table = await mountTable(page, { page: 3, total: 60 });
+  await expect(table.getByText("第 41–60 条，共 60 条", { exact: true })).toBeVisible();
+  await table.evaluate((host) => host.dispatchEvent(new CustomEvent("fixture-update", { detail: { loading: true, total: 0 } })));
+  await expect(table).not.toHaveAttribute("data-page");
+  await table.evaluate((host) => host.dispatchEvent(new CustomEvent("fixture-update", { detail: { loading: false, total: 20 } })));
+  await expect(table).toHaveAttribute("data-page", "1");
+  await expect(table.getByText("第 1–20 条，共 20 条", { exact: true })).toBeVisible();
+});
+
+test("查询失败显示重新读取入口，不冒充空结果", async ({ page }) => {
+  const table = await mountTable(page);
+  await table.evaluate((host) => host.dispatchEvent(new CustomEvent("fixture-update", { detail: { error: "连接已中断" } })));
+  await expect(table.getByRole("alert")).toContainText("读取失败");
+  await expect(table.getByText("没有符合条件的数据", { exact: true })).toHaveCount(0);
+  await table.getByRole("button", { name: "重新读取", exact: true }).click();
+  await expect(table).toHaveAttribute("data-retried", "true");
+  await expect(table.getByRole("button", { name: "文件甲", exact: true })).toBeVisible();
+});
+
+interface TableExample { grouped?: boolean; rowClickable?: boolean; numeric?: boolean; align?: "left" | "center" | "right"; page?: number; total?: number }
 async function mountTable(page: Page, options: TableExample = {}) {
   await page.goto("/dev/design");
   await page.evaluate(async (example) => {
@@ -8,12 +41,14 @@ async function mountTable(page: Page, options: TableExample = {}) {
     // 使用组件实际导入的版本地址，保证夹具与插槽共享同一份 Vue。
     const source = await (await fetch(tablePath)).text();
     const vuePath = source.match(/from "([^\"]*\/vue\.js[^\"]*)"/)![1]!;
-    const { createApp, h } = await import(vuePath);
+    const { createApp, h, reactive } = await import(vuePath);
     const { default: DataTable } = await import(tablePath);
     const host = document.createElement("div");
     host.dataset.tableInteractionTest = "";
     Object.assign(host.style, { position: "fixed", inset: "0", zIndex: "1000", background: "var(--surface)", padding: "24px", display: "flex" });
     document.body.append(host);
+    const paging = reactive({ page: example.page ?? 1, total: example.total ?? 2, loading: false, error: "" });
+    host.addEventListener("fixture-update", (event) => Object.assign(paging, (event as CustomEvent).detail));
     const rows = [
       { id: "A", name: "文件甲", team: "资料", amount: 123.45 },
       { id: "B", name: "文件乙", team: "资料", amount: 9876.5 },
@@ -21,6 +56,9 @@ async function mountTable(page: Page, options: TableExample = {}) {
     createApp({ render: () => h(DataTable, {
       columns: [{ key: example.numeric ? "amount" : "name", title: example.numeric ? "金额" : "文件名", kind: example.numeric ? "number" : "text", align: example.align, width: 260 }, { key: "team", title: "分组", width: 120 }],
       rows, rowKey: "id", fill: true, flat: true, settings: false, fullscreenable: false,
+      page: paging.page, total: paging.total, loading: paging.loading, error: paging.error, retryable: true,
+      "onUpdate:page": (value: number) => { paging.page = value; host.dataset.page = String(value); },
+      onRetry: () => { paging.error = ""; host.dataset.retried = "true"; },
       rowClickable: example.rowClickable ?? true, groupBy: example.grouped ? "team" : undefined,
       onRowClick: (row: { id: string }) => { host.dataset.lastRowClick = row.id; host.dataset.rowClickCount = String(Number(host.dataset.rowClickCount ?? 0) + 1); },
     }, {

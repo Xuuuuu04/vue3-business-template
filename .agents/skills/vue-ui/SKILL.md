@@ -5,6 +5,8 @@ description: 新建、调整或评审本模板的页面和公共组件时使用�
 
 # 界面系统
 
+第一次为产品做页面，先读 [产品交付](../../../doc/delivery.md)，沿用任务、状态接入和完成检查。草稿由页面在确认保存成功后清空；列表失败与空结果分开。
+
 完整任务示例可在 `/dev/examples` 操作，分别展示客户列表、活动表单、采购详情和客服会话。入口与复用规则见 `doc/ui-examples.md`；示例只修改本页内存，实际业务保存仍通过已声明动作和接口。不要把示例的内存保存复制成生产数据处理。
 
 读 `src/shared/ui/README.md`，查看 `/dev/design` 中相关组件及 `src/modules/file_library/pages/` 的实际页面。目录一次展示一个示例，可用 `section` 与 `example` 地址参数直接打开并刷新，例如 `/dev/design?section=data&example=table`。组件目录用于操作和比较，业务页面仍按真实任务安排。

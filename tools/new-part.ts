@@ -73,6 +73,7 @@ const columns: DataColumn[] = [{ key: 'name', title: '名称', minWidth: 240 }];
         "WorkArea",
         "Stack",
         "Field",
+        "FormSection",
         "UiInput",
         "UiEmpty",
       ],
@@ -82,9 +83,11 @@ const draft = ref('');`,
       body: `<WorkArea form fill>
       <form id="${module}-${name}-form" @submit.prevent>
         <Stack>
+          <FormSection title="基本信息">
           <Field label="样板字段" for="${module}-${name}-input" hint="请按已确认规则替换字段、校验与输入状态。">
             <UiInput id="${module}-${name}-input" v-model="draft" placeholder="字段尚未实现" disabled />
           </Field>
+          </FormSection>
           ${empty("表单尚未接入保存", "声明真实提交动作后，再添加保存入口和结果提示。")}
         </Stack>
       </form>

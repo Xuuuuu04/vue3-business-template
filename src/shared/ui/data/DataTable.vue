@@ -16,6 +16,7 @@ import Skeleton from "../base/Skeleton.vue";
 import EmptyState from "../base/EmptyState.vue";
 import Pagination from "../base/Pagination.vue";
 import Tip from "../base/Tip.vue";
+import UiButton from "../base/Button.vue";
 
 const props = withDefaults(
   defineProps<{
@@ -27,6 +28,9 @@ const props = withDefaults(
     /** 标题后的小字，如“当前筛选 13 条”。 */
     meta?: string;
     loading?: boolean;
+    /** 查询失败与无结果分开；重新读取由页面调用查询动作。 */
+    error?: string;
+    retryable?: boolean;
     selectable?: boolean;
     /** 分组字段；相同值的行归为一组，可折叠。 */
     groupBy?: string;
@@ -70,7 +74,12 @@ const expanded = defineModel<string[]>("expanded", { default: () => [] });
 const page = defineModel<number>("page", { default: 1 });
 const pageSize = defineModel<number>("pageSize", { default: 20 });
 const slots = useSlots();
-const emit = defineEmits<{ "row-click": [row: T] }>();
+const emit = defineEmits<{ "row-click": [row: T]; retry: [] }>();
+function keyRow(event: KeyboardEvent, row: T) {
+  if (!props.rowClickable || event.target !== event.currentTarget || !["Enter", " "].includes(event.key)) return;
+  event.preventDefault();
+  emit("row-click", row);
+}
 function clickRow(e: MouseEvent, row: T) {
   if (!props.rowClickable) return;
   if ((e.target as HTMLElement).closest("button, a, input, label, [role=checkbox]")) return;
@@ -84,8 +93,9 @@ function doubleClickRow(e: MouseEvent, row: T) {
 /** 当前页显示的是第几条到第几条。 */
 const range = computed(() => {
   const t = props.total ?? 0;
-  if (!t) return "";
-  const from = (page.value - 1) * pageSize.value + 1;
+  if (!t) return "共 0 条";
+  const validPage = Math.min(Math.max(1, page.value), Math.max(1, Math.ceil(t / pageSize.value)));
+  const from = (validPage - 1) * pageSize.value + 1;
   return `第 ${from}–${Math.min(t, from + pageSize.value - 1)} 条，共 ${t.toLocaleString("zh-CN")} 条`;
 });
 
@@ -200,7 +210,7 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
 </script>
 
 <template>
-  <section class="data-table relative flex min-h-0 min-w-0 flex-col overflow-hidden bg-surface" :class="[fullscreen ? 'fixed inset-0 z-[60]' : !flat && 'rounded-lg border border-line', fill && 'flex-1']" :aria-label="title ?? '数据表格'">
+  <section class="data-table relative flex min-h-0 min-w-0 flex-col overflow-hidden bg-surface" :class="[fullscreen ? 'fixed inset-0 z-[60]' : !flat && 'rounded-lg border border-line', fill && 'flex-1']" :aria-label="title ?? '数据表格'" :aria-busy="Boolean(loading)">
     <header v-if="hasToolbar" class="flex min-h-12 shrink-0 flex-wrap items-center gap-3 pb-2" :class="!flat && 'px-4 pt-3'">
       <slot name="search" />
       <h2 v-if="title" class="text-[15px] font-semibold">{{ title }}</h2>
@@ -266,6 +276,9 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
             <td v-for="c in visibleColumns" :key="c.key" class="h-(--row-h) border-b border-line px-(--cell-px)"><Skeleton :width="c.kind === 'number' ? '40px' : '70%'" :class="(c.kind === 'number') && 'ml-auto'" /></td>
           </tr>
         </tbody>
+        <tbody v-else-if="error">
+          <tr><td :colspan="colCount"><div role="alert"><EmptyState title="读取失败" :hint="error"><UiButton v-if="retryable" variant="secondary" icon="refresh" @click="emit('retry')">重新读取</UiButton></EmptyState></div></td></tr>
+        </tbody>
         <tbody v-else-if="rows.length === 0">
           <tr><td :colspan="colCount"><slot name="empty"><EmptyState :title="emptyTitle" :hint="emptyHint" /></slot></td></tr>
         </tbody>
@@ -281,7 +294,7 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
               </td>
             </tr>
             <template v-for="row in g.rows" :key="keyOf(row)">
-              <tr v-show="!collapsed.has(g.key)" class="group/row" :class="[rowClickable && 'cursor-pointer', selected.includes(keyOf(row)) && 'is-selected']" @dblclick="doubleClickRow($event, row)" @click="clickRow($event, row)">
+              <tr v-show="!collapsed.has(g.key)" class="group/row" :class="[rowClickable && 'cursor-pointer focus-visible:outline-offset-[-2px]', selected.includes(keyOf(row)) && 'is-selected']" :tabindex="rowClickable ? 0 : undefined" @keydown="keyRow($event, row)" @dblclick="doubleClickRow($event, row)" @click="clickRow($event, row)">
                 <td v-if="selectable" class="sticky left-0 z-10 h-(--row-h) border-b border-line bg-surface pl-4 group-hover/row:bg-subtle group-[.is-selected]/row:bg-primary-soft">
                   <UiCheckbox :model-value="selected.includes(keyOf(row))" :aria-label="`选择第 ${keyOf(row)} 行`" @update:model-value="(v) => toggleRow(row, v)" />
                 </td>
@@ -325,7 +338,7 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
       <span class="tabular-nums">{{ range }}</span>
       <slot name="footer" />
       <span class="flex-1" />
-      <Pagination v-model:page="page" v-model:page-size="pageSize" :total="total!" :sizes="sizes" />
+      <Pagination v-model:page="page" v-model:page-size="pageSize" :total="total!" :sizes="sizes" :loading="loading || Boolean(error)" />
     </footer>
   </section>
 </template>

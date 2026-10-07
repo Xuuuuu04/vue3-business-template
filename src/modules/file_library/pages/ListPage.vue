@@ -163,7 +163,6 @@ async function downloadFile(file: FileView) {
       ></template
     >
     <template #status>
-      <StatusMessage :status="state.status" :error="state.error" />
       <StatusMessage
         :status="download.state.value.status"
         :error="download.state.value.error"
@@ -185,7 +184,10 @@ async function downloadFile(file: FileView) {
       :columns="columns"
       :rows="rows"
       row-key="id"
-      :loading="state.status === 'loading' && !state.data"
+      :loading="state.status === 'loading'"
+      :error="state.status === 'error' ? state.error : undefined"
+      retryable
+      @retry="load"
       :total="state.data?.total ?? 0"
       @row-click="openFile"
     >

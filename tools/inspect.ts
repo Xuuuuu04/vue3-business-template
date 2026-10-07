@@ -1,6 +1,7 @@
 import { inspectPageLayout } from "./page-layout";
 /** 源码结构检查使用 TS 和 Vue 语法树，发现违规后拒绝启动与打包。 */
 import ts from "typescript";
+import { endpointProblems } from "../src/shared/http/endpoint";
 import { parse } from "@vue/compiler-sfc";
 import { baseParse, NodeTypes, type ElementNode } from "@vue/compiler-dom";
 import { readFileSync, existsSync } from "node:fs";
@@ -245,9 +246,9 @@ export function inspectModule(
           errors.push(`${step.id}：接口 ${id} 未登记`);
     }
   }
-  for (const endpoint of module.endpoints)
-    if (!endpoint.path.startsWith("/api/") || endpoint.path.includes("://"))
-      errors.push(`${endpoint.id}：接口必须使用同源 /api/ 路径`);
+  for (const endpoint of module.endpoints) {
+    errors.push(...endpointProblems(endpoint).map((problem) => `${endpoint.id}：${problem}`));
+  }
   for (const page of module.pages)
     for (const id of page.actions)
       if (!module.actions.some((a) => a.id === id))

@@ -88,6 +88,8 @@ navigation: [{
 
 完整的实际效果看开发时的「设计预览」页（`/dev/design`），点配色即时切换。
 
+`PromptInput` 不自行删除草稿，只发出 `send`；页面在确认成功后清空与本次发送相同的草稿，失败或结果未知时保留。产品任务与交付步骤见 [产品交付](../../../doc/delivery.md)。
+
 完整功能页面见 `/dev/examples` 和 [功能示例说明](../../../doc/ui-examples.md)。`SplitWorkspace` 提供同一任务的选择区与内容区：桌面并排，手机通过 `v-model:view="list|detail"` 切换，插槽为 `listHeader`、`list`、`heading`、默认内容与 `composer`。`ConversationList` 显示姓名、最后消息、未读和处理状态；`ConversationThread` 用纯文字展示人员消息并保留换行。`PromptInput` 可传 `ariaLabel` 命名输入，默认仍为输入问题。未读、草稿、权限和发送结果由页面或业务模块管理。
 
 ## 单一任务的页面规则
@@ -117,6 +119,8 @@ navigation: [{
 业务页面不能自己导入图标库：按钮写 `<UiButton icon="download">`，可用名称见 `lib/icons.ts` 的 `actionIcons`；侧栏图标在 `module.ts` 写 `icon: "folder"`，可用名称见 `moduleIcons`。
 
 ## 表格怎么用
+
+查询失败使用 `error`，明确的重新读取入口使用 `retryable` 与 `@retry`，不能把错误显示成空结果；实际状态示例在 `/dev/design?section=data&example=table-states`。`loading` 包含重新读取过程，临时的零总数不会触发页码校正，失败也不会改变已有地址。可点击行支持 Enter 和空格，行内按钮独立操作。
 
 列用 `columns` 声明，特殊单元格用 `#cell-列名` 插槽。
 

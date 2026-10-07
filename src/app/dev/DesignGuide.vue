@@ -47,6 +47,7 @@ const examples: Record<string, GalleryExample[]> = {
   ],
   data: [
     { value: "table", label: "数据表格", components: "DataTable" },
+    { value: "table-states", label: "查询状态", components: "DataTable · UiSegmented" },
     { value: "line", label: "趋势图", components: "LineChart" },
     { value: "bars", label: "柱状图", components: "BarChart" },
     { value: "donut", label: "构成比例", components: "DonutChart", form: true },
@@ -85,6 +86,7 @@ const expanded = ref<string[]>([]);
 const sort = ref<SortState | null>(null);
 const page = ref(1);
 const pageSize = ref(20);
+const tableState = ref("ready");
 
 interface Item { id: string; name: string; store: string; sku: string; orig: number; act: number; rate: number; chg: number; kind: string }
 const rows: Item[] = [
@@ -170,6 +172,7 @@ const chat = ref([
 const reply = "好的，我按**周**拆开看：第一周受国庆前备货影响订单偏少，第二、三周恢复到日均 140 单以上，第四周因为 `满减活动` 带动达到峰值。建议十月继续保留周末满减。";
 function send(text: string) {
   chat.value.push({ id: `u${Date.now()}`, role: "user", content: text });
+  prompt.value = "";
   const msg = { id: `a${Date.now()}`, role: "assistant" as const, content: "", streaming: true };
   chat.value.push(msg);
   busy.value = true;
@@ -280,6 +283,14 @@ onBeforeUnmount(stop);
         <UiSegmented v-model="resultState" :options="[{ value: 'success', label: '成功' }, { value: 'error', label: '失败' }]" aria-label="结果状态" />
         <UiResult v-if="resultState === 'success'" status="success" title="提交成功" text="审批人会在 1 个工作日内处理，结果会通知你。"><UiButton variant="primary">查看申请</UiButton><UiButton>返回列表</UiButton></UiResult>
         <UiResult v-else status="error" title="支付没有完成" text="银行返回余额不足。订单已保留 30 分钟。"><UiButton variant="primary">重新支付</UiButton></UiResult>
+      </template>
+      <template #table-states>
+        <div class="flex min-h-0 flex-1 flex-col gap-4">
+          <UiSegmented v-model="tableState" aria-label="查询状态" :options="[{ value: 'ready', label: '有数据' }, { value: 'loading', label: '读取中' }, { value: 'empty', label: '无结果' }, { value: 'error', label: '失败' }]" />
+          <DataTable fill flat :columns="columns" :rows="tableState === 'empty' ? [] : shown" row-key="id"
+            :loading="tableState === 'loading'" :error="tableState === 'error' ? '连接暂时中断，已有筛选条件已保留。' : undefined"
+            retryable :settings="false" :fullscreenable="false" @retry="tableState = 'ready'" />
+        </div>
       </template>
       <template #table>
         <DataTable fill flat v-model:selected="picked" v-model:sort="sort" v-model:expanded="expanded" v-model:page="page" v-model:page-size="pageSize" :columns="columns" :rows="shown" row-key="id" selectable :total="shown.length">

@@ -1,12 +1,18 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import { ChevronLeft, ChevronRight } from "lucide-vue-next";
 import UiSelect from "./Select.vue";
 /** 分页：页码、每页条数；条数选项由页面决定。 */
 const page = defineModel<number>("page", { required: true });
 const pageSize = defineModel<number>("pageSize", { required: true });
-const props = defineProps<{ total: number; sizes?: number[] }>();
+const props = defineProps<{ total: number; sizes?: number[]; loading?: boolean }>();
 const pages = computed(() => Math.max(1, Math.ceil(props.total / pageSize.value)));
+/** 等查询结束再纠正页码，避免读取中临时的零总数把地址重置。 */
+watch([page, pages, () => props.loading], () => {
+  if (props.loading) return;
+  const valid = Math.min(pages.value, Math.max(1, Number.isSafeInteger(page.value) ? page.value : 1));
+  if (page.value !== valid) page.value = valid;
+}, { immediate: true });
 /** 当前页附近的页码；首尾页始终显示，中间省略。 */
 const shown = computed<(number | "…")[]>(() => {
   const n = pages.value, p = page.value;
