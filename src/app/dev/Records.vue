@@ -44,10 +44,10 @@ function exportRuns() {
 }
 </script>
 <template>
-  <PageFrame title="操作记录">
+  <PageFrame title="操作记录" workspace>
     <template #actions><UiButton :disabled="!items.length" @click="exportRuns"><Download class="size-4" />导出记录</UiButton></template>
     <template #status><StatusLine :items="[{ text: `最近 ${items.length} 次操作` }, { text: '最多保留 100 次，刷新页面后清空' }, ...(dropped() ? [{ text: `已移除较早的 ${dropped()} 次`, tone: 'warn' as const }] : [])]" /></template>
-    <DataTable :columns="columns" :rows="rows" row-key="id" :settings="false" :fullscreenable="false" row-clickable @row-click="(r) => show2(r.id)">
+    <DataTable fill flat :columns="columns" :rows="rows" row-key="id" :settings="false" :fullscreenable="false" row-clickable @row-click="(r) => show2(r.id)">
       <template #search><FilterItem size="lg"><UiSearchInput v-model="query" placeholder="按操作名查找" /></FilterItem><UiSegmented v-model="show" size="sm" aria-label="按结果筛选" :options="[{ value: 'all', label: '全部' }, { value: 'failed', label: '失败' }, { value: 'unknown', label: '结果未确认' }]" /></template>
       <template #cell-started="{ row }"><span class="text-fg-muted tabular-nums">{{ clock(row.started) }}</span></template>
       <template #cell-status="{ row }"><UiTag :tone="tone[row.status as keyof typeof tone]" dot>{{ label[row.status as keyof typeof label] }}</UiTag></template>
@@ -62,7 +62,7 @@ function exportRuns() {
         <div>
           <h3 class="mb-3 text-[13px] font-semibold text-fg-muted">执行过程</h3>
           <ol class="flex flex-col gap-3">
-            <li v-for="(s, i) in picked.steps" :key="s.id" class="rounded-lg border border-line p-3">
+            <li v-for="(s, i) in picked.steps" :key="s.id" class="border-b border-line py-4 last:border-0">
               <div class="flex items-center gap-2"><span class="grid size-5 place-items-center rounded-full bg-muted text-xs text-fg-muted">{{ i + 1 }}</span><b class="font-medium">{{ s.title }}</b><UiTag class="ml-auto" :tone="tone[s.status]" dot>{{ label[s.status] }}</UiTag><span class="text-fg-muted tabular-nums">{{ ms(s.elapsed) }}</span></div>
               <p v-if="s.error" class="mt-2 text-bad">{{ s.error }}</p>
               <p v-for="o in s.outputs" :key="o" class="mt-1.5 text-[13px] text-fg-muted">{{ o }}</p>

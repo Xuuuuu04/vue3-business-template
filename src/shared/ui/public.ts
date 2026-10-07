@@ -49,8 +49,8 @@ export { fileKind, formatBytes, formatDateTime, formatRelative } from "./lib/for
 export { default as Stack } from "./layout/Stack.vue";
 export { default as Row } from "./layout/Row.vue";
 export { default as Grid } from "./layout/Grid.vue";
-export { default as Card } from "./layout/Card.vue";
 export { default as Field } from "./layout/Field.vue";
+export { default as WorkArea } from "./layout/WorkArea.vue";
 export { default as PageFrame } from "./layout/PageFrame.vue";
 export { default as StatusLine } from "./layout/StatusLine.vue";
 export { default as AppShell } from "./layout/AppShell.vue";

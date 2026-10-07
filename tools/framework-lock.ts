@@ -8,6 +8,7 @@ export function protectedFiles(root = process.cwd()) {
   return [
     "src/shared",
     "src/app",
+    "deploy",
     "tools",
     "tests/framework",
     "tests/architecture",

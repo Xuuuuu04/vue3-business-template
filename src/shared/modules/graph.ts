@@ -10,9 +10,10 @@ export function describe(modules: BusinessModule[], lookup = sourceOf) {
     source: `src/modules/${module.name}/module.ts`,
     files: module.files,
     pages: module.pages.map(
-      ({ id, title, path, file, actions, components }) => ({
+      ({ id, title, task, path, file, actions, components }) => ({
         id,
         title,
+        task,
         path,
         file: `src/modules/${module.name}/${file}`,
         actions,

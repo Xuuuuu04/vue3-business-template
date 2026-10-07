@@ -20,22 +20,22 @@ const props = withDefaults(
 );
 
 const styles = cva(
-  "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border font-medium transition-[background-color,border-color,color,transform] duration-150 select-none active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border font-medium transition-[background-color,border-color,color,box-shadow] duration-(--motion-fast) select-none disabled:pointer-events-none disabled:opacity-45",
   {
     variants: {
       variant: {
         primary: "border-primary bg-primary text-primary-ink hover:border-primary-hover hover:bg-primary-hover",
-        secondary: "border-line-strong bg-surface text-fg hover:bg-subtle hover:border-fg-faint",
+        secondary: "border-line bg-surface text-fg shadow-card hover:bg-subtle hover:border-line-strong",
         ghost: "border-transparent bg-transparent text-fg-muted hover:bg-muted hover:text-fg",
         danger: "border-bad bg-bad text-surface hover:opacity-90",
-        "danger-quiet": "border-line-strong bg-surface text-bad hover:border-bad hover:bg-bad-soft",
+        "danger-quiet": "border-line bg-surface text-bad hover:border-bad hover:bg-bad-soft",
         link: "-mx-1 h-auto border-transparent px-1 text-primary-text hover:bg-primary-soft",
         text: "-mx-1 h-auto border-transparent px-1 text-left font-medium text-fg hover:text-primary-text hover:underline",
       },
       size: {
-        sm: "h-7 px-2.5 text-[13px]",
+        sm: "h-8 px-3 text-label",
         md: "h-(--control-h) px-3.5",
-        lg: "h-(--control-h-lg) px-5 text-[15px]",
+        lg: "h-(--control-h-lg) px-5 text-[16px]",
         icon: "h-(--control-h) w-(--control-h) px-0",
         none: "",
       },

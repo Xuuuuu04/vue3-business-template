@@ -2,16 +2,18 @@ import { test, expect } from "@playwright/test";
 
 /**
  * 每套配色在浅色、深色和三种侧栏风格下，文字与底色的对比度都要达标：
- * 正文类 4.5:1，提示与占位类 3:1。换主题、改色阶后先跑这个测试。
+ * 普通文字、提示和占位文字均为 4.5:1，不把小字误当成可放宽的大字。换主题、改色阶后先跑这个测试。
  */
 const PAIRS: [string, string, number][] = [
   ["fg", "canvas", 4.5], ["fg", "surface", 4.5], ["fg", "muted", 4.5],
   ["fg-muted", "surface", 4.5], ["fg-muted", "canvas", 4.5], ["fg-muted", "subtle", 4.5],
-  ["fg-faint", "surface", 3],
+  ["fg-faint", "surface", 4.5], ["fg-faint", "canvas", 4.5], ["fg-faint", "subtle", 4.5], ["fg-faint", "muted", 4.5],
   ["primary-ink", "primary", 4.5], ["primary-text", "primary-soft", 4.5], ["primary-text", "surface", 4.5],
   ["ok", "ok-soft", 4.5], ["warn", "warn-soft", 4.5], ["bad", "bad-soft", 4.5], ["info", "info-soft", 4.5],
   ["ok", "surface", 4.5], ["bad", "surface", 4.5],
-  ["side-fg", "side-bg", 4.5], ["side-active", "side-bg", 4.5], ["side-fg-faint", "side-bg", 3],
+  ["auth-fg", "auth-bg", 4.5], ["auth-muted", "auth-bg", 4.5],
+  ["side-fg", "side-bg", 4.5], ["side-active", "side-bg", 4.5], ["side-fg-faint", "side-bg", 4.5],
+  ["side-active", "side-selected", 4.5], ["side-active", "side-selected-hover", 4.5], ["side-fg", "side-hover", 4.5],
 ];
 const PALETTES = ["graphite", "sand", "sea", "pine", "rose", "ink", "night"];
 
@@ -33,7 +35,7 @@ test("所有配色、明暗、侧栏组合的文字对比度达标", async ({ pa
         return [...ctx.getImageData(0, 0, 1, 1).data.slice(0, 3)] as [number, number, number];
       };
       const lum = ([r, g, b]: number[]) => {
-        const f = (c: number) => ((c /= 255) <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+        const f = (c: number) => ((c /= 255) <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
         return 0.2126 * f(r!) + 0.7152 * f(g!) + 0.0722 * f(b!);
       };
       /** 半透明底色先叠在页面底色上，再算对比度。 */

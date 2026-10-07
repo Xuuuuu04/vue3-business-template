@@ -44,43 +44,34 @@ export async function sendRequest<T>(
   signal: AbortSignal,
   record: RequestRecord,
   transport: Transport = fetch,
+  safeText: (message: string) => string = (message) => message.slice(0, 300),
 ): Promise<T> {
-  let path = endpoint.path;
-  for (const [name, value] of Object.entries(options.params ?? {}))
-    path = path.replace(`:${name}`, encodeURIComponent(value));
-  if (/:\w+/.test(path))
-    throw new ActionError("path_missing", "接口缺少路径参数");
-  const query = new URLSearchParams(
-    Object.entries(options.query ?? {}).map(([key, value]) => [
-      key,
-      String(value),
-    ]),
-  );
-  const requestId = crypto.randomUUID();
-  const headers: Record<string, string> = { "X-Request-ID": requestId };
-  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-  const multipart = options.body instanceof FormData;
-  if (options.body !== undefined && !multipart)
-    headers["Content-Type"] = "application/json";
+  let prepared: ReturnType<typeof prepareRequest>;
+  try {
+    prepared = prepareRequest(endpoint, options);
+  } catch (error) {
+    record.outcome = "failed";
+    if (error instanceof ActionError) throw error;
+    throw new ActionError(
+      "request_invalid",
+      "请求数据无法发送，请修正输入后再提交。",
+    );
+  }
   const started = performance.now();
   const timer = new AbortController();
   const timeout = setTimeout(() => timer.abort(new Error("timeout")), 15_000);
   const combined = AbortSignal.any([signal, timer.signal]);
   try {
-    const reply = await transport(path + (query.size ? `?${query}` : ""), {
+    const reply = await transport(prepared.url, {
       method: endpoint.method,
-      headers,
+      headers: prepared.headers,
       signal: combined,
-      body:
-        options.body === undefined
-          ? undefined
-          : multipart
-            ? (options.body as FormData)
-            : JSON.stringify(options.body),
+      body: prepared.body,
     });
     record.status = reply.status;
-    record.backendRun = reply.headers.get("X-Run-ID") ?? undefined;
-    record.requestId = reply.headers.get("X-Request-ID") ?? requestId;
+    const backendRun = reply.headers.get("X-Run-ID");
+    record.backendRun = backendRun ? safeText(backendRun) : undefined;
+    record.requestId = safeText(reply.headers.get("X-Request-ID") ?? prepared.requestId);
     if (!reply.ok) {
       const uncertain =
         endpoint.method !== "GET" &&
@@ -92,7 +83,7 @@ export async function sendRequest<T>(
       throw new ActionError(
         typeof body.code === "string" ? body.code : `http_${reply.status}`,
         typeof body.message === "string"
-          ? body.message.slice(0, 300)
+          ? safeText(body.message)
           : `请求失败（${reply.status}）`,
         uncertain,
       );
@@ -136,4 +127,31 @@ export async function sendRequest<T>(
     clearTimeout(timeout);
     record.elapsed = performance.now() - started;
   }
+}
+
+/** 在进入网络阶段前完成路径和正文准备；此时失败没有后台写入结果。 */
+function prepareRequest(endpoint: Endpoint, options: RequestOptions) {
+  let path = endpoint.path;
+  for (const [name, value] of Object.entries(options.params ?? {}))
+    path = path.replace(`:${name}`, encodeURIComponent(value));
+  if (/:\w+/.test(path))
+    throw new ActionError("path_missing", "接口缺少路径参数");
+  const query = new URLSearchParams(
+    Object.entries(options.query ?? {}).map(([key, value]) => [
+      key,
+      String(value),
+    ]),
+  );
+  const requestId = crypto.randomUUID();
+  const headers: Record<string, string> = { "X-Request-ID": requestId };
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+  const multipart = options.body instanceof FormData;
+  if (options.body !== undefined && !multipart)
+    headers["Content-Type"] = "application/json";
+  const body = options.body === undefined
+    ? undefined
+    : multipart ? options.body as FormData : JSON.stringify(options.body);
+  if (options.body !== undefined && body === undefined)
+    throw new ActionError("request_invalid", "请求数据无法发送，请修正输入后再提交。");
+  return { url: path + (query.size ? `?${query}` : ""), headers, body, requestId };
 }

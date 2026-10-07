@@ -1,8 +1,10 @@
 <script setup lang="ts">
 /** 单行输入。前后缀用插槽放图标或单位；invalid 由表单字段统一设置。 */
+import { useAttrs } from "vue";
+import { useFieldControl } from "../lib/field";
 defineOptions({ inheritAttrs: false });
 const model = defineModel<string>({ default: "" });
-defineProps<{
+const props = defineProps<{
   placeholder?: string;
   type?: string;
   disabled?: boolean;
@@ -16,19 +18,27 @@ defineProps<{
   id?: string;
   name?: string;
 }>();
+const attrs = useAttrs();
+const { attributes, invalid: fieldInvalid } = useFieldControl(() => ({
+  id: props.id, label: attrs["aria-label"] as string | undefined,
+  labelledBy: attrs["aria-labelledby"] as string | undefined,
+  describedBy: attrs["aria-describedby"] as string | undefined,
+  invalid: props.invalid || attrs["aria-invalid"] === true || attrs["aria-invalid"] === "true",
+}));
 </script>
 <template>
   <div
-    class="group flex w-full items-center overflow-hidden rounded-md border bg-surface transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_3px_var(--ring)] hover:border-fg-faint"
+    class="group flex w-full items-center overflow-hidden control-surface rounded-md border bg-surface transition-[border-color,box-shadow] duration-(--motion-fast) focus-within:border-primary focus-within:shadow-[0_0_0_2px_var(--ring)] hover:border-line-strong"
+    :data-invalid="fieldInvalid() || undefined"
     :class="[
       size === 'lg' ? 'h-(--control-h-lg)' : 'h-(--control-h)',
-      invalid ? 'border-bad focus-within:border-bad' : 'border-line-strong',
+      fieldInvalid() ? 'border-bad focus-within:border-bad' : 'border-line',
       disabled && 'pointer-events-none opacity-50',
     ]"
   >
     <span v-if="$slots.prefix" class="flex items-center pl-2.5 text-fg-faint"><slot name="prefix" /></span>
     <input
-      :id="id"
+      v-bind="{ ...$attrs, ...attributes() }"
       :name="name"
       v-model="model"
       :type="type ?? 'text'"
@@ -36,11 +46,9 @@ defineProps<{
       :disabled="disabled"
       :inputmode="inputmode"
       :autocomplete="autocomplete"
-      :aria-invalid="invalid || undefined"
-      v-bind="$attrs"
       class="h-full min-w-0 flex-1 bg-transparent px-2.5 text-fg outline-none placeholder:text-fg-faint tabular-nums"
       :class="align === 'right' && 'text-right'"
     />
-    <span v-if="$slots.suffix" class="flex h-full items-center px-2.5 text-[13px] text-fg-muted" :class="unit && 'border-l border-line bg-muted'"><slot name="suffix" /></span>
+    <span v-if="$slots.suffix" class="flex h-full items-center px-2.5 text-help text-fg-muted" :class="unit && 'border-l border-line bg-muted'"><slot name="suffix" /></span>
   </div>
 </template>

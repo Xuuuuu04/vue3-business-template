@@ -1,9 +1,13 @@
+<script lang="ts">
+/** 返回列表时恢复表体位置，仅保存本次页面会话内最近 50 个地址。 */
+const scrollPositions = new Map<string, number>();
+</script>
 <script setup lang="ts" generic="T extends object">
 /**
  * 数据表格：排序、勾选、固定列、行内展开、分组折叠、列设置、全屏、分页、批量操作条。
  * 列用 columns 声明；特殊单元格用 cell-列名 插槽；数据读取状态用 loading 与 empty 表达。
  */
-import { computed, ref, useSlots, watch, onBeforeUnmount } from "vue";
+import { computed, ref, useSlots, watch, onBeforeUnmount, onMounted, nextTick } from "vue";
 import { ArrowDown, ArrowUp, ChevronDown, ChevronsUpDown, Columns3, Maximize2, Minimize2 } from "lucide-vue-next";
 import { PopoverRoot, PopoverTrigger, PopoverPortal, PopoverContent } from "reka-ui";
 import type { DataColumn, SortState } from "../lib/types";
@@ -28,8 +32,14 @@ const props = withDefaults(
     groupBy?: string;
     /** 为 true 时点击表头只发出 sort 变化，由页面重新读取；默认在当前页内排序。 */
     serverSort?: boolean;
-    /** 表格区域最高多少；默认留出页头后占满一屏，表头和分页始终可见。写 "none" 跟随页面滚动。 */
+    /** 表体最高多少；fill 模式由父工作区决定高度，普通模式跟随内容。 */
     maxHeight?: string;
+    /** 在主工作区占满剩余高度，只有表体滚动。 */
+    fill?: boolean;
+    /** 一般传列表完整地址，筛选和分页分别保留位置。 */
+    scrollKey?: string;
+    /** 直接作为页面主区时不再包一层卡片边框。 */
+    flat?: boolean;
     emptyTitle?: string;
     emptyHint?: string;
     total?: number;
@@ -41,6 +51,19 @@ const props = withDefaults(
   }>(),
   { emptyTitle: "没有符合条件的数据", settings: true, fullscreenable: true },
 );
+const scrollport = ref<HTMLElement>();
+function saveScroll() {
+  if (!props.scrollKey || !scrollport.value) return;
+  scrollPositions.set(props.scrollKey, scrollport.value.scrollTop);
+  if (scrollPositions.size > 50) scrollPositions.delete(scrollPositions.keys().next().value!);
+}
+async function restoreScroll() {
+  await nextTick();
+  if (props.scrollKey && scrollport.value)
+    scrollport.value.scrollTop = scrollPositions.get(props.scrollKey) ?? 0;
+}
+onMounted(restoreScroll);
+watch([() => props.scrollKey, () => props.loading, () => props.rows.length], restoreScroll, { flush: "post" });
 const selected = defineModel<string[]>("selected", { default: () => [] });
 const sort = defineModel<SortState | null>("sort", { default: null });
 const expanded = defineModel<string[]>("expanded", { default: () => [] });
@@ -52,6 +75,11 @@ function clickRow(e: MouseEvent, row: T) {
   if (!props.rowClickable) return;
   if ((e.target as HTMLElement).closest("button, a, input, label, [role=checkbox]")) return;
   emit("row-click", row);
+}
+function doubleClickRow(e: MouseEvent, row: T) {
+  // 可导航行以行点击为准，展开只使用独立按钮，避免双击同时触发两种操作。
+  if (props.rowClickable || !slots["expanded"] || (e.target as Element).closest("button, a, input, label, [role=checkbox]")) return;
+  toggleExpand(row);
 }
 /** 当前页显示的是第几条到第几条。 */
 const range = computed(() => {
@@ -69,7 +97,6 @@ const SELECT_WIDTH = 44;
 
 /** 行对象按列名取值；列名由页面声明，类型在这里放宽。 */
 function cell(row: T, key: string): unknown { return (row as Record<string, unknown>)[key]; }
-function rowIndex(row: T): number { return props.rows.indexOf(row); }
 function keyOf(row: T): string { return String(cell(row, props.rowKey)); }
 
 /** 固定列的位置：左固定列从勾选列之后依次排开，右固定列从右边依次排开。 */
@@ -141,15 +168,23 @@ function show(c: DataColumn, row: T): string {
   const v = cell(row, c.key);
   return c.format ? c.format(v, row as Record<string, unknown>) : v === null || v === undefined ? "—" : String(v);
 }
+function cellAlignment(c: DataColumn) {
+  return c.align ?? (c.kind === "number" || c.kind === "delta" ? "right" : "left");
+}
 function cellClass(c: DataColumn) {
+  const alignment = cellAlignment(c);
   return [
-    (c.align ?? (c.kind === "number" || c.kind === "delta" ? "right" : "left")) === "right" ? "text-right" : c.align === "center" ? "text-center" : "text-left",
+    alignment === "right" ? "text-right" : alignment === "center" ? "text-center" : "text-left",
     (c.kind === "number" || c.kind === "delta") && "tabular-nums",
   ];
 }
 function stickyStyle(c: DataColumn) {
   const o = offsets.value.get(c.key);
-  return o === undefined ? undefined : { [c.sticky === "right" ? "right" : "left"]: `${o}px` };
+  return o === undefined ? undefined : { "--sticky-offset": `${o}px` };
+}
+/** 窄屏让字段一起横向滚动，避免左右固定列盖住中间内容；勾选列仍留在左边。 */
+function stickyPosition(c: DataColumn) {
+  return c.sticky === "right" ? "sm:right-(--sticky-offset)" : "sm:left-(--sticky-offset)";
 }
 function widthStyle(c: DataColumn) {
   return { width: c.width ? `${c.width}px` : undefined, minWidth: c.minWidth ? `${c.minWidth}px` : c.width ? `${c.width}px` : undefined };
@@ -161,16 +196,16 @@ const hasToolbar = computed(() => props.title || props.meta || slots["toolbar"] 
 const showFooter = computed(() => props.total !== undefined);
 function onKey(e: KeyboardEvent) { if (e.key === "Escape") fullscreen.value = false; }
 watch(fullscreen, (v) => { v ? document.addEventListener("keydown", onKey) : document.removeEventListener("keydown", onKey); });
-onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
+onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", onKey); });
 </script>
 
 <template>
-  <section class="relative flex min-w-0 flex-col overflow-hidden border border-line bg-surface shadow-card" :class="fullscreen ? 'fixed inset-0 z-[60] rounded-none' : 'rounded-lg'" :aria-label="title ?? '数据表格'">
-    <header v-if="hasToolbar" class="flex min-h-13 flex-wrap items-center gap-2 py-2 pr-3 pl-4">
+  <section class="data-table relative flex min-h-0 min-w-0 flex-col overflow-hidden bg-surface" :class="[fullscreen ? 'fixed inset-0 z-[60]' : !flat && 'rounded-lg border border-line', fill && 'flex-1']" :aria-label="title ?? '数据表格'">
+    <header v-if="hasToolbar" class="flex min-h-12 shrink-0 flex-wrap items-center gap-3 pb-2" :class="!flat && 'px-4 pt-3'">
       <slot name="search" />
       <h2 v-if="title" class="text-[15px] font-semibold">{{ title }}</h2>
-      <span v-if="meta" class="text-[13px] text-fg-faint tabular-nums">{{ meta }}</span>
-      <span class="flex-1" />
+      <span v-if="meta" class="text-help text-fg-faint tabular-nums">{{ meta }}</span>
+      <span class="hidden flex-1 sm:block" />
       <slot name="toolbar" />
       <PopoverRoot v-if="settings">
         <Tip text="列设置">
@@ -179,7 +214,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
           </PopoverTrigger>
         </Tip>
         <PopoverPortal>
-          <PopoverContent align="end" :side-offset="6" class="z-[100] w-52 rounded-lg border border-line bg-surface p-2 shadow-pop data-[state=open]:animate-[pop_.14s_var(--ease)]">
+          <PopoverContent :collision-padding="12" align="end" :side-offset="6" class="z-[100] w-52 rounded-lg border border-line bg-surface p-2 popup-surface data-[state=open]:animate-[pop_var(--motion-fast)_var(--ease-enter)]">
             <p class="px-2 pt-1 pb-2 text-xs text-fg-faint">显示的列</p>
             <div v-for="c in columns" :key="c.key" class="flex h-8 items-center rounded-md px-2 hover:bg-muted">
               <UiCheckbox :model-value="!hidden.has(c.key)" :label="c.title" @update:model-value="(v) => toggleColumn(c.key, v)" />
@@ -194,7 +229,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       </Tip>
     </header>
 
-    <div class="min-h-0 flex-1 overflow-auto border-t border-line" :style="{ maxHeight: fullscreen ? 'none' : (maxHeight ?? 'calc(100dvh - 330px)') }">
+    <div ref="scrollport" data-table-scroll @scroll="saveScroll" class="min-h-0 flex-1 overflow-auto border border-line rounded-md" :style="{ maxHeight: fullscreen || fill ? 'none' : (maxHeight ?? 'none') }">
       <table class="w-full min-w-max border-separate border-spacing-0">
         <thead>
           <tr>
@@ -203,9 +238,12 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
             </th>
             <th
               v-for="c in visibleColumns" :key="c.key" scope="col" :aria-sort="ariaSort(c)"
-              class="sticky top-0 h-10 border-b border-line bg-subtle px-(--cell-px) align-middle text-[13px] font-semibold whitespace-nowrap text-fg-muted"
-              :class="[cellClass(c), c.sticky ? 'z-30' : 'z-20', c.key === lastLeft && 'shadow-[1px_0_0_var(--line)]', c.key === firstRight && 'shadow-[-1px_0_0_var(--line)]', c.sortable && 'cursor-pointer select-none hover:text-fg']"
+              class="sticky top-0 h-10 border-b border-line bg-subtle px-(--cell-px) align-middle text-help font-medium whitespace-nowrap text-fg"
+              :class="[cellClass(c), c.sticky ? ['z-20 sm:z-30', stickyPosition(c)] : 'z-20', c.key === lastLeft && 'sm:shadow-[1px_0_0_var(--line)]', c.key === firstRight && 'sm:shadow-[-1px_0_0_var(--line)]', c.sortable && 'cursor-pointer select-none hover:text-fg']"
               :style="{ ...widthStyle(c), ...stickyStyle(c) }"
+               :tabindex="c.sortable ? 0 : undefined"
+              @keydown.enter="toggleSort(c)"
+              @keydown.space.prevent="toggleSort(c)"
               @click="toggleSort(c)"
             >
               <span class="inline-flex flex-col" :class="(c.kind === 'number' || c.kind === 'delta' || c.align === 'right') && 'items-end'">
@@ -217,7 +255,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
                     <ChevronsUpDown v-else class="size-3.5 text-fg-faint" />
                   </template>
                 </span>
-                <span v-if="c.unit" class="text-[11px] leading-none font-normal text-fg-faint">{{ c.unit }}</span>
+                <span v-if="c.unit" class="text-[12px] leading-none font-normal text-fg-faint">{{ c.unit }}</span>
               </span>
             </th>
           </tr>
@@ -233,32 +271,37 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         </tbody>
         <tbody v-else>
           <template v-for="g in groups" :key="g.key">
-            <tr v-if="groupBy" class="cursor-pointer select-none" :aria-expanded="!collapsed.has(g.key)" @click="toggleGroup(g.key)">
+            <tr v-if="groupBy">
               <td :colspan="colCount" class="h-10 border-b border-line bg-subtle px-4 font-semibold hover:bg-muted">
-                <span class="inline-flex items-center gap-2">
-                  <ChevronDown class="size-4 text-fg-faint transition-transform duration-200" :class="collapsed.has(g.key) && '-rotate-90'" />
+                <button type="button" class="flex min-h-10 w-full items-center gap-2 text-left" :aria-expanded="!collapsed.has(g.key)" :aria-label="`${collapsed.has(g.key) ? '展开' : '收起'}${g.key || '未分组'}分组`" @click="toggleGroup(g.key)">
+                  <ChevronDown class="size-4 text-fg-faint transition-transform duration-(--motion-normal)" :class="collapsed.has(g.key) && '-rotate-90'" aria-hidden="true" />
                   <slot name="group" :label="g.key" :rows="g.rows">{{ g.key }}</slot>
                   <span class="font-normal text-fg-faint tabular-nums">{{ g.rows.length }} 项</span>
-                </span>
+                </button>
               </td>
             </tr>
             <template v-for="row in g.rows" :key="keyOf(row)">
-              <tr v-show="!collapsed.has(g.key)" class="group/row animate-[fade_.35s_ease-out_both]" :style="{ animationDelay: `${Math.min(rowIndex(row), 12) * 22}ms` }" :class="[rowClickable && 'cursor-pointer', selected.includes(keyOf(row)) && 'is-selected']" @dblclick="slots['expanded'] && toggleExpand(row)" @click="clickRow($event, row)">
+              <tr v-show="!collapsed.has(g.key)" class="group/row" :class="[rowClickable && 'cursor-pointer', selected.includes(keyOf(row)) && 'is-selected']" @dblclick="doubleClickRow($event, row)" @click="clickRow($event, row)">
                 <td v-if="selectable" class="sticky left-0 z-10 h-(--row-h) border-b border-line bg-surface pl-4 group-hover/row:bg-subtle group-[.is-selected]/row:bg-primary-soft">
                   <UiCheckbox :model-value="selected.includes(keyOf(row))" :aria-label="`选择第 ${keyOf(row)} 行`" @update:model-value="(v) => toggleRow(row, v)" />
                 </td>
                 <td
                   v-for="c in visibleColumns" :key="c.key"
                   class="h-(--row-h) border-b border-line bg-surface px-(--cell-px) py-2 align-middle transition-colors group-hover/row:bg-subtle group-[.is-selected]/row:bg-primary-soft"
-                  :class="[cellClass(c), c.sticky && 'sticky z-10', c.key === lastLeft && 'shadow-[1px_0_0_var(--line)]', c.key === firstRight && 'shadow-[-1px_0_0_var(--line)]', c.kind === 'delta' && deltaTone(cell(row, c.key))]"
+                  :class="[cellClass(c), c.sticky && ['sm:sticky sm:z-10', stickyPosition(c)], c.key === lastLeft && 'sm:shadow-[1px_0_0_var(--line)]', c.key === firstRight && 'sm:shadow-[-1px_0_0_var(--line)]', c.kind === 'delta' && deltaTone(cell(row, c.key))]"
                   :style="stickyStyle(c)"
                 >
-                  <slot :name="`cell-${c.key}`" :row="row" :value="cell(row, c.key)">
-                    <template v-if="c.kind === 'delta' && typeof cell(row, c.key) === 'number'">
-                      <span v-if="(cell(row, c.key) as number) !== 0" aria-hidden="true">{{ (cell(row, c.key) as number) > 0 ? "▲" : "▼" }} </span>{{ Math.abs(cell(row, c.key) as number).toFixed(1) }}
-                    </template>
-                    <template v-else>{{ show(c, row) }}</template>
-                  </slot>
+                  <div :class="slots['expanded'] && c.key === visibleColumns[0]?.key && ['flex items-center gap-2', cellAlignment(c) === 'right' ? 'justify-end' : cellAlignment(c) === 'center' ? 'justify-center' : 'justify-start']">
+                    <button v-if="slots['expanded'] && c.key === visibleColumns[0]?.key" type="button" class="grid size-6 shrink-0 place-items-center rounded-md text-fg-muted hover:bg-muted hover:text-fg" :aria-label="`${expanded.includes(keyOf(row)) ? '收起' : '展开'}${show(c, row)}详情`" :aria-expanded="expanded.includes(keyOf(row))" @click.stop="toggleExpand(row)">
+                      <ChevronDown class="size-4 transition-transform duration-(--motion-normal)" :class="!expanded.includes(keyOf(row)) && '-rotate-90'" aria-hidden="true" />
+                    </button>
+                    <slot :name="`cell-${c.key}`" :row="row" :value="cell(row, c.key)">
+                      <template v-if="c.kind === 'delta' && typeof cell(row, c.key) === 'number'">
+                        <span v-if="(cell(row, c.key) as number) !== 0" aria-hidden="true">{{ (cell(row, c.key) as number) > 0 ? "▲" : "▼" }} </span>{{ Math.abs(cell(row, c.key) as number).toFixed(1) }}
+                      </template>
+                      <template v-else>{{ show(c, row) }}</template>
+                    </slot>
+                  </div>
                 </td>
               </tr>
               <tr v-if="slots['expanded'] && expanded.includes(keyOf(row)) && !collapsed.has(g.key)">
@@ -270,15 +313,15 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       </table>
     </div>
 
-    <Transition enter-from-class="opacity-0 translate-y-4" enter-active-class="transition duration-200 ease-(--ease)" leave-active-class="transition duration-150" leave-to-class="opacity-0 translate-y-4">
-      <div v-if="selectable && selected.length" class="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-xl bg-fg py-2 pr-2 pl-4 text-surface shadow-pop" role="toolbar" aria-label="批量操作">
+    <Transition enter-from-class="opacity-0 translate-y-4" enter-active-class="transition duration-(--motion-normal) ease-(--ease)" leave-active-class="transition duration-(--motion-fast)" leave-to-class="opacity-0 translate-y-4">
+      <div v-if="selectable && selected.length" class="fixed bottom-6 left-1/2 z-40 flex max-w-[calc(100vw-32px)] -translate-x-1/2 flex-wrap items-center justify-center gap-3 rounded-xl bg-fg py-2 pr-2 pl-4 text-surface popup-surface" role="toolbar" aria-label="批量操作">
         <span class="tabular-nums">已选 <b>{{ selected.length }}</b> 项</span>
         <span class="mx-1 h-5 w-px bg-surface/20" />
         <slot name="bulk" :count="selected.length" :clear="() => (selected = [])" />
-        <button type="button" class="h-7 rounded-md px-2.5 text-[13px] text-surface/70 hover:bg-surface/10 hover:text-surface" @click="selected = []">取消选择</button>
+        <button type="button" class="h-7 rounded-md px-2.5 text-help text-surface/70 hover:bg-surface/10 hover:text-surface" @click="selected = []">取消选择</button>
       </div>
     </Transition>
-    <footer v-if="showFooter" class="flex flex-wrap items-center gap-3 border-t border-line px-4 py-2.5 text-[13px] text-fg-muted">
+    <footer v-if="showFooter" class="flex shrink-0 flex-wrap items-center gap-3 border-t border-line py-3 text-help text-fg-muted" :class="!flat && 'px-4'">
       <span class="tabular-nums">{{ range }}</span>
       <slot name="footer" />
       <span class="flex-1" />

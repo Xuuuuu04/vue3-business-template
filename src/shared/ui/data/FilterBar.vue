@@ -10,16 +10,16 @@ const emit = defineEmits<{ query: []; reset: []; remove: [key: string] }>();
 </script>
 <template>
   <form class="flex flex-col gap-2" role="search" @submit.prevent="emit('query')">
-    <div class="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-surface p-3 shadow-card">
+    <div class="flex flex-wrap items-center gap-2 py-1">
       <slot />
       <span class="flex-1" />
       <Button variant="ghost" @click="emit('reset')">复原</Button>
-      <Button type="submit" variant="primary" :loading="loading"><Search class="size-4" />查询</Button>
+      <Button type="submit" variant="secondary" :loading="loading"><Search class="size-4" />查询</Button>
     </div>
     <div v-if="applied?.length" class="flex flex-wrap gap-1.5">
-      <span v-for="a in applied" :key="a.key" class="inline-flex h-6 items-center gap-1 rounded-full border border-primary-line bg-primary-soft pr-1 pl-2.5 text-[13px] text-primary-text">
+      <span v-for="a in applied" :key="a.key" class="inline-flex h-6 items-center gap-1 rounded-md border border-line bg-subtle pr-1 pl-2.5 text-help text-fg">
         {{ a.label }}
-        <button type="button" class="grid size-4 place-items-center rounded-full hover:bg-primary-soft-hover" :aria-label="`移除条件：${a.label}`" @click="emit('remove', a.key)"><X class="size-3" /></button>
+        <button type="button" class="grid size-4 place-items-center rounded-sm hover:bg-muted" :aria-label="`移除条件：${a.label}`" @click="emit('remove', a.key)"><X class="size-3" /></button>
       </span>
     </div>
   </form>

@@ -2,16 +2,17 @@
 import { computed } from "vue";
 import { parseMarkdown, type Inline } from "../lib/markdown";
 import CodeBlock from "./CodeBlock.vue";
-/** 渲染模型或用户写的 Markdown；不执行其中的 HTML。streaming 时末尾显示闪烁光标。 */
-const props = defineProps<{ text: string; streaming?: boolean }>();
+/** 渲染模型或用户写的 Markdown；不执行其中的 HTML。文档模式采用更清楚的标题和段落间距。 */
+const props = defineProps<{ text: string; streaming?: boolean; variant?: "message" | "document" }>();
 const blocks = computed(() => parseMarkdown(props.text));
+const document = computed(() => props.variant === "document");
 function key(i: Inline, n: number) { return `${n}-${i.t}`; }
 </script>
 <template>
-  <div class="flex flex-col gap-2.5 leading-relaxed">
+  <div class="flex flex-col" :class="document ? 'gap-4 leading-7' : 'gap-2.5 leading-relaxed'">
     <template v-for="(b, n) in blocks" :key="n">
       <CodeBlock v-if="b.t === 'code'" :code="b.v" :lang="b.lang" />
-      <component :is="`h${b.level + 2}`" v-else-if="b.t === 'h'" class="font-semibold" :class="b.level === 1 ? 'text-base' : 'text-[15px]'"><template v-for="(i, k) in b.inline" :key="key(i, k)"><b v-if="i.t === 'bold'" class="font-semibold">{{ i.v }}</b><code v-else-if="i.t === 'code'" class="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">{{ i.v }}</code><a v-else-if="i.t === 'link'" :href="i.href" target="_blank" rel="noopener noreferrer" class="text-primary-text underline underline-offset-2">{{ i.v }}</a><template v-else>{{ i.v }}</template></template></component>
+      <component :is="`h${b.level + (document ? 1 : 2)}`" v-else-if="b.t === 'h'" class="font-semibold" :class="document ? [n > 0 && 'mt-4', b.level === 1 ? 'text-[24px] leading-8 tracking-tight' : b.level === 2 ? 'text-[20px] leading-7' : 'text-[18px] leading-7'] : b.level === 1 ? 'text-base' : 'text-[15px]'"><template v-for="(i, k) in b.inline" :key="key(i, k)"><b v-if="i.t === 'bold'" class="font-semibold">{{ i.v }}</b><code v-else-if="i.t === 'code'" class="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">{{ i.v }}</code><a v-else-if="i.t === 'link'" :href="i.href" target="_blank" rel="noopener noreferrer" class="text-primary-text underline underline-offset-2">{{ i.v }}</a><template v-else>{{ i.v }}</template></template></component>
       <ul v-else-if="b.t === 'ul' || b.t === 'ol'" class="flex flex-col gap-1 pl-5" :class="b.t === 'ol' ? 'list-decimal' : 'list-disc'">
         <li v-for="(item, m) in b.items" :key="m" class="marker:text-fg-faint"><template v-for="(i, k) in item" :key="key(i, k)"><b v-if="i.t === 'bold'" class="font-semibold">{{ i.v }}</b><code v-else-if="i.t === 'code'" class="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">{{ i.v }}</code><a v-else-if="i.t === 'link'" :href="i.href" target="_blank" rel="noopener noreferrer" class="text-primary-text underline underline-offset-2">{{ i.v }}</a><template v-else>{{ i.v }}</template></template></li>
       </ul>

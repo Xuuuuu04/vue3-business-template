@@ -12,6 +12,7 @@ import {
   UiSearchInput,
   UiEmpty,
   UiFileIcon,
+  UiTag,
   UiTime,
   UiTip,
   UiDialog,
@@ -72,14 +73,17 @@ const rows = computed(() =>
     .filter((file) =>
       file.name.toLowerCase().includes(filter.value.toLowerCase()),
     )
-    .map((file) => ({ ...file, kind: fileKind(file.name, file.content_type).label })),
+    .map((file) => ({
+      ...file,
+      kind: fileKind(file.name, file.content_type).label,
+    })),
 );
 const columns: DataColumn[] = [
   { key: "name", title: "名称", minWidth: 340 },
   { key: "kind", title: "类型", width: 140 },
   { key: "size", title: "大小", kind: "number", width: 120, sortable: true },
   { key: "created_at", title: "保存时间", width: 160, sortable: true },
-  { key: "actions", title: "", align: "right", width: 112 },
+  { key: "actions", title: "", align: "right", width: 64 },
 ];
 function load() {
   void list.run({ org, offset: offset.value, limit: size.value });
@@ -108,7 +112,9 @@ const batchOpen = computed({
 });
 function closeBatch() {
   const removed = batchMode.value === "delete";
-  const done = batch.items.value.filter((i) => i.status === "ok").map((i) => i.key);
+  const done = batch.items.value
+    .filter((i) => i.status === "ok")
+    .map((i) => i.key);
   batchMode.value = "";
   batch.reset();
   if (removed) {
@@ -120,7 +126,11 @@ async function batchDelete() {
   batchMode.value = "delete";
   await batch.run(
     remove,
-    picked.value.map((f) => ({ key: f.id, label: f.name, input: { org, id: f.id } })),
+    picked.value.map((f) => ({
+      key: f.id,
+      label: f.name,
+      input: { org, id: f.id },
+    })),
   );
 }
 async function batchDownload() {
@@ -128,7 +138,11 @@ async function batchDownload() {
   const names = new Map(picked.value.map((f) => [f.id, f.name]));
   await batch.run(
     download,
-    picked.value.map((f) => ({ key: f.id, label: f.name, input: { org, id: f.id } })),
+    picked.value.map((f) => ({
+      key: f.id,
+      label: f.name,
+      input: { org, id: f.id },
+    })),
     (blob, key) => blob && saveDownload(blob, names.get(key)!),
   );
 }
@@ -138,7 +152,7 @@ async function downloadFile(file: FileView) {
 }
 </script>
 <template>
-  <PageFrame title="文件管理">
+  <PageFrame title="文件管理" workspace>
     <template #actions
       ><UiButton
         v-if="session.can('file_library.write')"
@@ -148,9 +162,17 @@ async function downloadFile(file: FileView) {
         >上传文件</UiButton
       ></template
     >
-    <StatusMessage :status="state.status" :error="state.error" />
-    <StatusMessage :status="download.state.value.status" :error="download.state.value.error" />
+    <template #status>
+      <StatusMessage :status="state.status" :error="state.error" />
+      <StatusMessage
+        :status="download.state.value.status"
+        :error="download.state.value.error"
+      />
+    </template>
     <DataTable
+      fill
+      flat
+      :scroll-key="route.fullPath"
       v-model:page="page"
       v-model:page-size="pageSize"
       v-model:sort="sort"
@@ -187,7 +209,7 @@ async function downloadFile(file: FileView) {
         /></UiTip>
       </template>
       <template #cell-name="{ row }"
-        ><Row gap="md" nowrap
+        ><Row gap="sm" nowrap
           ><UiFileIcon :name="row.name" :type="row.content_type" /><UiButton
             variant="text"
             @click="openFile(row)"
@@ -195,6 +217,7 @@ async function downloadFile(file: FileView) {
           ></Row
         ></template
       >
+      <template #cell-kind="{ row }"><UiTag>{{ row.kind }}</UiTag></template>
       <template #cell-size="{ row }">{{ formatBytes(row.size) }}</template>
       <template #cell-created_at="{ row }"
         ><UiTime :value="row.created_at"
@@ -202,15 +225,13 @@ async function downloadFile(file: FileView) {
       <template #cell-actions="{ row }"
         ><Row justify="end" gap="xs" nowrap
           ><UiTip text="下载"
-          ><UiButton
-            size="icon"
-            variant="ghost"
-            icon="download"
-            :aria-label="`下载 ${row.name}`"
-            :disabled="download.state.value.status === 'loading'"
-            @click="downloadFile(row)" /></UiTip
-          ><UiButton variant="link" @click="openFile(row)"
-            >详情</UiButton
+            ><UiButton
+              size="icon"
+              variant="ghost"
+              icon="download"
+              :aria-label="`下载 ${row.name}`"
+              :disabled="download.state.value.status === 'loading'"
+              @click="downloadFile(row)" /></UiTip
           ></Row
         ></template
       >
@@ -229,11 +250,12 @@ async function downloadFile(file: FileView) {
       <template #empty
         ><UiEmpty
           :title="filter ? '这一页没有符合条件的文件' : '还没有文件'"
-          :hint="filter ? '换个文件名，或清除搜索' : '上传第一个文件后会显示在这里'"
+          :hint="
+            filter ? '换个文件名，或清除搜索' : '上传第一个文件后会显示在这里'
+          "
           ><UiButton v-if="filter" @click="filter = ''">清除搜索</UiButton
           ><UiButton
             v-else-if="session.can('file_library.write')"
-            variant="primary"
             icon="upload"
             @click="router.push('/files/upload')"
             >上传文件</UiButton
@@ -262,7 +284,9 @@ async function downloadFile(file: FileView) {
     >
       <template v-if="batchMode === 'confirm'"
         ><BatchProgress
-          :items="picked.map((f) => ({ key: f.id, label: f.name, status: 'waiting' }))"
+          :items="
+            picked.map((f) => ({ key: f.id, label: f.name, status: 'waiting' }))
+          "
       /></template>
       <BatchProgress
         v-else

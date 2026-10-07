@@ -24,6 +24,7 @@
       {
         "id": "file_library.list_page",
         "title": "文件列表",
+        "task": "查找并打开团队文件",
         "path": "/files",
         "file": "src/modules/file_library/pages/ListPage.vue",
         "actions": [
@@ -41,6 +42,7 @@
           "UiSearchInput",
           "UiEmpty",
           "UiFileIcon",
+          "UiTag",
           "UiTime",
           "UiTip",
           "UiDialog",
@@ -51,6 +53,7 @@
       {
         "id": "file_library.detail_page",
         "title": "文件详情",
+        "task": "查看并下载当前文件",
         "path": "/files/:id",
         "file": "src/modules/file_library/pages/DetailPage.vue",
         "actions": [
@@ -61,10 +64,9 @@
         "components": [
           "PageFrame",
           "StatusMessage",
-          "Card",
-          "Grid",
-          "Stack",
+          "WorkArea",
           "DescriptionList",
+          "UiAccordion",
           "FilePreview",
           "UiButton",
           "UiDialog",
@@ -78,6 +80,7 @@
       {
         "id": "file_library.upload_page",
         "title": "上传文件",
+        "task": "保存一个文件到团队文件库",
         "path": "/files/upload",
         "file": "src/modules/file_library/pages/UploadPage.vue",
         "actions": [
@@ -87,10 +90,9 @@
         "components": [
           "PageFrame",
           "StatusMessage",
-          "Card",
+          "WorkArea",
           "Stack",
           "Row",
-          "Grid",
           "UiButton",
           "UiFileDrop",
           "UiFileIcon",

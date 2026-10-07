@@ -5,6 +5,8 @@ import type { Endpoint } from "@/shared/http/client";
 export interface Page {
   id: string;
   title: string;
+  /** 此页唯一的主要任务，用一句话说明用户要得到什么。 */
+  task?: string;
   path: string;
   file: string;
   permission?: string;
@@ -12,7 +14,14 @@ export interface Page {
   components: string[];
   load: () => Promise<{ default: Component }>;
 }
+/** 菜单只引用已登记页面；详情页等带参数的地址不直接进入侧栏。 */
+export interface ModuleNavigation {
+  label: string;
+  page?: string;
+  children?: ModuleNavigation[];
+}
 export interface ModuleMetadata {
+  navigation?: ModuleNavigation[];
   name: string;
   title: string;
   description: string;
@@ -32,6 +41,21 @@ export interface Module extends ModuleMetadata {
 }
 /** 清单不扫描任意目录注册，只有主代理登记的开发包才会被使用。 */
 export function defineModule(module: Module): Module {
+  function validate(items: ModuleNavigation[]) {
+    for (const item of items) {
+      if (!item.page && !item.children?.length)
+        throw new Error(`${module.name} 菜单 ${item.label} 没有页面或子菜单`);
+      if (
+        item.page &&
+        !module.pages.some((p) => p.id === item.page && !p.path.includes(":"))
+      )
+        throw new Error(
+          `${module.name} 菜单 ${item.label} 必须引用已登记的固定页面`,
+        );
+      validate(item.children ?? []);
+    }
+  }
+  validate(module.navigation ?? []);
   return Object.freeze(module);
 }
 

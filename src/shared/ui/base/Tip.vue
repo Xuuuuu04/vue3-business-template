@@ -29,8 +29,8 @@ onBeforeUnmount(() => clearTimeout(timer));
     <slot />
   </span>
   <Teleport to="body">
-    <Transition enter-from-class="opacity-0" enter-active-class="transition-opacity duration-100">
-      <div v-if="open" role="tooltip" class="pointer-events-none fixed z-[300] max-w-xs rounded-md bg-fg px-2.5 py-1.5 text-xs text-surface shadow-pop" :class="side === 'right' ? '-translate-y-1/2' : '-translate-x-1/2'" :style="{ left: pos.left + 'px', top: pos.top + 'px' }">{{ text }}</div>
+    <Transition enter-from-class="opacity-0" enter-active-class="transition-opacity duration-(--motion-fast)">
+      <div v-if="open" role="tooltip" class="pointer-events-none fixed z-[300] max-w-xs rounded-md bg-fg px-2.5 py-1.5 text-xs text-surface popup-surface" :class="side === 'right' ? '-translate-y-1/2' : '-translate-x-1/2'" :style="{ left: pos.left + 'px', top: pos.top + 'px' }">{{ text }}</div>
     </Transition>
   </Teleport>
 </template>

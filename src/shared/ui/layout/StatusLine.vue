@@ -3,7 +3,7 @@
 defineProps<{ items: { text: string; tone?: "ok" | "warn" | "bad" | "neutral" }[] }>();
 </script>
 <template>
-  <div class="flex min-h-8 flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-fg-muted">
+  <div class="flex min-h-8 flex-wrap items-center gap-x-4 gap-y-1 text-help text-fg-muted">
     <template v-for="(item, i) in items" :key="i">
       <span v-if="i" class="h-3 w-px bg-line-strong" aria-hidden="true" />
       <span class="inline-flex items-center gap-1.5" :class="item.tone && item.tone !== 'neutral' && 'text-fg'">

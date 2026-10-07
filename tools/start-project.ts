@@ -52,7 +52,9 @@ const { rmSync } = await import("node:fs");
 rmSync(resolve(target, "src/modules"), { recursive: true, force: true });
 mkdirSync(resolve(target, "src/modules"), { recursive: true });
 rmSync(resolve(target, "doc/file_library"), { recursive: true, force: true });
-rmSync(resolve(target, "tests/browser/files.spec.ts"), { force: true });
+// 样例业务检查集中在两个 demo 目录；公共检查与受保护的已知输入继续保留。
+rmSync(resolve(target, "tests/demo"), { recursive: true, force: true });
+rmSync(resolve(target, "tests/browser/demo"), { recursive: true, force: true });
 writeFileSync(
   resolve(target, "src/app/catalog.ts"),
   `import type { Module } from '@/shared/public';\nexport const modules: Module[] = [];\n`,

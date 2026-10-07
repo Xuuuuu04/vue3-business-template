@@ -12,21 +12,66 @@ export type Block =
 
 export function parseInline(s: string): Inline[] {
   const out: Inline[] = [];
-  const re = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)\s]+\))/g;
-  let last = 0;
-  for (const m of s.matchAll(re)) {
-    if (m.index! > last) out.push({ t: "text", v: s.slice(last, m.index) });
-    const tok = m[0];
-    if (tok.startsWith("**")) out.push({ t: "bold", v: tok.slice(2, -2) });
-    else if (tok.startsWith("`")) out.push({ t: "code", v: tok.slice(1, -1) });
-    else {
-      const [, text, href] = tok.match(/\[([^\]]+)\]\(([^)]+)\)/)!;
-      // 只允许 http(s) 与站内链接，避免 javascript: 之类的地址
-      out.push(/^(https?:\/\/|\/)/.test(href!) ? { t: "link", v: text!, href: href! } : { t: "text", v: text! });
+  const closing = new Map<string, number>();
+  const whitespace = /\s/g;
+  let nextSpace = -1;
+  let plainStart = 0;
+  let i = 0;
+  // 搜索位置只向前移动；一串未闭合的 [ 不会反复扫描整段剩余文本。
+  function next(character: string, start: number): number {
+    let index = closing.get(character) ?? -1;
+    if (index < start) {
+      const found = s.indexOf(character, start);
+      index = found < 0 ? s.length : found;
+      closing.set(character, index);
     }
-    last = m.index! + tok.length;
+    return index;
   }
-  if (last < s.length) out.push({ t: "text", v: s.slice(last) });
+  function space(start: number): number {
+    if (nextSpace < start) {
+      whitespace.lastIndex = start;
+      nextSpace = whitespace.exec(s)?.index ?? s.length;
+    }
+    return nextSpace;
+  }
+  function append(token: Inline, end: number): void {
+    if (i > plainStart) out.push({ t: "text", v: s.slice(plainStart, i) });
+    out.push(token);
+    i = end;
+    plainStart = end;
+  }
+  while (i < s.length) {
+    if (s.startsWith("**", i)) {
+      const end = next("*", i + 2);
+      if (end > i + 2 && s[end + 1] === "*") {
+        append({ t: "bold", v: s.slice(i + 2, end) }, end + 2);
+        continue;
+      }
+    } else if (s[i] === "`") {
+      const end = next("`", i + 1);
+      if (end > i + 1 && end < s.length) {
+        append({ t: "code", v: s.slice(i + 1, end) }, end + 1);
+        continue;
+      }
+    } else if (s[i] === "[") {
+      const labelEnd = next("]", i + 1);
+      if (labelEnd > i + 1 && s[labelEnd + 1] === "(") {
+        const hrefStart = labelEnd + 2;
+        const end = next(")", hrefStart);
+        if (end > hrefStart && end < s.length && space(hrefStart) >= end) {
+          const label = s.slice(i + 1, labelEnd);
+          const href = s.slice(hrefStart, end);
+          // 只允许 http(s) 与站内链接，其他地址继续作为普通文字显示。
+          append(/^(https?:\/\/|\/)/.test(href)
+            ? { t: "link", v: label, href }
+            : { t: "text", v: label }, end + 1);
+          continue;
+        }
+      }
+    }
+    i++;
+  }
+  if (plainStart < s.length) out.push({ t: "text", v: s.slice(plainStart) });
   return out;
 }
 

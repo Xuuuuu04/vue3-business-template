@@ -8,6 +8,7 @@ import {
   UiButton, UiTag, UiTip, UiDialog, syncFavicon, palettes, useTheme, moduleIcon, type NavGroup,
 } from "@/shared/ui/public";
 import { appConfig } from "./app.config";
+import { moduleNavigation } from "./navigation";
 import { enabledModules, consoleEnabled } from "./router";
 
 const route = useRoute();
@@ -20,10 +21,6 @@ const { settings, update, choosePalette } = useTheme();
 const bare = computed(() => route.path === "/login" || route.path.startsWith("/legal/"));
 /** 开发者工具和产品界面分开：进入 /dev 后侧栏只显示开发者工具。 */
 const inDev = computed(() => route.path === "/dev" || route.path.startsWith("/dev/"));
-/** 业务页面的面包屑前一级：当前页面所属模块。 */
-const currentModule = computed(() => enabledModules.find((m) => m.name === route.meta.module));
-const moduleTitle = computed(() => currentModule.value?.title);
-
 const nav = computed<NavGroup[]>(() =>
   inDev.value
     ? [
@@ -39,7 +36,7 @@ const nav = computed<NavGroup[]>(() =>
           ],
         },
       ]
-    : [{ items: enabledModules.map((m) => ({ to: m.pages[0]?.path || "/", label: m.title, icon: moduleIcon(m.icon) })) }],
+    : [{ title: "工作空间", items: enabledModules.flatMap((m) => { const item = moduleNavigation(m, session.can); return item ? [{ ...item, icon: moduleIcon(m.icon) }] : []; }) }],
 );
 
 // 顶部进度条：路由开始切换到完成
@@ -78,7 +75,7 @@ const build = (import.meta.env.VITE_CODE_VERSION as string | undefined)?.slice(0
 <template>
   <TopProgress :active="loading" />
   <RouterView v-if="bare" />
-  <AppShell v-else :brand="appConfig.name" :mark="appConfig.mark" :logo="appConfig.logo" :nav="nav" :section="inDev ? '开发者工具' : moduleTitle" :section-to="inDev ? '/dev' : currentModule?.pages[0]?.path">
+  <AppShell v-else :brand="appConfig.name" :mark="appConfig.mark" :logo="appConfig.logo" :nav="nav" :context="inDev ? '开发者工具' : identity.org">
     <template #sidebar-footer="{ collapsed }">
       <UiTip :text="collapsed ? '开发者工具（仅开发时可见）' : ''">
         <RouterLink v-if="consoleEnabled && !inDev" to="/dev" class="flex h-10 w-full items-center gap-3 px-[18px] text-side-faint transition-colors hover:bg-side-hover hover:text-side-fg" :class="collapsed && 'justify-center px-0'" aria-label="开发者工具">
@@ -86,11 +83,13 @@ const build = (import.meta.env.VITE_CODE_VERSION as string | undefined)?.slice(0
         </RouterLink>
       </UiTip>
     </template>
-    <template #topbar>
+    <template #search>
       <button type="button" class="mr-2 hidden h-9 w-60 items-center gap-2 rounded-md border border-line bg-surface px-3 text-fg-faint shadow-card transition-colors hover:border-line-strong hover:text-fg-muted md:flex" aria-label="搜索页面和操作" @click="search = true">
         <Search class="size-4" /><span class="flex-1 text-left">搜索页面和操作</span><kbd class="rounded border border-line-strong px-1.5 font-mono text-[11px]">{{ isMac ? "⌘" : "Ctrl" }} K</kbd>
       </button>
       <UiTip text="搜索"><UiButton variant="ghost" size="icon" class="md:hidden" aria-label="搜索页面和操作" @click="search = true"><Search class="size-[18px]" /></UiButton></UiTip>
+    </template>
+    <template #topbar>
       <UiTip v-if="session.demo" text="当前是演示数据，没有连接后台"><UiTag tone="warn" class="mr-1">演示数据</UiTag></UiTip>
       <NotificationBell />
       <ThemePanel />

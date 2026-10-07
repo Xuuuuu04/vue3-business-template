@@ -14,6 +14,9 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { parse } from "@vue/compiler-sfc";
+import { baseParse, NodeTypes } from "@vue/compiler-dom";
 import { lockData } from "../../tools/framework-lock";
 function clone() {
   const root = mkdtempSync(join(tmpdir(), "vue-generator-"));
@@ -23,10 +26,13 @@ function clone() {
     "tests",
     "doc",
     "design",
+    "deploy",
     "package.json",
     "tsconfig.json",
     "vitest.config.ts",
     "vite.config.ts",
+    "playwright.config.ts",
+    ".github",
     "framework.lock",
     "scaffold.json",
   ])
@@ -48,6 +54,223 @@ function command(root: string, ...args: string[]) {
     timeout: 30000,
   });
 }
+/** 实际收集用例，不启动浏览器或演示服务；产品必须保留公共用例并去掉样例用例。 */
+function browserCases(root: string) {
+  interface Suite {
+    specs?: Array<{
+      title: string;
+      file: string;
+      tests: Array<{ projectName: string }>;
+    }>;
+    suites?: Suite[];
+  }
+  const report = JSON.parse(
+    execFileSync(
+      resolve("node_modules/.bin/playwright"),
+      ["test", "--list", "--reporter=json"],
+      { cwd: root, encoding: "utf8", stdio: "pipe", timeout: 30000 },
+    ),
+  ) as { suites: Suite[] };
+  const cases: Array<{ title: string; file: string; project: string }> = [];
+  function visit(suite: Suite) {
+    for (const spec of suite.specs ?? [])
+      for (const test of spec.tests)
+        cases.push({
+          title: spec.title,
+          file: spec.file.replaceAll("\\", "/"),
+          project: test.projectName,
+        });
+    for (const child of suite.suites ?? []) visit(child);
+  }
+  for (const suite of report.suites) visit(suite);
+  return cases.sort((left, right) =>
+    JSON.stringify(left).localeCompare(JSON.stringify(right)),
+  );
+}
+/** 比较完整隔离副本，参数错误不能修改页面、登记、图或框架记录。 */
+function filesSnapshot(root: string) {
+  const files: Record<string, string> = {};
+  function visit(directory: string) {
+    for (const entry of readdirSync(join(root, directory), {
+      withFileTypes: true,
+    })) {
+      const name = join(directory, entry.name);
+      if (entry.isDirectory()) visit(name);
+      else if (entry.isFile())
+        files[name] = createHash("sha256")
+          .update(readFileSync(join(root, name)))
+          .digest("hex");
+    }
+  }
+  visit("");
+  return files;
+}
+test("页面生成器提供四种单一任务起点，并登记真实组件与传入任务", () => {
+  const root = clone();
+  try {
+    command(root, "tools/new-module.ts", "contacts", "--title", "联系人");
+    const task = '查看 "待联系" 对象的资料与下一步';
+    const title = '联系人 "资料" & <记录>';
+    command(root, "tools/new-part.ts", "page", "contacts", "blank_default");
+    for (const layout of ["blank", "list", "form", "detail"])
+      command(
+        root,
+        "tools/new-part.ts",
+        "page",
+        "contacts",
+        `${layout}_page`,
+        "--layout",
+        layout,
+        "--task",
+        task,
+        "--title",
+        title,
+      );
+    const pages = JSON.parse(
+      command(
+        root,
+        "--input-type=module",
+        "--eval",
+        "const {default:module}=await import('./src/modules/contacts/module.ts');console.log(JSON.stringify(module.pages));",
+      ),
+    ) as Array<{
+      id: string;
+      task: string;
+      title: string;
+      actions: string[];
+      components: string[];
+    }>;
+    expect(
+      pages.find((page) => page.id === "contacts.blank_default")?.task,
+    ).toBe("填写此页唯一的用户任务");
+    for (const layout of ["blank", "list", "form", "detail"]) {
+      const page = pages.find((item) => item.id === `contacts.${layout}_page`)!;
+      expect(page.task).toBe(task);
+      expect(page.title).toBe(title);
+      expect(page.actions).toEqual([]);
+      const source = readFileSync(
+        join(root, `src/modules/contacts/pages/${layout}_page.vue`),
+        "utf8",
+      );
+      const { descriptor, errors } = parse(source);
+      expect(errors).toEqual([]);
+      const template = baseParse(descriptor.template!.content);
+      const frame = template.children.find(
+        (node) => node.type === NodeTypes.ELEMENT,
+      );
+      expect(frame?.tag).toBe("PageFrame");
+      if (!frame) throw new Error("页面缺少主框架");
+      expect(
+        frame.props.some(
+          (prop) =>
+            prop.type === NodeTypes.ATTRIBUTE && prop.name === "workspace",
+        ),
+      ).toBe(true);
+      const main = frame.children.find(
+        (node) => node.type === NodeTypes.ELEMENT,
+      )!;
+      expect(main.tag).toBe(layout === "list" ? "DataTable" : "WorkArea");
+      expect(page.components).toContain(main.tag);
+      if (layout !== "blank")
+        expect(
+          main.props.some(
+            (prop) => prop.type === NodeTypes.ATTRIBUTE && prop.name === "fill",
+          ),
+        ).toBe(true);
+      if (layout === "list" || layout === "form")
+        expect(
+          main.props.some(
+            (prop) =>
+              prop.type === NodeTypes.ATTRIBUTE &&
+              prop.name === (layout === "list" ? "flat" : "form"),
+          ),
+        ).toBe(true);
+    }
+    command(root, "tools/export-docs.ts");
+    command(root, "tools/check.ts", "--structure");
+    execFileSync(resolve("node_modules/.bin/vue-tsc"), ["--noEmit"], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: "pipe",
+      timeout: 30000,
+    });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}, 60000);
+test("未知布局与不完整页面参数在写入前失败，隔离副本所有文件保持原样", () => {
+  const root = clone();
+  try {
+    command(root, "tools/new-module.ts", "contacts");
+    const before = filesSnapshot(root);
+    for (const options of [
+      ["--layout", "board"],
+      ["--layout=board"],
+      ["--layout"],
+      ["--layout", "--task", "查看联系人"],
+      ["--layout", "list", "--layout", "form"],
+      ["--title", "--layout"],
+      ["--title"],
+      ["--title", "   "],
+      ["--title", "历史", "--title", "记录"],
+      ["--task"],
+      ["--task", "  "],
+      ["--task", "查看联系人\n修改账单"],
+      ["--task", "查看联系人", "--task", "修改联系人"],
+      ["--unknown", "list"],
+      ["--layuot", "list"],
+      ["unexpected_argument"],
+    ]) {
+      expect(() =>
+        command(
+          root,
+          "tools/new-part.ts",
+          "page",
+          "contacts",
+          "invalid_page",
+          ...options,
+        ),
+      ).toThrow();
+      expect(filesSnapshot(root)).toEqual(before);
+    }
+    expect(() =>
+      command(
+        root,
+        "tools/new-part.ts",
+        "page",
+        "contacts",
+        "class",
+        "--layout",
+        "form",
+      ),
+    ).toThrow();
+    expect(filesSnapshot(root)).toEqual(before);
+    command(
+      root,
+      "tools/new-part.ts",
+      "page",
+      "contacts",
+      "history",
+      "--layout=detail",
+      "--task=查看联系人记录",
+    );
+    const after = filesSnapshot(root);
+    expect(() =>
+      command(
+        root,
+        "tools/new-part.ts",
+        "page",
+        "contacts",
+        "history",
+        "--layout",
+        "form",
+      ),
+    ).toThrow();
+    expect(filesSnapshot(root)).toEqual(after);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}, 60000);
 test("生成器产生真实可执行的开发包，重复名称不覆盖", () => {
   const root = clone();
   try {
@@ -99,8 +322,19 @@ test("产品初始化清理样板业务，框架三份比较遇到冲突不写�
   const parent = mkdtempSync(join(tmpdir(), "vue-product-"));
   const product = join(parent, "product");
   try {
+    const templateCases = browserCases(root);
+    const publicCases = templateCases.filter(
+      (item) => !item.file.startsWith("demo/"),
+    );
+    expect(templateCases.some((item) => item.file.startsWith("demo/"))).toBe(
+      existsSync(join(root, "tests/browser/demo")),
+    );
+    expect(publicCases.length).toBeGreaterThan(0);
     command(root, "tools/start-project.ts", product);
     expect(existsSync(join(product, "src/modules/file_library"))).toBe(false);
+    expect(existsSync(join(product, "tests/browser/demo"))).toBe(false);
+    expect(existsSync(join(product, "tests/demo"))).toBe(false);
+    expect(existsSync(join(product, "tests/framework/fixtures/file-openapi.ts"))).toBe(true);
     // 新产品带上项目 Skill，但不带本机的任务与记录。
     expect(existsSync(join(product, ".agents/skills/vue-guide/SKILL.md"))).toBe(
       true,
@@ -110,6 +344,7 @@ test("产品初始化清理样板业务，框架三份比较遇到冲突不写�
       readFileSync(join(product, "src/generated/graph.json"), "utf8"),
     ).toBe("[]\n");
     symlinkSync(resolve("node_modules"), join(product, "node_modules"), "dir");
+    expect(browserCases(product)).toEqual(publicCases);
     command(product, "tools/export-docs.ts");
     command(product, "tools/check.ts", "--structure");
     const file = "src/shared/ui/theme/tokens.css";

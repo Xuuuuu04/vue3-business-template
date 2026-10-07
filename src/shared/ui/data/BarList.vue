@@ -10,10 +10,7 @@ const max = computed(() => Math.max(1, ...props.items.map((i) => i.value)));
       <span class="text-fg-faint tabular-nums">{{ i + 1 }}</span>
       <span class="truncate">{{ it.label }}</span>
       <span class="text-fg-muted tabular-nums">{{ it.text ?? it.value.toLocaleString("zh-CN") }}</span>
-      <span class="col-start-2 col-end-4 h-1.5 overflow-hidden rounded-full bg-muted"><span class="bar block h-full w-0 rounded-full bg-primary" :style="{ '--w': `${(it.value / max) * 100}%`, animationDelay: `${i * 70 + 150}ms` }" /></span>
+      <span class="col-start-2 col-end-4 h-1.5 overflow-hidden rounded-full bg-muted"><span class="block h-full rounded-full bg-primary" :style="{ width: `${(it.value / max) * 100}%` }" /></span>
     </li>
   </ol>
 </template>
-<style scoped>
-.bar { animation: grow-x 0.8s var(--ease) forwards; }
-</style>
