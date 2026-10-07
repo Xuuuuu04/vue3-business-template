@@ -77,7 +77,8 @@ function clickRow(e: MouseEvent, row: T) {
   emit("row-click", row);
 }
 function doubleClickRow(e: MouseEvent, row: T) {
-  if (!slots["expanded"] || (e.target as Element).closest("button, a, input, label, [role=checkbox]")) return;
+  // 可导航行以行点击为准，展开只使用独立按钮，避免双击同时触发两种操作。
+  if (props.rowClickable || !slots["expanded"] || (e.target as Element).closest("button, a, input, label, [role=checkbox]")) return;
   toggleExpand(row);
 }
 /** 当前页显示的是第几条到第几条。 */
@@ -167,9 +168,13 @@ function show(c: DataColumn, row: T): string {
   const v = cell(row, c.key);
   return c.format ? c.format(v, row as Record<string, unknown>) : v === null || v === undefined ? "—" : String(v);
 }
+function cellAlignment(c: DataColumn) {
+  return c.align ?? (c.kind === "number" || c.kind === "delta" ? "right" : "left");
+}
 function cellClass(c: DataColumn) {
+  const alignment = cellAlignment(c);
   return [
-    (c.align ?? (c.kind === "number" || c.kind === "delta" ? "right" : "left")) === "right" ? "text-right" : c.align === "center" ? "text-center" : "text-left",
+    alignment === "right" ? "text-right" : alignment === "center" ? "text-center" : "text-left",
     (c.kind === "number" || c.kind === "delta") && "tabular-nums",
   ];
 }
@@ -286,7 +291,7 @@ onBeforeUnmount(() => { saveScroll(); document.removeEventListener("keydown", on
                   :class="[cellClass(c), c.sticky && ['sm:sticky sm:z-10', stickyPosition(c)], c.key === lastLeft && 'sm:shadow-[1px_0_0_var(--line)]', c.key === firstRight && 'sm:shadow-[-1px_0_0_var(--line)]', c.kind === 'delta' && deltaTone(cell(row, c.key))]"
                   :style="stickyStyle(c)"
                 >
-                  <div :class="slots['expanded'] && c.key === visibleColumns[0]?.key && 'flex items-center gap-2'">
+                  <div :class="slots['expanded'] && c.key === visibleColumns[0]?.key && ['flex items-center gap-2', cellAlignment(c) === 'right' ? 'justify-end' : cellAlignment(c) === 'center' ? 'justify-center' : 'justify-start']">
                     <button v-if="slots['expanded'] && c.key === visibleColumns[0]?.key" type="button" class="grid size-6 shrink-0 place-items-center rounded-md text-fg-muted hover:bg-muted hover:text-fg" :aria-label="`${expanded.includes(keyOf(row)) ? '收起' : '展开'}${show(c, row)}详情`" :aria-expanded="expanded.includes(keyOf(row))" @click.stop="toggleExpand(row)">
                       <ChevronDown class="size-4 transition-transform duration-(--motion-normal)" :class="!expanded.includes(keyOf(row)) && '-rotate-90'" aria-hidden="true" />
                     </button>
