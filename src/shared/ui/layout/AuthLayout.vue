@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BrandMark from "./BrandMark.vue";
-/** 登录外壳：实色品牌区与单一表单；centered 用于只需表单的产品。 */
+/** 登录外壳：品牌区（实色底、品牌色光与细网格质感）与单一表单；centered 用于只需表单的产品。 */
 defineProps<{
   brand: string;
   mark?: string;
@@ -11,9 +11,10 @@ defineProps<{
 }>();
 </script>
 <template>
-  <div class="min-h-dvh bg-surface" :class="variant === 'centered' ? 'flex flex-col' : 'grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]'">
-    <aside v-if="variant !== 'centered'" class="hidden min-h-dvh flex-col bg-auth-bg p-10 text-auth-fg lg:flex xl:p-12">
+  <div class="auth-shell min-h-dvh bg-surface" :class="variant === 'centered' ? 'flex flex-col' : 'grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]'">
+    <aside v-if="variant !== 'centered'" class="auth-panel hidden min-h-dvh flex-col bg-auth-bg p-10 text-auth-fg lg:flex xl:p-12">
       <BrandMark :name="brand" :mark="mark" :logo="logo" size="md" wordmark inverse />
+      <span class="auth-watermark" aria-hidden="true">{{ mark ?? brand.slice(0, 1) }}</span>
       <div class="my-auto py-16">
         <p v-if="tagline" class="max-w-sm text-balance text-[40px] leading-[1.3] font-medium tracking-tight"><slot name="tagline">{{ tagline }}</slot></p>
       </div>

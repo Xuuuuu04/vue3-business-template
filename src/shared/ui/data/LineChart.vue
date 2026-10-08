@@ -6,7 +6,7 @@ const props = defineProps<{ series: { name: string; values: number[]; dashed?: b
 const svg = ref<SVGSVGElement>();
 const W = useChartWidth(svg);
 const H = computed(() => props.height ?? 240);
-const pad = { l: 44, r: 16, t: 12, b: 26 };
+
 const colors = ["var(--primary)", "var(--fg-faint)", "var(--info)", "var(--ok)"];
 const fmt = (v: number) => (props.format ? props.format(v) : v.toLocaleString("zh-CN"));
 const range = computed(() => {
@@ -16,18 +16,23 @@ const range = computed(() => {
   const top = Math.ceil(max / step) * step;
   return { min, max: top === min ? min + 1 : top };
 });
+/** 左边距按最长刻度文字估算，中文与单位不会被裁掉。 */
+const pad = computed(() => {
+  const widest = Math.max(...ticks.value.map((t) => [...fmt(t)].reduce((w, ch) => w + (/[\u4e00-\u9fff]/.test(ch) ? 12 : 7), 0)));
+  return { l: Math.max(36, widest + 14), r: 16, t: 12, b: 26 };
+});
 const n = computed(() => props.labels.length);
-const x = (i: number) => pad.l + (n.value <= 1 ? 0 : (i * (W.value - pad.l - pad.r)) / (n.value - 1));
-const y = (v: number) => pad.t + (1 - (v - range.value.min) / (range.value.max - range.value.min)) * (H.value - pad.t - pad.b);
+const x = (i: number) => pad.value.l + (n.value <= 1 ? 0 : (i * (W.value - pad.value.l - pad.value.r)) / (n.value - 1));
+const y = (v: number) => pad.value.t + (1 - (v - range.value.min) / (range.value.max - range.value.min)) * (H.value - pad.value.t - pad.value.b);
 const path = (values: number[]) => values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
-const area = computed(() => `${path(props.series[0]?.values ?? [])} L${x(n.value - 1)} ${H.value - pad.b} L${x(0)} ${H.value - pad.b}Z`);
+const area = computed(() => `${path(props.series[0]?.values ?? [])} L${x(n.value - 1)} ${H.value - pad.value.b} L${x(0)} ${H.value - pad.value.b}Z`);
 const ticks = computed(() => [0, 1, 2, 3].map((i) => range.value.min + ((range.value.max - range.value.min) * i) / 3));
 const xTicks = computed(() => { const out = new Set([0, n.value - 1]); for (let i = 1; i < 4; i++) out.add(Math.round(((n.value - 1) * i) / 4)); return [...out].sort((a, b) => a - b); });
 const hover = ref<number | null>(null);
 function move(e: PointerEvent) {
   const box = svg.value!.getBoundingClientRect();
   const px = ((e.clientX - box.left) / box.width) * W.value;
-  hover.value = Math.max(0, Math.min(n.value - 1, Math.round(((px - pad.l) / (W.value - pad.l - pad.r)) * (n.value - 1))));
+  hover.value = Math.max(0, Math.min(n.value - 1, Math.round(((px - pad.value.l) / (W.value - pad.value.l - pad.value.r)) * (n.value - 1))));
 }
 const uid = Math.random().toString(36).slice(2, 8);
 </script>

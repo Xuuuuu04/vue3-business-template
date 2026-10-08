@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";
 import { useRoute, useRouter, RouterView, RouterLink } from "vue-router";
-import { ArrowLeft, Wrench, Compass, History, Gauge, Palette, PlugZap, Search, Moon, Sun, LogOut, Info, Settings, PanelsTopLeft, Users, CalendarDays, ClipboardCheck, MessagesSquare } from "lucide-vue-next";
+import { ArrowLeft, Wrench, Compass, History, Gauge, Palette, PlugZap, Search, Moon, Sun, LogOut, Info, Settings, PanelsTopLeft, LayoutDashboard, Users, CalendarDays, ClipboardCheck, MessagesSquare } from "lucide-vue-next";
 import { useSession } from "@/shared/public";
 import {
   AppShell, AppFooter, ThemePanel, NotificationBell, UserMenu, CommandPalette, TopProgress, Toaster, BrandMark,
@@ -27,6 +27,7 @@ const nav = computed<NavGroup[]>(() =>
     ? [
         { items: [{ to: "/dev", label: "返回开发者工具", icon: ArrowLeft, exact: true }] },
         { title: "功能示例", items: [
+          { to: "/dev/examples/overview", label: "经营总览", icon: LayoutDashboard },
           { to: "/dev/examples/customers", label: "客户管理", icon: Users },
           { to: "/dev/examples/campaign", label: "活动编辑", icon: CalendarDays },
           { to: "/dev/examples/approval", label: "采购审批", icon: ClipboardCheck },
@@ -51,6 +52,13 @@ const nav = computed<NavGroup[]>(() =>
       ]
     : [{ title: "工作空间", items: enabledModules.flatMap((m) => { const item = moduleNavigation(m, session.can); return item ? [{ ...item, icon: moduleIcon(m.icon) }] : []; }) }],
 );
+
+// 页面标题前的模块图标：业务页按所属模块自动显示，开发者工具不显示。
+provide("page-icon", computed(() => {
+  if (inDev.value) return undefined;
+  const owner = enabledModules.find((m) => m.name === route.meta.module);
+  return owner ? moduleIcon(owner.icon) : undefined;
+}));
 
 // 顶部进度条：路由开始切换到完成
 const loading = ref(false);

@@ -105,7 +105,7 @@ function closeMobile(event: KeyboardEvent) {
     >跳到主要内容</a
   >
   <div
-    class="grid h-dvh overflow-hidden transition-[grid-template-columns] duration-(--motion-panel) ease-(--ease)"
+    class="app-canvas grid h-dvh overflow-hidden transition-[grid-template-columns] duration-(--motion-panel) ease-(--ease)"
     :class="collapsed ? 'md:grid-cols-[64px_1fr]' : 'md:grid-cols-[256px_1fr]'"
   >
     <div
@@ -178,7 +178,7 @@ function closeMobile(event: KeyboardEvent) {
 
     <div :inert="!desktop && mobileOpen" class="application-surface flex min-h-0 min-w-0 flex-col">
       <header
-        class="z-30 flex h-16 shrink-0 items-center gap-1 bg-surface px-3 md:px-5"
+        class="app-topbar z-30 flex h-14 shrink-0 items-center gap-1 px-3 md:px-4"
       >
         <Button
           variant="ghost"

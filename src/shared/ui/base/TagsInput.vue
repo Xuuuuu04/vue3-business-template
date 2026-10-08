@@ -10,7 +10,7 @@ const { attributes, invalid: fieldInvalid, rootAttributes } = useFieldControl(()
 </script>
 <template>
   <TagsInputRoot v-bind="rootAttributes()" :data-invalid="fieldInvalid() || undefined" v-model="model" :max="max" add-on-paste :delimiter="/[,，]/" class="flex min-h-(--control-h) w-full flex-wrap items-center gap-1.5 control-surface rounded-md border border-line bg-surface px-2 py-1 transition-[border-color,box-shadow] focus-within:border-primary focus-within:shadow-[0_0_0_2px_var(--ring)] hover:border-line-strong">
-    <TagsInputItem v-for="t in model" :key="t" :value="t" class="inline-flex h-6 items-center gap-1 rounded-sm bg-primary-soft pl-2 text-help text-primary-text data-[state=active]:ring-2 data-[state=active]:ring-(--ring)">
+    <TagsInputItem v-for="t in model" :key="t" :value="t" data-chip class="inline-flex h-6 items-center gap-1 rounded-sm bg-primary-soft pl-2 text-help text-primary-text data-[state=active]:ring-2 data-[state=active]:ring-(--ring)">
       <TagsInputItemText /><TagsInputItemDelete class="grid size-6 place-items-center rounded-sm hover:bg-primary-soft-hover" :aria-label="`删除 ${t}`"><X class="size-3" /></TagsInputItemDelete>
     </TagsInputItem>
     <TagsInputInput v-bind="attributes()" :placeholder="model.length ? '' : placeholder" :aria-label="attributes()['aria-labelledby'] ? undefined : ariaLabel ?? placeholder" class="h-6 min-w-24 flex-1 bg-transparent outline-none placeholder:text-fg-faint" />

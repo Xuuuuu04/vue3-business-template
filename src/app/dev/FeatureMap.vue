@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { ArrowDown } from "lucide-vue-next";
+import { ArrowRight, Check, Globe, Play } from "lucide-vue-next";
 import generatedGraph from "@/generated/graph.json";
 import type { describe } from "@/shared/modules/graph";
 import { PageFrame, StatusLine, WorkArea, Stack, Row, SelectList, UiTag, UiEmpty, UiCopy } from "@/shared/ui/public";
@@ -35,24 +35,31 @@ const total = graph.reduce((n, m) => n + m.actions.length, 0);
             <p v-if="action.inputFields.length" class="text-fg-muted">需要用户或页面提供：{{ names(action.inputFields).join("、") }}</p>
           </Stack>
         </header>
-        <section><h3 class="mb-4 font-medium">执行过程</h3>
-          <ol class="flex flex-col">
-            <li v-for="(step, i) in action.steps" :key="step.id" class="flex flex-col">
-              <div v-if="i" class="flex h-6 items-center pl-3 text-fg-faint"><ArrowDown class="size-4" /></div>
-              <div class="border-l-2 border-line pl-5 py-3">
-                <div class="mb-2 flex items-center gap-2"><span class="grid size-6 place-items-center rounded-full bg-primary-soft text-[13px] font-semibold text-primary-text">{{ i + 1 }}</span><b class="font-medium">{{ step.title }}</b><UiTag v-if="step.rule" class="ml-auto">规则 {{ step.rule }}</UiTag></div>
-                <dl class="grid grid-cols-[88px_minmax(0,1fr)] gap-x-3 gap-y-1.5">
-                  <dt class="text-fg-faint">用到的数据</dt><dd class="min-w-0 break-words">{{ names(step.reads).join("、") || "无" }}</dd>
-                  <dt class="text-fg-faint">得到的数据</dt><dd class="min-w-0 break-words">{{ names(step.writes).join("、") || "无" }}</dd>
-                  <template v-if="step.uses.length"><dt class="text-fg-faint">调用的接口</dt><dd class="flex min-w-0 flex-wrap gap-1.5 overflow-auto"><UiTag v-for="u in step.uses" :key="u" tone="code">{{ endpoint(u) }}</UiTag></dd></template>
-                  <template v-if="step.when"><dt class="text-fg-faint">执行条件</dt><dd>{{ step.when.title }}</dd></template>
-                  <dt class="text-fg-faint">代码位置</dt>
-                  <dd class="flex min-w-0 items-center gap-2 overflow-auto" v-if="step.source"><UiTag tone="code">{{ where(step.source) }}</UiTag><span class="text-fg-faint">{{ step.source.symbol }}</span>
-                    <UiCopy :text="where(step.source)" :label="`复制 ${where(step.source)}`" /></dd>
-                  <dd v-else class="text-warn">没有找到代码位置，请运行 npm run docs</dd>
-                </dl>
+        <section aria-label="执行过程">
+          <h3 class="mb-4 font-medium">执行过程</h3>
+          <ol class="flow">
+            <li class="flow-node is-terminal"><span class="flow-dot"><Play class="size-3" /></span><div class="flow-terminal">页面触发<span v-if="action.inputFields.length" class="text-fg-faint">，带上 {{ names(action.inputFields).join("、") }}</span></div></li>
+            <li v-for="(step, i) in action.steps" :key="step.id" class="flow-node" :style="{ animationDelay: `${i * 50}ms` }">
+              <span class="flow-dot">{{ i + 1 }}</span>
+              <div class="flow-card">
+                <div class="flex flex-wrap items-center gap-2">
+                  <b class="font-medium">{{ step.title }}</b>
+                  <UiTag v-if="step.when" tone="warn">仅当 {{ step.when.title }}</UiTag>
+                  <UiTag v-if="step.rule" class="ml-auto">规则 {{ step.rule }}</UiTag>
+                </div>
+                <div class="flow-data">
+                  <span class="flow-chips"><span v-for="r in names(step.reads)" :key="r" class="flow-chip">{{ r }}</span><span v-if="!step.reads.length" class="text-fg-faint">不读取数据</span></span>
+                  <ArrowRight class="size-4 shrink-0 text-fg-faint" />
+                  <span class="flow-chips"><span v-for="w in names(step.writes)" :key="w" class="flow-chip is-out">{{ w }}</span><span v-if="!step.writes.length" class="text-fg-faint">不产生数据</span></span>
+                </div>
+                <div v-if="step.uses.length" class="flex flex-wrap gap-1.5"><span v-for="u in step.uses" :key="u" class="flow-endpoint"><Globe class="size-3.5" />{{ endpoint(u) }}</span></div>
+                <div class="flow-source">
+                  <template v-if="step.source"><code>{{ where(step.source) }}</code><span class="text-fg-faint">{{ step.source.symbol }}</span><UiCopy :text="where(step.source)" :label="`复制 ${where(step.source)}`" /></template>
+                  <span v-else class="text-warn">没有找到代码位置，请运行 npm run docs</span>
+                </div>
               </div>
             </li>
+            <li class="flow-node is-terminal"><span class="flow-dot"><Check class="size-3" /></span><div class="flow-terminal">页面得到结果<span v-if="action.steps.at(-1)?.writes.length" class="text-fg-faint">：{{ names(action.steps.at(-1)!.writes).join("、") }}</span></div></li>
           </ol>
         </section>
       </div>

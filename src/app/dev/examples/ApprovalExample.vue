@@ -15,6 +15,7 @@ import {
   UiButton,
   UiDialog,
   UiTabs,
+  SummaryBand,
   UiTextarea,
   WorkArea,
   type DataColumn,
@@ -144,6 +145,20 @@ const tabs = computed(() => [
   { value: "details", label: "申请详情" },
   { value: "history", label: "审批记录", count: history.value.length },
 ]);
+/** 摘要带：本页重点是金额，其次是状态、预算占用和交付时间。 */
+const summary = computed(() => [
+  { label: "采购总额", value: formatMoney(totalCents) },
+  { label: "审批状态", value: statusLabel.value, tone: status.value === "approved" ? ("ok" as const) : status.value === "returned" ? ("bad" as const) : ("warn" as const) },
+  { label: "占部门预算", value: `${Math.round((totalCents / budgetCents) * 100)}`, unit: "%" },
+  { label: "期望交付", value: "10 月 16 日" },
+]);
+/** 右侧审批进度：已完成的环节带时间，当前环节突出显示。 */
+const progress = computed(() => [
+  { title: "周宁提交申请", time: "10/06 10:24" },
+  { title: "部门负责人确认", time: "10/06 11:06" },
+  { title: pending.value ? "等待你审批" : status.value === "approved" ? "你已通过" : "你已退回", time: pending.value ? "进行中" : decisionTime.value },
+  { title: "行政采购执行", time: status.value === "approved" ? "待开始" : "未开始" },
+]);
 const statusItems = computed(() => [
   { text: requestNumber },
   {
@@ -247,8 +262,11 @@ function resetExample(): void {
     <template #tabs><UiTabs v-model="activeTab" :items="tabs" /></template>
     <template #status><StatusLine :items="statusItems" /></template>
 
-    <WorkArea fill>
-      <Stack v-if="activeTab === 'details'" gap="none">
+    <WorkArea fill aside-title="审批进度">
+      <template #aside><Timeline :items="progress" /></template>
+      <Stack v-if="activeTab === 'details'" gap="lg">
+        <SummaryBand :items="summary" />
+        <Stack gap="none">
         <FormSection title="申请信息" layout="stacked">
           <DescriptionList :items="requestFields" :columns="2" />
         </FormSection>
@@ -293,6 +311,7 @@ function resetExample(): void {
         <FormSection v-if="!pending" title="审批结果" layout="stacked">
           <DescriptionList :items="decisionFields" :columns="2" />
         </FormSection>
+        </Stack>
       </Stack>
       <FormSection v-else title="审批记录" layout="stacked">
         <Timeline :items="history" />

@@ -60,11 +60,24 @@ export function inspectPageLayout(
   );
   if (
     bodies.length !== 1 ||
-    !["WorkArea", "DataTable"].includes(tag(bodies[0]!))
+    !["WorkArea", "DataTable", "OverviewBoard"].includes(tag(bodies[0]!))
   )
     errors.push(
-      "页面必须只有一个 WorkArea 或 DataTable 主区；禁止在标题下堆说明段落、卡片或独立面板",
+      "页面必须只有一个 WorkArea、DataTable 或 OverviewBoard 主区；禁止在标题下堆说明段落、卡片或独立面板",
     );
+  const board = bodies.length === 1 && tag(bodies[0]!) === "OverviewBoard" ? bodies[0]! : undefined;
+  if (board) {
+    const panels = elements(board);
+    if (panels.some((p) => tag(p) !== "Panel"))
+      errors.push("OverviewBoard 里只能直接放 Panel，每块回答一个问题");
+    if (panels.length < 2 || panels.length > 6)
+      errors.push("总览放 2–6 个 Panel；更多内容拆到对应列表或详情页");
+    const focus = panels.filter((p) => p.props.some((x) => (x.type === NodeTypes.ATTRIBUTE && x.name === "focus")));
+    if (focus.length !== 1)
+      errors.push("总览必须且只能有一个 focus 面板，放本页最重要的趋势、地图或对比");
+    else if (panels[0] !== focus[0])
+      errors.push("focus 面板放在 OverviewBoard 第一个，用户先看到最重要的内容");
+  }
   for (const child of elements(frame)) {
     const declared = slot(child);
     if (
@@ -87,6 +100,8 @@ export function inspectPageLayout(
     if (node.tag === "h1")
       errors.push("业务页标题由 PageFrame 提供，正文不能重复 h1");
     if (tag(node) === "Card") errors.push("业务页不能用 Card 拼接多个内容区");
+    if (tag(node) === "Panel" && !board?.children.includes(node))
+      errors.push("Panel 只能作为 OverviewBoard 的直接子项");
     const variant = attr(node, "variant");
     if (
       tag(node) === "UiButton" &&

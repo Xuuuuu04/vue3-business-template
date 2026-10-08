@@ -146,6 +146,7 @@ async function runStep(
     source: sourceOf(part.id),
     status: "running",
     elapsed: 0,
+    at: run.origin === undefined ? undefined : performance.now() - run.origin,
     outputs: [],
     requests: [],
   };
@@ -197,6 +198,7 @@ async function runStep(
           endpoint: id,
           method: endpoint.method,
           elapsed: 0,
+          at: run.origin === undefined ? undefined : performance.now() - run.origin,
           outcome: "running",
         };
         if (item.requests.length >= 40)

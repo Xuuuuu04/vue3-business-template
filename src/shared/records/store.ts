@@ -13,6 +13,8 @@ export interface RequestRecord {
   method: string;
   status?: number;
   elapsed: number;
+  /** 距离本次操作开始的毫秒数，用于瀑布图定位。 */
+  at?: number;
   backendRun?: string;
   requestId?: string;
   outcome: string;
@@ -24,6 +26,8 @@ export interface StepRecord {
   source?: Source;
   status: "running" | "ok" | "failed" | "skipped" | "cancelled";
   elapsed: number;
+  /** 距离本次操作开始的毫秒数。 */
+  at?: number;
   outputs: string[];
   requests: RequestRecord[];
   error?: string;
@@ -39,6 +43,8 @@ export interface RunRecord {
   action: string;
   title: string;
   started: string;
+  /** 本页计时起点（performance.now），步骤与请求的 at 以它为零点。 */
+  origin?: number;
   elapsed: number;
   status: "running" | "ok" | "failed" | "cancelled" | "unknown";
   steps: StepRecord[];
@@ -62,6 +68,7 @@ export function startRecord(action: string, title: string): RunRecord {
     action,
     title,
     started: new Date().toISOString(),
+    origin: performance.now(),
     elapsed: 0,
     status: "running",
     steps: [],
