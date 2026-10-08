@@ -58,6 +58,7 @@ export { default as OverviewBoard } from "./layout/OverviewBoard.vue";
 export { default as Panel } from "./layout/Panel.vue";
 export { default as TraceWaterfall } from "./data/TraceWaterfall.vue";
 export { default as SummaryBand } from "./data/SummaryBand.vue";
+export { default as SpeedChip } from "./layout/SpeedChip.vue";
 export type { TraceSpan } from "./data/TraceWaterfall.vue";
 export { default as StatusLine } from "./layout/StatusLine.vue";
 export { default as AppShell } from "./layout/AppShell.vue";

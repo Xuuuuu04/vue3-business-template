@@ -22,7 +22,11 @@ function resourceName(entry: PerformanceEntry & { initiatorType?: string }): str
 }
 
 /** Paint 的 duration 为零，startTime 才是相对页面加载开始的绘制时点。 */
-export function recordBrowserEntry(kind: string, entry: PerformanceEntry & { initiatorType?: string }) {
+export function recordBrowserEntry(kind: string, entry: PerformanceEntry & { initiatorType?: string; value?: number; hadRecentInput?: boolean; interactionId?: number }) {
+  // 最大内容绘制取发生时点；布局偏移记录分数（不是毫秒），用户刚操作后的偏移不计；交互只记有编号的真实点击与按键。
+  if (kind === "largest-contentful-paint") return recordSignal(kind, "最大内容绘制", entry.startTime);
+  if (kind === "layout-shift") { if (!entry.hadRecentInput && entry.value) recordSignal(kind, "布局偏移", entry.value); return; }
+  if (kind === "event") { if (entry.interactionId) recordSignal(kind, entry.name, entry.duration); return; }
   recordSignal(kind, kind === "resource" ? resourceName(entry) : entry.name,
     kind === "paint" ? entry.startTime : entry.duration);
 }
@@ -42,7 +46,7 @@ export function recordSignal(kind: string, name: string, duration: number) {
   triggerRef(signals);
 }
 export function startPerformance() {
-  for (const type of ["paint", "longtask", "resource"]) {
+  for (const type of ["paint", "longtask", "resource", "largest-contentful-paint", "layout-shift", "event"]) {
     if (!PerformanceObserver.supportedEntryTypes.includes(type)) {
       gaps.value.push(`当前浏览器不支持 ${type}`);
       continue;
@@ -51,7 +55,7 @@ export function startPerformance() {
       for (const entry of list.getEntries())
         recordBrowserEntry(type, entry);
     });
-    observer.observe({ type, buffered: true });
+    observer.observe({ type, buffered: true, ...(type === "event" ? { durationThreshold: 40 } : {}) } as PerformanceObserverInit);
     observers.push(observer);
   }
   return () => {
