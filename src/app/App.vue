@@ -3,9 +3,10 @@ import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";
 import { useRoute, useRouter, RouterView, RouterLink } from "vue-router";
 import { ArrowLeft, Wrench, Compass, History, Gauge, Palette, PlugZap, Search, Moon, Sun, LogOut, Info, Settings, PanelsTopLeft, LayoutDashboard, Users, CalendarDays, ClipboardCheck, MessagesSquare } from "lucide-vue-next";
 import { useSession } from "@/shared/public";
+import { usePerformance } from "@/shared/records/performance";
 import {
   AppShell, AppFooter, ThemePanel, NotificationBell, UserMenu, CommandPalette, TopProgress, Toaster, BrandMark,
-  UiButton, UiTag, UiTip, UiDialog, syncFavicon, palettes, useTheme, moduleIcon, type NavGroup,
+  UiButton, UiTag, UiTip, UiDialog, SpeedChip, syncFavicon, palettes, useTheme, moduleIcon, type NavGroup,
 } from "@/shared/ui/public";
 import { appConfig } from "./app.config";
 import { moduleNavigation } from "./navigation";
@@ -60,6 +61,10 @@ provide("page-icon", computed(() => {
   return owner ? moduleIcon(owner.icon) : undefined;
 }));
 
+// 开发时顶栏显示最近一次页面切换耗时。
+const { signals } = usePerformance();
+const lastSwitch = computed(() => [...signals.value].reverse().find((s) => s.kind === "navigation-dom")?.duration);
+
 // 顶部进度条：路由开始切换到完成
 const loading = ref(false);
 const stops = [router.beforeEach(() => { loading.value = true; }), router.afterEach(() => { loading.value = false; }), router.onError(() => { loading.value = false; })];
@@ -113,6 +118,7 @@ const build = (import.meta.env.VITE_CODE_VERSION as string | undefined)?.slice(0
       <UiTip text="搜索"><UiButton variant="ghost" size="icon" class="md:hidden" aria-label="搜索页面和操作" @click="search = true"><Search class="size-[18px]" /></UiButton></UiTip>
     </template>
     <template #topbar>
+      <SpeedChip v-if="consoleEnabled" :value="lastSwitch" to="/dev/speed" />
       <UiTip v-if="session.demo" text="当前是演示数据，没有连接后台"><UiTag tone="warn" class="mr-1">演示数据</UiTag></UiTip>
       <NotificationBell />
       <ThemePanel />

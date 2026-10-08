@@ -422,3 +422,9 @@ button.trace-row:hover { background: var(--subtle); }
 @media (min-width: 1200px) { .work-area-split { grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); } .work-area-split > .work-area-side { position: sticky; top: 0; align-self: start; } }
 .work-area-side { display: flex; min-width: 0; flex-direction: column; gap: 16px; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--subtle); }
 .work-area-side-title { font-size: 14px; font-weight: 600; }
+
+/* 开发速度小标：只在开发工具开启时出现在顶栏。 */
+.speed-chip { display: inline-flex; align-items: center; gap: 4px; height: 26px; margin-right: 4px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg-muted); font-size: 12px; font-weight: 600; transition: border-color var(--motion-fast), background var(--motion-fast); }
+.speed-chip small { font-weight: 500; color: var(--fg-faint); }
+.speed-chip:hover { border-color: var(--line-strong); }
+.speed-chip.is-ok svg { color: var(--ok); } .speed-chip.is-warn svg { color: var(--warn); } .speed-chip.is-bad { color: var(--bad); border-color: oklch(from var(--bad) l c h / 0.4); background: var(--bad-soft); }
