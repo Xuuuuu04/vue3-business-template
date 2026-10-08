@@ -15,6 +15,15 @@ const page: Page = {
 const check = (markup: string, script = "") =>
   inspectPageLayout(baseParse(markup), [script], page).join(" ");
 describe("业务页的单一任务结构", () => {
+  it("总览用 OverviewBoard 放 2–6 个面板，第一个是唯一的 focus 面板", () => {
+    const board = (panels: string) => check(`<PageFrame workspace title="总览"><OverviewBoard>${panels}</OverviewBoard></PageFrame>`);
+    expect(board('<Panel title="趋势" focus /><Panel title="待处理" />')).toBe("");
+    expect(board('<Panel title="趋势" focus />')).toContain("2–6 个 Panel");
+    expect(board('<Panel title="趋势" /><Panel title="待处理" />')).toContain("只能有一个 focus");
+    expect(board('<Panel title="待处理" /><Panel title="趋势" focus />')).toContain("放在 OverviewBoard 第一个");
+    expect(board('<Panel title="趋势" focus /><WorkArea />')).toContain("只能直接放 Panel");
+    expect(check('<PageFrame workspace><WorkArea><Panel title="零散" /></WorkArea></PageFrame>')).toContain("Panel 只能作为 OverviewBoard 的直接子项");
+  });
   it("允许一个主区、状态行和按需确认", () => {
     expect(
       check(

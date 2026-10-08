@@ -4,7 +4,7 @@ import { useRouter } from "vue-router";
 import { Download, History } from "lucide-vue-next";
 import { useRecords } from "@/shared/records/store";
 import { endpointLabel } from "./endpoint";
-import { PageFrame, StatusLine, DataTable, FilterItem, UiTag, UiButton, UiDrawer, UiEmpty, UiSegmented, UiSearchInput, UiCopy, DescriptionList, StatusMessage, Stack, type DataColumn } from "@/shared/ui/public";
+import { PageFrame, StatusLine, DataTable, FilterItem, UiTag, UiButton, UiDrawer, UiEmpty, UiSegmented, UiSearchInput, UiCopy, DescriptionList, StatusMessage, Stack, TraceWaterfall, type DataColumn, type TraceSpan } from "@/shared/ui/public";
 
 const router = useRouter();
 const { items, dropped } = useRecords();
@@ -34,6 +34,15 @@ const facts = computed(() => picked.value ? [
   { label: "运行编号", value: picked.value.id },
   { label: "代码版本", value: picked.value.codeVersion.slice(0, 12) },
 ] : []);
+/** 步骤与其中的接口请求转成瀑布图的行；点某一行跳到下方对应步骤。 */
+const spans = computed<TraceSpan[]>(() => picked.value ? picked.value.steps.map((s) => ({
+  id: s.id, label: s.title, at: s.at, elapsed: s.elapsed, status: s.status,
+  children: s.requests.map((r, k) => ({ id: `${s.id}-r${k}`, label: endpointLabel(r.endpoint, r.method), at: r.at, elapsed: r.elapsed, status: r.outcome === "ok" ? "ok" as const : r.outcome === "running" ? "running" as const : r.outcome === "unknown" ? "unknown" as const : "failed" as const, meta: r.status ? String(r.status) : undefined })),
+})) : []);
+function jump(span: TraceSpan) {
+  const id = span.id.replace(/-r\d+$/, "");
+  document.getElementById(`step-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 function exportRuns() {
   const blob = new Blob([JSON.stringify({ removed: dropped(), runs: items.value }, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
@@ -59,10 +68,14 @@ function exportRuns() {
       <Stack v-if="picked" gap="lg">
         <StatusMessage v-if="picked.error" status="error" :error="picked.error" />
         <DescriptionList :items="facts" />
+        <section>
+          <h3 class="mb-2 text-[13px] font-semibold text-fg-muted">时间线</h3>
+          <TraceWaterfall :spans="spans" :total="picked.elapsed" @select="jump" />
+        </section>
         <div>
-          <h3 class="mb-3 text-[13px] font-semibold text-fg-muted">执行过程</h3>
+          <h3 class="mb-3 text-[13px] font-semibold text-fg-muted">步骤详情</h3>
           <ol class="flex flex-col gap-3">
-            <li v-for="(s, i) in picked.steps" :key="s.id" class="border-b border-line py-4 last:border-0">
+            <li v-for="(s, i) in picked.steps" :id="`step-${s.id}`" :key="s.id" class="scroll-mt-4 border-b border-line py-4 last:border-0">
               <div class="flex items-center gap-2"><span class="grid size-5 place-items-center rounded-full bg-muted text-xs text-fg-muted">{{ i + 1 }}</span><b class="font-medium">{{ s.title }}</b><UiTag class="ml-auto" :tone="tone[s.status]" dot>{{ label[s.status] }}</UiTag><span class="text-fg-muted tabular-nums">{{ ms(s.elapsed) }}</span></div>
               <p v-if="s.error" class="mt-2 text-bad">{{ s.error }}</p>
               <p v-for="o in s.outputs" :key="o" class="mt-1.5 text-[13px] text-fg-muted">{{ o }}</p>

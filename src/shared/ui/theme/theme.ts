@@ -1,6 +1,6 @@
 /** 主题设置：应用到 <html>、保存在浏览器、供界面切换。保存失败时仍可正常显示。 */
 import { reactive, readonly } from "vue";
-import { paletteById, type Density, type Mode, type Radius, type SidebarStyle } from "./presets";
+import { paletteById, type Density, type Mode, type Radius, type SidebarStyle, type Texture } from "./presets";
 
 export interface ThemeSettings {
   palette: string;
@@ -8,6 +8,7 @@ export interface ThemeSettings {
   radius: Radius;
   density: Density;
   sidebar: SidebarStyle;
+  texture: Texture;
   /** 自定义品牌色相；为空时使用配色自带的品牌色。 */
   brandHue: number | null;
 }
@@ -16,7 +17,7 @@ const STORAGE_KEY = "ui-theme";
 
 /** 产品默认主题。换产品时改这里，或在初始化时调用 setDefaultTheme。 */
 let defaults: ThemeSettings = {
-  palette: "ink", mode: "light", radius: "soft", density: "comfortable", sidebar: "light", brandHue: null,
+  palette: "graphite", mode: "light", radius: "soft", density: "comfortable", sidebar: "light", texture: "dots", brandHue: null,
 };
 const state = reactive<ThemeSettings>({ ...defaults });
 
@@ -35,6 +36,7 @@ export function applyTheme(settings: ThemeSettings, root: HTMLElement = document
   root.dataset.radius = settings.radius;
   root.dataset.density = settings.density;
   root.dataset.sidebar = settings.sidebar;
+  root.dataset.texture = settings.texture ?? "dots";
 }
 
 function load(): Partial<ThemeSettings> {

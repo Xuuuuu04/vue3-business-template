@@ -20,7 +20,7 @@ provide(fieldContext, computed(() => ({
 })));
 </script>
 <template>
-  <div class="flex min-w-0 flex-col gap-2">
+  <div class="flex min-w-0 flex-col gap-2" :data-field-required="required || undefined">
     <label :id="labelId" :for="controlId" class="text-label leading-5 font-medium">{{ label }}<span v-if="required" class="ml-0.5 text-bad" aria-hidden="true">*</span></label>
     <slot />
     <p v-if="error" :id="messageId" class="text-help text-bad" role="alert">{{ error }}</p>

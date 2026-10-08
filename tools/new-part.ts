@@ -14,7 +14,7 @@ const kind = args[0];
 if (kind !== "page" && kind !== "step") throw new Error("只支持 page 或 step");
 const module = nameOf(args[1]);
 const name = nameOf(args[2]);
-const pageLayouts = ["blank", "list", "form", "detail"] as const;
+const pageLayouts = ["blank", "list", "form", "detail", "overview"] as const;
 type PageLayout = (typeof pageLayouts)[number];
 /** 页面所有带值参数在写入前检查，错拼或缺值不能成为页面内容。 */
 function pageOptions() {
@@ -92,6 +92,14 @@ const draft = ref('');`,
         </Stack>
       </form>
     </WorkArea>`,
+    },
+    overview: {
+      components: ["PageFrame", "OverviewBoard", "Panel", "UiEmpty"],
+      script: "",
+      body: `<OverviewBoard>
+      <Panel title="重点趋势" focus>${empty("重点指标尚未接入", "先确定本页最重要的一个问题，再声明查询动作并放入趋势图或地图。")}</Panel>
+      <Panel title="待处理">${empty("待处理事项尚未接入", "列出需要用户马上处理的事项与数量，点击进入对应列表。")}</Panel>
+    </OverviewBoard>`,
     },
     detail: {
       components: ["PageFrame", "WorkArea", "UiEmpty"],

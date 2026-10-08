@@ -20,11 +20,11 @@ const props = withDefaults(
 );
 
 const styles = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border font-medium transition-[background-color,border-color,color,box-shadow] duration-(--motion-fast) select-none disabled:pointer-events-none disabled:opacity-45",
+  "btn-press inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-(--motion-fast) select-none disabled:pointer-events-none disabled:opacity-45",
   {
     variants: {
       variant: {
-        primary: "border-primary bg-primary text-primary-ink hover:border-primary-hover hover:bg-primary-hover",
+        primary: "btn-primary border-primary bg-primary text-primary-ink hover:border-primary-hover hover:bg-primary-hover",
         secondary: "border-line bg-surface text-fg shadow-card hover:bg-subtle hover:border-line-strong",
         ghost: "border-transparent bg-transparent text-fg-muted hover:bg-muted hover:text-fg",
         danger: "border-bad bg-bad text-surface hover:opacity-90",
