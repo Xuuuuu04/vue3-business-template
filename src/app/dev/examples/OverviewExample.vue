@@ -2,12 +2,16 @@
 /** 经营总览示例：一个重点趋势、一组待处理事项和三个辅助比较。数据只在当前页面内存。 */
 import { computed } from "vue";
 import {
-  PageFrame, OverviewBoard, Panel, StatusLine, LineChart, BarList, DonutChart, ActivityFeed, ActionList, FilterBar, UiSelect, UiSegmented,
+  PageFrame, OverviewBoard, Panel, StatusLine, LineChart, BarList, DonutChart, ActivityFeed, ActionList, FilterBar, Field, UiSelect, UiSegmented,
 } from "@/shared/ui/public";
 import { ref } from "vue";
 
 const range = ref("30");
 const region = ref("");
+const storeType = ref("");
+const channel = ref("");
+const storeTypes = [{ value: "", label: "全部类型" }, { value: "flagship", label: "旗舰店" }, { value: "community", label: "社区店" }];
+const channelOptions = [{ value: "", label: "全部渠道" }, { value: "store", label: "门店" }, { value: "mini", label: "小程序" }, { value: "delivery", label: "外卖平台" }];
 const regions = [{ value: "", label: "全部区域" }, { value: "center", label: "渝中区" }, { value: "north", label: "江北区" }, { value: "south", label: "南岸区" }];
 const days = computed(() => Number(range.value));
 const labels = computed(() => Array.from({ length: days.value }, (_, i) => {
@@ -54,8 +58,12 @@ const activity = [
       <UiSegmented v-model="range" :options="[{ value: '7', label: '7 天' }, { value: '30', label: '30 天' }, { value: '90', label: '90 天' }]" aria-label="统计范围" />
     </template>
     <template #filters>
-      <FilterBar @query="() => {}" @reset="region = ''">
+      <FilterBar :more-active="[storeType, channel].filter(Boolean).length" @query="() => {}" @reset="region = ''; storeType = ''; channel = ''">
         <UiSelect v-model="region" :options="regions" aria-label="区域" />
+        <template #more>
+          <Field label="门店类型"><UiSelect v-model="storeType" :options="storeTypes" /></Field>
+          <Field label="销售渠道"><UiSelect v-model="channel" :options="channelOptions" /></Field>
+        </template>
       </FilterBar>
     </template>
     <template #status>

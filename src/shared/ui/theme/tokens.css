@@ -431,9 +431,12 @@ button.trace-row:hover { background: var(--subtle); }
 
 /* 页面筛选：总览等页面的筛选放在标题下面一整行，作用于整页所有面板。 */
 .page-filters { flex: none; }
-.page-filters [role="search"] > div { flex-wrap: nowrap; padding: 0; }
-.page-filters [role="search"] > div > :not(.btn-press):not(span) { flex: 0 1 220px; min-width: 140px; }
-@media (max-width: 767px) { .page-filters [role="search"] > div { flex-wrap: wrap; } .page-filters [role="search"] > div > :not(.btn-press):not(span) { flex: 1 1 100%; } }
+/* 筛选条：一行排开，控件定宽，不随屏幕拉满；窄屏换行占满。 */
+.filter-bar { display: flex; flex-direction: column; gap: 8px; }
+.filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.filter-row > :not(.btn-press):not(span) { flex: 0 1 220px; min-width: 140px; }
+.filter-more-count { display: grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--primary); color: var(--primary-ink); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+@media (max-width: 767px) { .filter-row > :not(.btn-press):not(span) { flex: 1 1 100%; } }
 
 /* 待处理清单：整行可点，左侧小圆点表示紧急程度。 */
 .action-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
