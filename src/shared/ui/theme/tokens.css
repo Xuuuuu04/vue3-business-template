@@ -453,3 +453,8 @@ button.trace-row:hover { background: var(--subtle); }
 .stat-item dd { margin: 0; font-size: 22px; line-height: 30px; font-weight: 600; letter-spacing: -0.01em; }
 .stat-item dd small { margin-left: 4px; font-size: 13px; font-weight: 500; color: var(--fg-muted); letter-spacing: 0; }
 .stat-item .stat-delta { font-size: 12px; line-height: 18px; font-weight: 600; }
+
+.action-wrap { display: flex; height: 100%; flex-direction: column; }
+.action-tail { display: flex; flex: 1; min-height: 64px; align-items: center; justify-content: center; gap: 6px; margin: 0; border-top: 1px dashed var(--line); color: var(--fg-faint); font-size: 13px; }
+.panel-body.is-flush { display: flex; flex-direction: column; }
+.panel-body.is-flush > .action-wrap { flex: 1; }

@@ -27,7 +27,16 @@ const y = (v: number) => pad.value.t + (1 - (v - range.value.min) / (range.value
 const path = (values: number[]) => values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
 const area = computed(() => `${path(props.series[0]?.values ?? [])} L${x(n.value - 1)} ${H.value - pad.value.b} L${x(0)} ${H.value - pad.value.b}Z`);
 const ticks = computed(() => [0, 1, 2, 3].map((i) => range.value.min + ((range.value.max - range.value.min) * i) / 3));
-const xTicks = computed(() => { const out = new Set([0, n.value - 1]); for (let i = 1; i < 4; i++) out.add(Math.round(((n.value - 1) * i) / 4)); return [...out].sort((a, b) => a - b); });
+/** 横轴刻度按最长标签宽度决定能放几个，标签之间至少留 16px，不会挤在一起。 */
+const xTicks = computed(() => {
+  if (n.value <= 1) return [0];
+  const widest = Math.max(...props.labels.map((l) => [...l].reduce((w, ch) => w + (/[\u4e00-\u9fff]/.test(ch) ? 12 : 7), 0)));
+  const room = Math.max(2, Math.min(5, Math.floor((W.value - pad.value.l - pad.value.r) / (widest + 16)) + 1));
+  const count = Math.min(room, n.value);
+  const out = new Set<number>();
+  for (let i = 0; i < count; i++) out.add(Math.round(((n.value - 1) * i) / (count - 1)));
+  return [...out].sort((a, b) => a - b);
+});
 const hover = ref<number | null>(null);
 function move(e: PointerEvent) {
   const box = svg.value!.getBoundingClientRect();
