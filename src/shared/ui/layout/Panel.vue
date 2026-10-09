@@ -5,6 +5,8 @@
  */
 import { RouterLink } from "vue-router";
 import { ArrowUpRight } from "lucide-vue-next";
+import Skeleton from "../base/Skeleton.vue";
+import EmptyState from "../base/EmptyState.vue";
 defineProps<{
   title: string;
   focus?: boolean;
@@ -14,6 +16,10 @@ defineProps<{
   figure?: { value: string; unit?: string; delta?: number; deltaLabel?: string; goodWhenUp?: boolean };
   /** 内容贴边（表格、列表）；默认留内边距。 */
   flush?: boolean;
+  /** 读取中显示骨架；没有数据时显示 emptyTitle，页面不用自己写占位文字。 */
+  loading?: boolean;
+  empty?: boolean;
+  emptyTitle?: string;
 }>();
 function tone(f: { delta?: number; goodWhenUp?: boolean }) {
   if (!f.delta) return "text-fg-faint";
@@ -35,6 +41,10 @@ function tone(f: { delta?: number; goodWhenUp?: boolean }) {
         <RouterLink v-if="more" :to="more" class="panel-more">查看全部<ArrowUpRight class="size-3.5" /></RouterLink>
       </div>
     </header>
-    <div class="panel-body" :class="{ 'is-flush': flush }"><slot /></div>
+    <div class="panel-body" :class="{ 'is-flush': flush && !loading && !empty }">
+      <div v-if="loading" class="flex flex-col gap-3 py-2" aria-busy="true"><Skeleton width="60%" /><Skeleton width="90%" /><Skeleton width="75%" /><Skeleton width="85%" /></div>
+      <EmptyState v-else-if="empty" :title="emptyTitle ?? '暂无数据'" />
+      <slot v-else />
+    </div>
   </section>
 </template>

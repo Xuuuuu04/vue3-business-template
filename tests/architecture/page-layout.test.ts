@@ -24,6 +24,18 @@ describe("业务页的单一任务结构", () => {
     expect(board('<Panel title="趋势" focus /><WorkArea />')).toContain("只能直接放 Panel");
     expect(check('<PageFrame workspace><WorkArea><Panel title="零散" /></WorkArea></PageFrame>')).toContain("Panel 只能作为 OverviewBoard 的直接子项");
   });
+  it("总览面板只放一个展示组件，筛选在页面层，标题固定且不重复", () => {
+    const board = (panels: string, extra = "") => check(`<PageFrame workspace title="总览">${extra}<OverviewBoard>${panels}</OverviewBoard></PageFrame>`);
+    expect(board('<Panel title="趋势" focus><LineChart /></Panel><Panel title="待处理" flush><ActionList /></Panel>', '<template #filters><FilterBar><UiSelect /></FilterBar></template>')).toBe("");
+    expect(board('<Panel title="趋势" focus><FilterBar /><LineChart /></Panel><Panel title="待处理"><ActionList /></Panel>')).toContain("只放一个展示组件");
+    expect(board('<Panel title="趋势" focus><FormSection /></Panel><Panel title="待处理"><ActionList /></Panel>')).toContain("不能放 FormSection");
+    expect(board('<Panel title="趋势" focus><LineChart /></Panel><Panel title="待处理">暂无</Panel>')).toContain("不能直接写文字");
+    expect(board('<Panel :title="t" focus><LineChart /></Panel><Panel title="待处理"><ActionList /></Panel>')).toContain("固定文字");
+    expect(board('<Panel title="趋势" focus><LineChart /></Panel><Panel title="趋势"><ActionList /></Panel>')).toContain("重复");
+    expect(board('<Panel title="趋势" focus><StatList /></Panel><Panel title="待处理"><ActionList /></Panel>')).toContain("focus 面板要放趋势");
+    expect(board('<Panel title="趋势" focus><LineChart /></Panel><Panel title="待处理"><ActionList /></Panel>', '<template #tabs><UiTabs /></template>')).toContain("总览不分标签页");
+    expect(board('<Panel title="趋势" focus><LineChart /></Panel><Panel title="待处理"><ActionList /></Panel>', '<template #filters><FilterBar><Field><UiSelect /></Field></FilterBar></template>')).toContain("不套 Field");
+  });
   it("允许一个主区、状态行和按需确认", () => {
     expect(
       check(

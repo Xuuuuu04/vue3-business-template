@@ -81,7 +81,7 @@ navigation: [{
 | 选择 | `UiSelect`（少于 10 项）、`UiCombobox`（可搜索、可多选）、`UiTagsInput`、`UiCheckbox`、`UiSwitch`（立即生效）、`UiRadioGroup`（含卡片样式）、`UiSegmented` |
 | 数字与日期 | `UiNumberInput`（加减、上下限、单位）、`UiDatePicker`、`UiDateRangePicker`（含常用范围）、`UiFileDrop` |
 | 表单版式 | `Field`（名称、提示、错误）、`FormSection`（默认左标题右控件；`layout="stacked"` 用于整行详情）；`WorkArea form` 宽屏右侧自动显示表单目录与必填进度，传 `#aside` 换成页面自己的摘要或预览，`plain` 关闭 |
-| 总览 | `OverviewBoard` 主区 + 2–6 个 `Panel`；第一个必须是 `focus` 面板（占两列，可带 `figure` 关键数字），`more` 指向完整列表 |
+| 总览 | `OverviewBoard` 主区 + 2–6 个 `Panel`；第一个必须是 `focus` 面板（占两列，可带 `figure` 关键数字），`more` 指向完整列表；每个面板只放一个展示组件，`loading`/`empty` 由面板处理。筛选放 `PageFrame #filters`。`ActionList` 待处理清单、`StatList` 面板内关键数字。写法见 [页面配方](../../../doc/ui-recipes.md) |
 | 执行过程 | `TraceWaterfall`：每段从何时开始、用了多久、结果如何，可带子行；用于操作记录、后台流程阶段 |
 | 标记 | `UiTag`（状态 ok、warn、bad；编码 code）、`UiAvatar`、`UiAvatarGroup`、`UiFileIcon`、`UiTime`（“3 小时前”，悬停看完整时间）、`UiCopy` |
 | 浮层 | `UiDialog`（短决定）、`UiDrawer`（从列表快速查看）、`useToast()`、`UiTip` |

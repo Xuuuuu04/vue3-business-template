@@ -428,3 +428,28 @@ button.trace-row:hover { background: var(--subtle); }
 .speed-chip small { font-weight: 500; color: var(--fg-faint); }
 .speed-chip:hover { border-color: var(--line-strong); }
 .speed-chip.is-ok svg { color: var(--ok); } .speed-chip.is-warn svg { color: var(--warn); } .speed-chip.is-bad { color: var(--bad); border-color: oklch(from var(--bad) l c h / 0.4); background: var(--bad-soft); }
+
+/* 页面筛选：总览等页面的筛选放在标题下面一整行，作用于整页所有面板。 */
+.page-filters { flex: none; }
+.page-filters [role="search"] > div { flex-wrap: nowrap; padding: 0; }
+.page-filters [role="search"] > div > :not(.btn-press):not(span) { flex: 0 1 220px; min-width: 140px; }
+@media (max-width: 767px) { .page-filters [role="search"] > div { flex-wrap: wrap; } .page-filters [role="search"] > div > :not(.btn-press):not(span) { flex: 1 1 100%; } }
+
+/* 待处理清单：整行可点，左侧小圆点表示紧急程度。 */
+.action-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.action-list li + li { border-top: 1px solid var(--line); }
+.action-row { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 16px; color: var(--fg); transition: background var(--motion-fast); }
+.action-row:hover { background: var(--subtle); }
+.action-dot { width: 8px; height: 8px; flex: none; border-radius: 999px; background: var(--line-strong); }
+.action-dot.is-warn { background: var(--warn); } .action-dot.is-bad { background: var(--bad); box-shadow: 0 0 0 3px var(--bad-soft); }
+.action-clear { display: flex; min-height: 160px; align-items: center; justify-content: center; gap: 8px; color: var(--fg-muted); }
+
+/* 统计数字表：两列，名称在上、数字在下，列间细线。 */
+.stat-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+.stat-item { display: flex; flex-direction: column; gap: 2px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.stat-item:nth-child(odd) { padding-right: 16px; } .stat-item:nth-child(even) { padding-left: 16px; border-left: 1px solid var(--line); }
+.stat-item:nth-last-child(-n + 2):nth-child(odd), .stat-item:last-child { border-bottom: 0; }
+.stat-item dt { font-size: 13px; line-height: 20px; color: var(--fg-muted); }
+.stat-item dd { margin: 0; font-size: 22px; line-height: 30px; font-weight: 600; letter-spacing: -0.01em; }
+.stat-item dd small { margin-left: 4px; font-size: 13px; font-weight: 500; color: var(--fg-muted); letter-spacing: 0; }
+.stat-item .stat-delta { font-size: 12px; line-height: 18px; font-weight: 600; }

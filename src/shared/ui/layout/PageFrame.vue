@@ -38,6 +38,7 @@ const shownIcon = computed(() => props.icon ?? moduleIcon?.value);
       </div>
     </header>
     <div v-if="$slots.tabs" class="page-tabs"><slot name="tabs" /></div>
+    <div v-if="$slots.filters" class="page-filters"><slot name="filters" /></div>
     <div v-if="$slots.status" class="page-status"><slot name="status" /></div>
     <div class="page-content" :class="{ 'page-content-narrow': narrow }">
       <slot />
