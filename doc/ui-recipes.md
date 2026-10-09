@@ -59,7 +59,7 @@
 
 ## 列表
 
-`PageFrame workspace` → `DataTable fill flat`。搜索和筛选放表格的 `#search`，主要操作（新建、导入）放页头。名称列用 `UiButton variant="text"` 进详情，数字列 `kind="number"` 右对齐并写 `unit`，状态用 `UiTag`。整行可点用 `row-clickable`。
+`PageFrame workspace` → `DataTable fill flat`。只有一个搜索框和一两个快捷筛选时放表格的 `#search`；条件更多时放 `PageFrame #filters` 的 `FilterBar`：一行最多 3 个最常用的条件（不套 Field，用 aria-label），其余放 `<template #more>` 收进“更多筛选”，弹层里可以用 Field 写名称，`more-active` 传其中已生效的数量。不要在表格上方铺一整块带标题的筛选表单。主要操作（新建、导入）放页头。名称列用 `UiButton variant="text"` 进详情，数字列 `kind="number"` 右对齐并写 `unit`，状态用 `UiTag`。整行可点用 `row-clickable`。
 
 ## 表单
 

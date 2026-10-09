@@ -119,7 +119,10 @@ export function inspectPageLayout(
     const bars = elements(filters);
     if (bars.length !== 1 || tag(bars[0]!) !== "FilterBar")
       errors.push("#filters 里只放一个 FilterBar");
-    for (const control of bars[0] ? elements(bars[0]) : [])
+    const visible = bars[0] ? elements(bars[0]).filter((c) => slotName(c) !== "more") : [];
+    if (visible.length > 3)
+      errors.push(`筛选条一行最多放 3 个常用条件（现在 ${visible.length} 个）；其余放 <template #more>，收进“更多筛选”`);
+    for (const control of visible)
       if (!FILTER_CONTROLS.includes(tag(control)))
         errors.push(`FilterBar 里只放筛选控件（${FILTER_CONTROLS.join("、")}），不能放 ${tag(control)}；控件用 aria-label 或占位文字说明，不套 Field`);
   }
