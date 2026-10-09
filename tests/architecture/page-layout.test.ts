@@ -24,6 +24,11 @@ describe("业务页的单一任务结构", () => {
     expect(board('<Panel title="趋势" focus /><WorkArea />')).toContain("只能直接放 Panel");
     expect(check('<PageFrame workspace><WorkArea><Panel title="零散" /></WorkArea></PageFrame>')).toContain("Panel 只能作为 OverviewBoard 的直接子项");
   });
+  it("业务页不能直接写原生表单控件", () => {
+    expect(check('<PageFrame workspace><WorkArea><input type="date" /></WorkArea></PageFrame>')).toContain("UiDatePicker");
+    expect(check('<PageFrame workspace><WorkArea><select /></WorkArea></PageFrame>')).toContain("UiSelect");
+    expect(check('<PageFrame workspace><WorkArea><button>保存</button></WorkArea></PageFrame>')).toContain("UiButton");
+  });
   it("总览面板只放一个展示组件，筛选在页面层，标题固定且不重复", () => {
     const board = (panels: string, extra = "") => check(`<PageFrame workspace title="总览">${extra}<OverviewBoard>${panels}</OverviewBoard></PageFrame>`);
     expect(board('<Panel title="趋势" focus><LineChart /></Panel><Panel title="待处理" flush><ActionList /></Panel>', '<template #filters><FilterBar><UiSelect /></FilterBar></template>')).toBe("");

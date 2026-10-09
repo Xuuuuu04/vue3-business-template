@@ -6,6 +6,13 @@ import type { Page } from "../src/shared/modules/definitions";
 /** 总览面板里允许的展示组件：每个 Panel 只放其中一个。 */
 const PANEL_CONTENT = ["LineChart", "BarChart", "BarList", "DonutChart", "DataTable", "ActionList", "StatList", "ActivityFeed", "Timeline", "TraceWaterfall"];
 const FOCUS_CONTENT = ["LineChart", "BarChart", "BarList", "DonutChart", "DataTable"];
+/** 原生表单控件与对应的公共组件。 */
+const NATIVE_CONTROLS: Record<string, string> = {
+  input: "UiInput、UiSearchInput、UiNumberInput、UiDatePicker、UiDateRangePicker、UiCheckbox 或 UiSwitch",
+  select: "UiSelect 或 UiCombobox",
+  textarea: "UiTextarea",
+  button: "UiButton",
+};
 const FILTER_CONTROLS = ["UiSelect", "UiCombobox", "UiSearchInput", "UiDatePicker", "UiDateRangePicker", "UiSegmented"];
 
 export function inspectPageLayout(
@@ -135,6 +142,8 @@ export function inspectPageLayout(
   let primary = 0;
   function visit(node: ElementNode) {
     if (["UiDialog", "UiDrawer"].includes(tag(node))) return;
+    if (NATIVE_CONTROLS[node.tag])
+      errors.push(`业务页不能直接写原生 <${node.tag}>：改用 ${NATIVE_CONTROLS[node.tag]}；原生控件不跟主题、不统一日期格式，也不接字段错误`);
     if (node.tag === "h1")
       errors.push("业务页标题由 PageFrame 提供，正文不能重复 h1");
     if (tag(node) === "Card") errors.push("业务页不能用 Card 拼接多个内容区");
