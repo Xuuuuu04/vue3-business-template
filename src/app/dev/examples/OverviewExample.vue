@@ -1,15 +1,14 @@
 <script setup lang="ts">
 /** 经营总览示例：一个重点趋势、一组待处理事项和三个辅助比较。数据只在当前页面内存。 */
 import { computed } from "vue";
-import { useRouter } from "vue-router";
-import { ChevronRight } from "lucide-vue-next";
 import {
-  PageFrame, OverviewBoard, Panel, StatusLine, LineChart, BarList, DonutChart, ActivityFeed, UiSegmented, UiTag,
+  PageFrame, OverviewBoard, Panel, StatusLine, LineChart, BarList, DonutChart, ActivityFeed, ActionList, FilterBar, UiSelect, UiSegmented,
 } from "@/shared/ui/public";
 import { ref } from "vue";
 
-const router = useRouter();
 const range = ref("30");
+const region = ref("");
+const regions = [{ value: "", label: "全部区域" }, { value: "center", label: "渝中区" }, { value: "north", label: "江北区" }, { value: "south", label: "南岸区" }];
 const days = computed(() => Number(range.value));
 const labels = computed(() => Array.from({ length: days.value }, (_, i) => {
   const d = new Date(2026, 9, 8 - (days.value - 1 - i));
@@ -27,12 +26,12 @@ const previous = computed(() => series.value[1]!.values.reduce((a, b) => a + b, 
 const money = (v: number) => (v >= 10000 ? `${(v / 10000).toFixed(v >= 1e6 ? 0 : 1)} 万` : v.toLocaleString("zh-CN"));
 
 const todos = [
-  { id: "refund", label: "退款待审核", count: 12, tone: "bad" as const, to: "/dev/examples/approval" },
-  { id: "stock", label: "库存低于安全线", count: 7, tone: "warn" as const, to: "/dev/examples/customers" },
-  { id: "reply", label: "客户消息未回复", count: 4, tone: "warn" as const, to: "/dev/examples/inbox" },
-  { id: "campaign", label: "活动待发布", count: 2, tone: "neutral" as const, to: "/dev/examples/campaign" },
-  { id: "invoice", label: "发票待开具", count: 9, tone: "neutral" as const, to: "/dev/examples/approval" },
-  { id: "contract", label: "合同即将到期", count: 3, tone: "warn" as const, to: "/dev/examples/customers" },
+  { label: "退款待审核", count: 12, tone: "bad" as const, to: "/dev/examples/approval" },
+  { label: "库存低于安全线", count: 7, tone: "warn" as const, to: "/dev/examples/customers" },
+  { label: "客户消息未回复", count: 4, tone: "warn" as const, to: "/dev/examples/inbox" },
+  { label: "合同即将到期", count: 3, tone: "warn" as const, to: "/dev/examples/customers" },
+  { label: "发票待开具", count: 9, to: "/dev/examples/approval" },
+  { label: "活动待发布", count: 2, to: "/dev/examples/campaign" },
 ];
 const stores = [
   { label: "解放碑旗舰店", value: 1286400 }, { label: "观音桥店", value: 982300 }, { label: "南坪万达店", value: 861000 },
@@ -54,6 +53,11 @@ const activity = [
     <template #actions>
       <UiSegmented v-model="range" :options="[{ value: '7', label: '7 天' }, { value: '30', label: '30 天' }, { value: '90', label: '90 天' }]" aria-label="统计范围" />
     </template>
+    <template #filters>
+      <FilterBar @query="() => {}" @reset="region = ''">
+        <UiSelect v-model="region" :options="regions" aria-label="区域" />
+      </FilterBar>
+    </template>
     <template #status>
       <StatusLine :items="[{ text: '数据截至 10 月 8 日 10:30', tone: 'ok' }, { text: '5 家门店已日结' }, { text: '1 家门店数据延迟', tone: 'warn' }]" />
     </template>
@@ -62,15 +66,7 @@ const activity = [
         <LineChart :series="series" :labels="labels" :height="248" :format="money" />
       </Panel>
       <Panel title="待处理" flush>
-        <ul class="divide-y divide-line">
-          <li v-for="t in todos" :key="t.id">
-            <button type="button" class="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-subtle" @click="router.push(t.to)">
-              <span class="min-w-0 flex-1">{{ t.label }}</span>
-              <UiTag :tone="t.tone === 'neutral' ? undefined : t.tone" class="tabular-nums">{{ t.count }}</UiTag>
-              <ChevronRight class="size-4 text-fg-faint" />
-            </button>
-          </li>
-        </ul>
+        <ActionList :items="todos" />
       </Panel>
       <Panel title="门店销售排名" more="/dev/examples/customers">
         <BarList :items="stores" />

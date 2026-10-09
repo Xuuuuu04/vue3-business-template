@@ -94,11 +94,18 @@ const draft = ref('');`,
     </WorkArea>`,
     },
     overview: {
-      components: ["PageFrame", "OverviewBoard", "Panel", "UiEmpty"],
-      script: "",
+      components: ["PageFrame", "OverviewBoard", "Panel", "LineChart", "ActionList"],
+      script: `/** 按 doc/ui-recipes.md 的总览配方替换：先确定本页最重要的一个问题，再声明查询动作。 */
+const labels: string[] = [];
+const values: number[] = [];
+const todos: { label: string; count: number; to: string; tone?: 'bad' | 'warn' }[] = [];`,
       body: `<OverviewBoard>
-      <Panel title="重点趋势" focus>${empty("重点指标尚未接入", "先确定本页最重要的一个问题，再声明查询动作并放入趋势图或地图。")}</Panel>
-      <Panel title="待处理">${empty("待处理事项尚未接入", "列出需要用户马上处理的事项与数量，点击进入对应列表。")}</Panel>
+      <Panel title="重点趋势" focus :empty="!values.length" empty-title="重点指标尚未接入">
+        <LineChart :labels="labels" :series="[{ name: '数量', values }]" />
+      </Panel>
+      <Panel title="待处理" flush>
+        <ActionList :items="todos" />
+      </Panel>
     </OverviewBoard>`,
     },
     detail: {
