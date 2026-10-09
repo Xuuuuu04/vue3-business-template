@@ -114,7 +114,7 @@
   "src/shared/ui/data/FilePreview.vue": "23430eecd5276aca3c07ea65354d3ee9dcb552f5363c577702e189f54674b85f",
   "src/shared/ui/data/FilterBar.vue": "07c342ef51d8c2c65effe93f8b233e88b161844670710972d98d6b524e6c0904",
   "src/shared/ui/data/FilterItem.vue": "fd5cedc8d51d26a6e1f03198862c468c8c8db80aff59b0a22c4a79f4e9589afb",
-  "src/shared/ui/data/LineChart.vue": "1b0fc3a23d6b94d53b4d50718d7d8603aff5c7cf44912d68266c212fc2873ac4",
+  "src/shared/ui/data/LineChart.vue": "8669600affd631bcd050f17c43de1cc84d5e5ed4961b181aba42ff366e8bce0d",
   "src/shared/ui/data/MetricStrip.vue": "2d94b28353b724163680a30b9f5cbda414d4c7c971761dd2acf64af67f713fcf",
   "src/shared/ui/data/SelectList.vue": "084442130c9924dbaf4e57d6aa892192d8739f910a64137c940b1186c2c220d2",
   "src/shared/ui/data/Sparkline.vue": "5de1ccdc02aa361e894b37e72f5ee434fe60d3d3d9f0055f3daae1b2c93a5f0d",
