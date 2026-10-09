@@ -11,7 +11,8 @@ const props = defineProps<{ items: { label: string; count: number; to: string; t
 const shown = computed(() => props.items.filter((i) => props.showZero || i.count > 0));
 </script>
 <template>
-  <ul v-if="shown.length" class="action-list">
+  <div v-if="shown.length" class="action-wrap">
+  <ul class="action-list">
     <li v-for="i in shown" :key="i.label">
       <RouterLink :to="i.to" class="action-row">
         <span class="action-dot" :class="i.tone && `is-${i.tone}`" aria-hidden="true" />
@@ -21,5 +22,7 @@ const shown = computed(() => props.items.filter((i) => props.showZero || i.count
       </RouterLink>
     </li>
   </ul>
+  <p v-if="shown.length < 4" class="action-tail"><CheckCircle2 class="size-4 text-ok" />其他事项都已处理</p>
+  </div>
   <div v-else class="action-clear"><CheckCircle2 class="size-5 text-ok" />暂无待处理</div>
 </template>

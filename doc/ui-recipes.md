@@ -53,7 +53,8 @@
 - 每个面板只放一个展示组件：`LineChart`、`BarChart`、`BarList`、`DonutChart`、`DataTable`、`ActionList`、`StatList`、`ActivityFeed`、`Timeline`。
 - 读取中、没数据用面板的 `loading`、`empty`、`empty-title`，不写 `v-if/v-else` 占位文字。
 - 筛选放 `#filters`，作用于整页；控件用 `aria-label`，不套 `Field`。不分标签页，每个视角各占一个面板。
-- 面板标题是固定文字，说明这一块回答什么问题，不重复。
+- 面板标题是固定文字，说明这一块回答什么问题，不重复。统计口径写进标题（如“任一眼低于 5.0 的比例”），不写在状态行。
+- 状态行只写实际状态：数据截至时间、来源是否齐全、延迟或失败；不写统计方法、操作说明。
 - 想加说明小字时，先想清楚：标题能不能说清？说不清就改标题，而不是加一行字。
 
 ## 列表
