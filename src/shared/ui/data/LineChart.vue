@@ -2,6 +2,7 @@
 /** 折线图：自适应宽度，悬停显示十字线与数值。第一条序列用品牌色，其余依次用中性色与状态色。 */
 import { computed, ref } from "vue";
 import { useChartWidth } from "../lib/chart-width";
+import { niceTicks } from "../lib/ticks";
 const props = defineProps<{ series: { name: string; values: number[]; dashed?: boolean }[]; labels: string[]; height?: number; format?: (v: number) => string }>();
 const svg = ref<SVGSVGElement>();
 const W = useChartWidth(svg);
@@ -9,13 +10,8 @@ const H = computed(() => props.height ?? 240);
 
 const colors = ["var(--primary)", "var(--fg-faint)", "var(--info)", "var(--ok)"];
 const fmt = (v: number) => (props.format ? props.format(v) : v.toLocaleString("zh-CN"));
-const range = computed(() => {
-  const all = props.series.flatMap((s) => s.values);
-  const max = Math.max(...all), min = Math.min(0, ...all);
-  const step = Math.pow(10, Math.floor(Math.log10(Math.max(1, max - min)))) / 2;
-  const top = Math.ceil(max / step) * step;
-  return { min, max: top === min ? min + 1 : top };
-});
+const ticks = computed(() => niceTicks(props.series.flatMap((s) => s.values)));
+const range = computed(() => ({ min: ticks.value[0]!, max: ticks.value.at(-1)! }));
 /** 左边距按最长刻度文字估算，中文与单位不会被裁掉。 */
 const pad = computed(() => {
   const widest = Math.max(...ticks.value.map((t) => [...fmt(t)].reduce((w, ch) => w + (/[\u4e00-\u9fff]/.test(ch) ? 12 : 7), 0)));
@@ -26,7 +22,6 @@ const x = (i: number) => pad.value.l + (n.value <= 1 ? 0 : (i * (W.value - pad.v
 const y = (v: number) => pad.value.t + (1 - (v - range.value.min) / (range.value.max - range.value.min)) * (H.value - pad.value.t - pad.value.b);
 const path = (values: number[]) => values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
 const area = computed(() => `${path(props.series[0]?.values ?? [])} L${x(n.value - 1)} ${H.value - pad.value.b} L${x(0)} ${H.value - pad.value.b}Z`);
-const ticks = computed(() => [0, 1, 2, 3].map((i) => range.value.min + ((range.value.max - range.value.min) * i) / 3));
 /** 横轴刻度按最长标签宽度决定能放几个，标签之间至少留 16px，不会挤在一起。 */
 const labelWidth = computed(() => Math.max(...props.labels.map((l) => [...l].reduce((w, ch) => w + (/[\u4e00-\u9fff]/.test(ch) ? 12 : 7.2), 0))));
 /** 标签一律居中对齐，靠两端的收进绘图区内；可放数量按“绘图宽度减一个标签宽”计算，保证相邻标签不重叠。 */
