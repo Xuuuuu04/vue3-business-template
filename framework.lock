@@ -160,7 +160,7 @@
   "src/shared/ui/public.ts": "91eb6a653c2f0063519f32fa687584fb53ba0fd28642c90f35bd8192fe49773e",
   "src/shared/ui/theme/presets.ts": "3329fdc69bd86ba39c1f427c81470f4b303e564aa60d5a3447058936e5a2acd3",
   "src/shared/ui/theme/theme.ts": "574b7bdea9367be4e2ecc58204221298332759c717a16f9f4cb1d13d50d683da",
-  "src/shared/ui/theme/tokens.css": "0fa19eff6029354b26fc92c5269a49684b262e8722a38d44eac0f0457a0eac40",
+  "src/shared/ui/theme/tokens.css": "d5c21333167376ac5ab41a274acff3f221c70fa2ec757348ecf8a34a3b1642da",
   "tests/architecture/generators.test.ts": "544ebbf68905b84dfc008461060318a43d6395e17d6946ac7c2369b04ee5f95c",
   "tests/architecture/page-layout.test.ts": "3094b7615fe397f45d55d414bb6974fc7c417188ae58fd75d647436c979a7046",
   "tests/architecture/structure.test.ts": "6bec1dd58d86bec308d559abde8ba0e132610690d32a7979181d74ed6987ab8d",
