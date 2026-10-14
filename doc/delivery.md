@@ -19,7 +19,7 @@
 | 详情 | `WorkArea fill` + `DescriptionList` | 直接进入、刷新、无权限和对象不存在都可用 |
 | 会话 | `SplitWorkspace` + `ConversationThread` + `PromptInput` | 草稿按对象保存；明确发送成功后由页面清空 |
 
-列表将查询动作的真实状态接入公共表格，不能把失败替换成空数组后显示“没有数据”。例如现有文件模块：
+列表将查询动作的真实状态接入公共表格，不能把失败替换成空数组后显示“没有数据”。例如：
 
 ```vue
 <DataTable

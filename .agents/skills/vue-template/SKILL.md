@@ -19,7 +19,8 @@ npm run update:framework -- --source /新版模板目录 --apply  # 确认后执
 - 目标先按真实目录位置判断，不能通过目录别名建回模板内部；复制前逐项检查来源路径，拒绝链接，包含环境样例和产品素材。
 - 干净产品去掉样板业务和历史，保留模板来源记录和框架内容，复制项目 Skill，不复制本机记录、检查结果和 Git 历史。
 - 样例业务的本地及浏览器用例分别放在 `tests/demo`、`tests/browser/demo`，创建产品时整体删除；公共组件、登录与安全用例及 `tests/framework/fixtures` 中的已知输入继续保留。模板运行全部检查，新产品仍执行 `npm run check`、`npm run test:browser` 和现有 CI，并为真实业务补充自己的用例。不要用逐个文件黑名单或跳过公共检查处理样例依赖。
-- 创建后在新目录运行 `npm install`、`npm run docs`、`npm run framework -- --accept`，再生成业务包。
+- 创建后在新目录运行 `npm ci`、`npm run docs`，再用 `npm run new:module` 生成业务包。新产品的保护记录已经写好，不需要 `framework -- --accept`。
+- 新产品的 AGENTS 开头、README、CHANGELOG（从 0.1.0 开始）、`package.json` 的名称和版本都换成产品自己的；模板的 `design/` 和旧变更说明不复制。
 - 改 `src/app/app.config.ts`：产品名称、logo、标语与亮点、公司名、备案号、联系方式、默认配色，已有视觉要求直接沿用，先做出可检查的实际页面，不把默认配置当作成品质感。用户协议和隐私政策（`src/app/legal.ts`）是文本骨架，必须由法务改写后再把 `legal.reviewed` 改为 true。
 
 ## 更新已有产品

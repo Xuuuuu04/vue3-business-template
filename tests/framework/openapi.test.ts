@@ -7,7 +7,7 @@ import { checkEndpoints, generateApi } from "../../tools/openapi";
 import { z, type Endpoint } from "../../src/shared/public";
 import { fileOpenApi } from "./fixtures/file-openapi";
 
-/** 合成的已知输入，只验证公共对照工具，不要求产品保留文件管理业务。 */
+/** 合成的已知输入，只验证公共对照工具，不依赖任何业务包。 */
 const FileViewFixture = z.object({
   id: z.string(), org_id: z.string(), name: z.string(),
   size: z.number().int().nonnegative(), sha256: z.string().regex(/^[a-f0-9]{64}$/),

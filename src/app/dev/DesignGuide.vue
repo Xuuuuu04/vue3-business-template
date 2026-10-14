@@ -119,7 +119,7 @@ const series = [{ name: "本月", values: a }, { name: "上月同期", values: a
 const tokens = [["canvas", "页面底色"], ["surface", "卡片、表格"], ["muted", "悬停、分隔"], ["line", "边框"], ["fg", "正文"], ["fg-muted", "次要文字"], ["primary", "品牌色"], ["primary-soft", "品牌浅底"], ["ok", "成功"], ["warn", "待处理"], ["bad", "失败"], ["info", "提示"]];
 const types = [
   ["展示标题", "32 / 600 / 字距 -1%", "text-[32px] leading-tight font-semibold tracking-tight", "每一步都看得见结果"],
-  ["页面标题", "24 / 600", "text-[24px] font-semibold tracking-tight", "文件管理 Files 1,284,630"],
+  ["页面标题", "24 / 600", "text-[24px] font-semibold tracking-tight", "客户管理 Customers 1,284,630"],
   ["区块标题", "18 / 600", "text-[18px] leading-6 font-semibold", "团队文件与最近上传"],
   ["正文", "16 / 400", "", "表格、表单与说明都使用这个大小，中文用系统黑体，数字与英文用 Inter。"],
   ["辅助说明", "13 / 400", "text-help text-fg-muted", "次要信息、字段提示、时间"],

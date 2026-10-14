@@ -28,6 +28,11 @@ function clone() {
     "design",
     "deploy",
     "package.json",
+    "package-lock.json",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "CHANGELOG.md",
+    "README.md",
     "index.html",
     ".env.example",
     "tsconfig.json",
@@ -88,6 +93,14 @@ function browserCases(root: string) {
   return cases.sort((left, right) =>
     JSON.stringify(left).localeCompare(JSON.stringify(right)),
   );
+}
+/** 列出目录下的普通文件（相对路径），不进入链接的 node_modules。 */
+function filesBelowRoot(root: string, directory = ""): string[] {
+  return readdirSync(join(root, directory), { withFileTypes: true }).flatMap((entry) => {
+    const name = join(directory, entry.name);
+    if (entry.isDirectory()) return filesBelowRoot(root, name);
+    return entry.isFile() ? [name] : [];
+  });
 }
 /** 比较完整隔离副本，参数错误不能修改页面、登记、图或框架记录。 */
 function filesSnapshot(root: string) {
@@ -411,6 +424,24 @@ test("产品初始化清理样板业务，框架三份比较遇到冲突不写�
     expect(readFileSync(join(product, ".env.example"), "utf8")).not.toContain("VITE_ORG_ID=demo-team");
     expect(readFileSync(join(product, "README.md"), "utf8")).toContain("登录与业务接口尚未连接真实后台");
     expect(existsSync(join(product, "src/modules/file_library"))).toBe(false);
+    // 新产品用自己的口径：入口、版本记录和包信息都换掉，不带模板设计说明和历史。
+    expect(readFileSync(join(product, "CLAUDE.md"), "utf8")).toBe("@AGENTS.md\n");
+    const agents = readFileSync(join(product, "AGENTS.md"), "utf8");
+    expect(agents.startsWith("# 客户联系工作台\n")).toBe(true);
+    expect(agents).toContain(".agents/skills/vue-module/SKILL.md");
+    expect(agents).not.toContain("文件管理");
+    expect(readFileSync(join(product, "CHANGELOG.md"), "utf8")).toMatch(/^# 客户联系工作台：版本记录\n\n## 0\.1\.0\n/);
+    expect(existsSync(join(product, "design"))).toBe(false);
+    expect(existsSync(join(product, "doc/changes.md"))).toBe(false);
+    for (const file of ["package.json", "package-lock.json"]) {
+      const data = JSON.parse(readFileSync(join(product, file), "utf8"));
+      expect([data.name, data.version]).toEqual(["product", "0.1.0"]);
+    }
+    expect(JSON.parse(readFileSync(join(product, "package-lock.json"), "utf8")).packages[""].version).toBe("0.1.0");
+    // 模板历史里出现过的客户和模型名字，拼起来写，免得这行测试自己被扫到。
+    const history = new RegExp(["朝", "聚|Deep", "Seek"].join(""));
+    const leftovers = filesBelowRoot(product).filter((name) => history.test(readFileSync(join(product, name), "utf8")));
+    expect(leftovers).toEqual([]);
     expect(existsSync(join(product, "tests/browser/demo"))).toBe(false);
     expect(existsSync(join(product, "tests/demo"))).toBe(false);
     expect(existsSync(join(product, "tests/framework/fixtures/file-openapi.ts"))).toBe(true);
