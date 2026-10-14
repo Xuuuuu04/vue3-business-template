@@ -15,6 +15,7 @@ export default defineModule({
     "public.ts",
     "data.ts",
     "api.ts",
+    "demo.ts",
     "flow.ts",
     "state.ts",
     "steps/read.ts",

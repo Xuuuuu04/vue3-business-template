@@ -14,6 +14,8 @@ export type { BatchOutcome } from "./state/batch";
 export { defineModule } from "./modules/definitions";
 export type { Module, BusinessModule, Page } from "./modules/definitions";
 export type { Endpoint, StepTools } from "./http/client";
+export { defineDemo } from "./http/demo";
+export type { DemoData, DemoHandler } from "./http/demo";
 export { setAccessToken } from "./http/client";
 export { useUnsaved, saveDownload } from "./navigation/guard";
 export { useSession } from "./session/session";

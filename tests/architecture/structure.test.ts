@@ -104,3 +104,14 @@ test("模块登记禁止提前导入步骤，任意动态加载也被拒绝", ()
     rmSync(root, { recursive: true });
   }
 });
+
+test("页面和步骤不能导入 demo.ts，演示数据不进生产包", () => {
+  const root = fixture("import demo from './demo'; export const x = demo;");
+  writeFileSync(join(root, "src/modules/sample/demo.ts"), "export default {};");
+  try {
+    const errors = inspectModule(root, { ...base, files: [...base.files, "demo.ts"] });
+    expect(errors.join(" ")).toContain("demo.ts 只给演示服务用");
+  } finally {
+    rmSync(root, { recursive: true });
+  }
+});

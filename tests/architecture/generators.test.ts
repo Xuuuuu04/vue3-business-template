@@ -337,6 +337,9 @@ test("生成器产生真实可执行的开发包，重复名称不覆盖", () =>
     expect(
       existsSync(join(root, "src/modules/contacts/steps/prepare.ts")),
     ).toBe(true);
+    // 每个包都有演示样例文件，登记在固定文件里。
+    expect(readFileSync(join(root, "src/modules/contacts/demo.ts"), "utf8")).toContain("defineDemo({})");
+    expect(JSON.parse(readFileSync(join(root, "scaffold.json"), "utf8")).modules.contacts.files).toContain("demo.ts");
     command(root, "tools/export-docs.ts");
     command(root, "tools/check.ts", "--structure");
     const output = execFileSync(

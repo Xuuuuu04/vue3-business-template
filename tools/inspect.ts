@@ -177,6 +177,10 @@ export function inspectModule(
             const target = resolve(dirname(file), spec);
             if (!target.startsWith(dir + "/"))
               errors.push(`${name}：相对导入越过业务包范围`);
+            else if (target.replace(/\.ts$/, "") === resolve(dir, "demo"))
+              errors.push(
+                `${name}：demo.ts 只给演示服务用，不能导入，否则演示数据会打进生产包`,
+              );
           } else if (spec.startsWith("@/")) {
             errors.push(`${name}：业务包不能导入应用内部 ${spec}`);
           } else if (
