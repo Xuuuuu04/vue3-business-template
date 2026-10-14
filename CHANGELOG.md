@@ -14,7 +14,12 @@
 - `start:project`：CHANGELOG 从产品自己的 0.1.0 开始，不复制 `design/` 和 `doc/changes.md`，改写 AGENTS 开头，重置包名和版本，结束提示统一为 npm ci、docs、new:module（FE-FILL-10、FE-ENTRY-7、FE-ENTRY-13）。
 - 页面结构只写在 `doc/ui-recipes.md`（补会话、设置两节），其他文档改成链接；设计说明的质感与动效、ui README 的默认主题等过期说法已改正（FE-ENTRY-1、FE-UI-8、FE-ENTRY-9）。
 
-已有产品：`update:framework` 会带上工具、Skill 和测试的改动；`AGENTS.md`、`CLAUDE.md`、`doc/` 不在框架范围，需要时对照新版手动更新。旧的 `var/checks/latest.json` 不再读取，重新运行一次 `npm run check` 即可。
+用户随后确认的三项：
+- 侧栏选中改成横跨整个侧栏宽度的整条底色，加贴着左边缘的竖条，去掉缩进和圆角；下级菜单的选中项也有竖条，上级目录只换文字颜色；浅侧栏选中用品牌色淡底和品牌色文字（FE-UI-11、FE-ENTRY-10）。
+- 每个业务包加固定的 `demo.ts`：按接口编号写演示模式下的样例回包，`tools/demo-api.ts` 统一提供，页面和步骤不能导入，生产打包不带；文件样例挪进 `src/modules/file_library/demo.ts`，新产品随样板一起删掉。没有样例的 `/api` 路径回 404 JSON（“演示服务没有这个接口”）；成功状态下回网页或坏 JSON 归为 `response_invalid`，不再说成网络失败（FE-FILL-4、CONTRACT-8）。
+- 登录接口约定挪进产品自己的 `src/app/login.config.ts`（路径、组织代码开关、请求字段、回包整理），不受框架保护；默认值与现有契约相同。`orgCode: false` 时登录页不显示组织代码。去掉只会测文件样板的 `npm run test:backend`，真实后台改用业务包自己的浏览器测试（CONTRACT-2、FIELD-6、PARITY-10）。
+
+已有产品：`update:framework` 会带上工具、Skill 和测试的改动，并补上产品里还没有的 `src/app/login.config.ts`；如果以前直接改过 `src/shared/session/login.ts`，升级会报冲突，先把改动搬进 `login.config.ts` 再升级。已有业务包没有 `demo.ts` 也能通过检查，只是演示模式下接口回 404 JSON；需要演示数据时补一个 `demo.ts`（`export default defineDemo({...})`），并登记到 module.ts 和 scaffold.json 的文件清单。`AGENTS.md`、`CLAUDE.md`、`doc/` 不在框架范围，需要时对照新版手动更新。旧的 `var/checks/latest.json` 不再读取，重新运行一次 `npm run check` 即可。
 
 ## 1.5.1（2026-10-09）
 
