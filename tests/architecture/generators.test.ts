@@ -107,14 +107,14 @@ function filesSnapshot(root: string) {
   visit("");
   return files;
 }
-test("页面生成器提供四种单一任务起点，并登记真实组件与传入任务", () => {
+test("页面生成器提供五种单一任务起点，并登记真实组件与传入任务", () => {
   const root = clone();
   try {
     command(root, "tools/new-module.ts", "contacts", "--title", "联系人");
     const task = '查看 "待联系" 对象的资料与下一步';
     const title = '联系人 "资料" & <记录>';
     command(root, "tools/new-part.ts", "page", "contacts", "blank_default");
-    for (const layout of ["blank", "list", "form", "detail"])
+    for (const layout of ["blank", "list", "form", "detail", "overview"])
       command(
         root,
         "tools/new-part.ts",
@@ -145,7 +145,14 @@ test("页面生成器提供四种单一任务起点，并登记真实组件与�
     expect(
       pages.find((page) => page.id === "contacts.blank_default")?.task,
     ).toBe("填写此页唯一的用户任务");
-    for (const layout of ["blank", "list", "form", "detail"]) {
+    const mainTag: Record<string, string> = {
+      blank: "WorkArea",
+      list: "DataTable",
+      form: "WorkArea",
+      detail: "WorkArea",
+      overview: "OverviewBoard",
+    };
+    for (const layout of Object.keys(mainTag)) {
       const page = pages.find((item) => item.id === `contacts.${layout}_page`)!;
       expect(page.task).toBe(task);
       expect(page.title).toBe(title);
@@ -171,9 +178,9 @@ test("页面生成器提供四种单一任务起点，并登记真实组件与�
       const main = frame.children.find(
         (node) => node.type === NodeTypes.ELEMENT,
       )!;
-      expect(main.tag).toBe(layout === "list" ? "DataTable" : "WorkArea");
+      expect(main.tag).toBe(mainTag[layout]);
       expect(page.components).toContain(main.tag);
-      if (layout !== "blank")
+      if (layout !== "blank" && layout !== "overview")
         expect(
           main.props.some(
             (prop) => prop.type === NodeTypes.ATTRIBUTE && prop.name === "fill",
@@ -269,6 +276,43 @@ test("未知布局与不完整页面参数在写入前失败，隔离副本所�
       ),
     ).toThrow();
     expect(filesSnapshot(root)).toEqual(after);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}, 60000);
+test("new:step 往空步骤数组和已有步骤后追加，import 留在文件头注释之后", () => {
+  const root = clone();
+  try {
+    command(root, "tools/new-module.ts", "orders", "--title", "订单");
+    const flowFile = join(root, "src/modules/orders/flow.ts");
+    const header = readFileSync(flowFile, "utf8").split("\n")[0]!;
+    // 代理先声明一个空动作，再用生成器补步骤；结果字段取输入，空动作本身不会被执行。
+    writeFileSync(
+      flowFile,
+      readFileSync(flowFile, "utf8").replace(
+        "export const actions=[prepare];",
+        "export const list=defineAction<z.infer<typeof Input>,string>({id:'orders.list',title:'查看订单',input:Input,inputFields:['value'],result:'value',fields:{value:{title:'样板输入',schema:z.string()}},steps:[]});\nexport const actions=[prepare,list];",
+      ),
+    );
+    command(root, "tools/new-part.ts", "step", "orders", "read_page", "--action", "orders.list");
+    command(root, "tools/new-part.ts", "step", "orders", "present_page", "--action", "orders.list");
+    const flow = readFileSync(flowFile, "utf8");
+    expect(flow).toContain("steps:[read_pageStep,present_pageStep]");
+    expect(flow).not.toMatch(/\[\s*,/);
+    const lines = flow.split("\n");
+    expect(lines[0]).toBe(header);
+    const imports = lines.flatMap((line, index) => (line.startsWith("import ") ? [index] : []));
+    expect(imports.at(-1)! - imports[0]! + 1).toBe(imports.length);
+    expect(lines).toContain("import { read_pageStep } from './steps/read_page';");
+    command(root, "tools/export-docs.ts");
+    command(root, "tools/check.ts", "--structure");
+    const graph = JSON.parse(readFileSync(join(root, "src/generated/graph.json"), "utf8")) as Array<{
+      actions: Array<{ id: string; steps: Array<{ id: string }> }>;
+    }>;
+    expect(graph[0]!.actions.find((action) => action.id === "orders.list")!.steps.map((step) => step.id)).toEqual([
+      "orders.read_page",
+      "orders.present_page",
+    ]);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
