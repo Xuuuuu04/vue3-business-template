@@ -47,6 +47,7 @@ function toggle() {
           :to="item.to"
           :type="item.to ? undefined : 'button'"
           class="sidebar-target"
+          :style="{ '--depth': depth }"
           :aria-current="item === current ? 'page' : undefined"
           :aria-label="compact ? item.label : undefined"
           :aria-expanded="
@@ -92,6 +93,7 @@ function toggle() {
       v-if="item.children?.length"
       v-show="open && !compact"
       class="sidebar-children"
+      :style="{ '--depth': depth + 1 }"
     >
       <SidebarItem
         v-for="(child, i) in item.children"

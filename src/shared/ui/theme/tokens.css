@@ -61,7 +61,6 @@
   --side-active: oklch(0.8 calc(var(--b-c) * 0.7) var(--b-h));
   --side-selected: oklch(0.29 calc(var(--n-c) * 0.9) var(--n-h));
   --side-selected-hover: oklch(0.32 calc(var(--n-c) * 0.9) var(--n-h));
-  --side-selected-shadow: none;
   --side-bar: oklch(0.78 calc(var(--b-c) * 0.9) var(--b-h));
   --side-icon-active: var(--side-bar);
 
@@ -83,19 +82,19 @@
 /* 疏密：两档 */
 [data-density="comfortable"] { --control-h: 38px; --control-h-lg: 44px; --row-h: 48px; --cell-px: 16px; --page-px: 24px; }
 /* 侧栏：浅色 / 品牌色 */
+/* 浅侧栏：选中行用品牌色淡底和品牌色文字，透明画布上也一眼能看出来。 */
 [data-sidebar="light"] {
   --side-bg: var(--canvas); --side-hover: oklch(from var(--fg) l c h / 0.05); --side-line: var(--line);
-  --side-selected: var(--surface);
-  --side-selected-hover: var(--surface);
-  --side-fg: var(--fg); --side-fg-faint: var(--fg-muted); --side-active: var(--fg);
-  --side-selected-shadow: 0 0 0 1px oklch(from var(--line) l c h / 0.8), 0 1px 3px oklch(from var(--shadow-color) l c h / 0.08);
+  --side-selected: color-mix(in oklch, var(--primary) 10%, var(--canvas));
+  --side-selected-hover: color-mix(in oklch, var(--primary) 14%, var(--canvas));
+  --side-fg: var(--fg); --side-fg-faint: var(--fg-muted); --side-active: var(--primary-text);
   --side-bar: var(--primary); --side-icon-active: var(--primary-text);
 }
 [data-sidebar="brand"] {
   --side-bg: oklch(min(calc(var(--b-l) - 0.12), 0.4) calc(var(--b-c) * 0.9) var(--b-h));
   --side-hover: oklch(min(calc(var(--b-l) - 0.07), 0.46) calc(var(--b-c) * 0.9) var(--b-h));
   --side-line: oklch(min(calc(var(--b-l) - 0.04), 0.5) calc(var(--b-c) * 0.8) var(--b-h));
-  --side-fg: oklch(0.93 0.02 var(--b-h)); --side-fg-faint: oklch(0.8 0.04 var(--b-h)); --side-active: oklch(1 0 0);
+  --side-fg: oklch(0.87 0.03 var(--b-h)); --side-fg-faint: oklch(0.8 0.04 var(--b-h)); --side-active: oklch(1 0 0);
   --side-selected: var(--side-hover); --side-selected-hover: var(--side-line);
   --side-bar: oklch(1 0 0); --side-icon-active: oklch(1 0 0);
 }
@@ -197,20 +196,22 @@
 .sidebar-surface { background: var(--side-bg); }
 /* 桌面上浅侧栏透明，直接露出画布的微光与质感；对比度按画布色计算。 */
 @media (min-width: 768px) { [data-sidebar="light"]:not([data-mode="dark"]) .sidebar-surface { background: transparent; } }
-.sidebar-row { display: flex; width: 100%; align-items: center; border-radius: var(--r-md); color: var(--side-fg); transition: background var(--motion-fast), color var(--motion-fast); }
+/* 菜单行横跨整个侧栏：选中是整条底色加贴左边缘的竖条，各级都一样；父级只换文字颜色。
+   层级靠文字缩进（--depth 每级 24px），不靠缩短行宽。 */
+.sidebar-row { position: relative; display: flex; width: 100%; align-items: center; color: var(--side-fg); transition: background var(--motion-fast), color var(--motion-fast); }
 .sidebar-row:hover { background: var(--side-hover); }
-.sidebar-row { position: relative; }
-.sidebar-row.is-current { background: var(--side-selected); color: var(--side-active); font-weight: 500; box-shadow: var(--side-selected-shadow); }
-.sidebar-row.is-current::before { content: ""; position: absolute; left: -16px; top: 6px; bottom: 6px; width: 3px; border-radius: 0 3px 3px 0; background: var(--side-bar); animation: bar-in var(--motion-normal) var(--ease-enter); }
-.sidebar-row.is-compact.is-current::before { left: -16px; }
-.sidebar-children .sidebar-row.is-current::before { display: none; }
+.sidebar-row.is-current { background: var(--side-selected); color: var(--side-active); font-weight: 500; }
+.sidebar-row.is-current::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--side-bar); animation: bar-in var(--motion-normal) var(--ease-enter); }
 .sidebar-row.is-current .sidebar-target > svg:first-child { color: var(--side-icon-active); }
 .sidebar-row.is-current:hover { background: var(--side-selected-hover); }
 .sidebar-row.is-ancestor { color: var(--side-active); }
-.sidebar-target { display: flex; align-items: center; gap: var(--space-inline); min-width: 0; flex: 1; min-height: 32px; padding: 6px 8px; text-align: left; font-size: 14px; line-height: 20px; text-decoration: none; }
-.sidebar-disclosure { display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--r-sm); margin-right: 4px; }
+.sidebar-target { display: flex; align-items: center; gap: var(--space-inline); min-width: 0; flex: 1; min-height: 34px; padding: 7px 24px 7px calc(24px + var(--depth, 0) * 24px); text-align: left; font-size: 14px; line-height: 20px; text-decoration: none; }
+.sidebar-target:has(+ .sidebar-disclosure) { padding-right: 4px; }
+.sidebar-disclosure { display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--r-sm); margin-right: 16px; }
 .sidebar-disclosure:hover { background: var(--side-line); }
-.sidebar-children { display: flex; flex-direction: column; gap: 3px; margin: 6px 0 8px 20px; padding-left: 12px; border-left: 1px solid var(--side-line); }
+/* 下级目录左侧一条细线对齐上级图标中线；选中行的底色盖住这一段。 */
+.sidebar-children { position: relative; display: flex; flex-direction: column; gap: 2px; margin: 2px 0 6px; }
+.sidebar-children::before { content: ""; position: absolute; top: 2px; bottom: 2px; left: calc(var(--depth, 1) * 24px + 7.5px); width: 1px; background: var(--side-line); }
 .sidebar-children .sidebar-target { min-height: 32px; font-size: 14px; }
 .sidebar-row.is-compact .sidebar-target { justify-content: center; padding-inline: 0; }
 .sidebar-badge { padding: 1px 6px; background: var(--side-hover); border-radius: var(--r-sm); font-size: 12px; font-variant-numeric: tabular-nums; }

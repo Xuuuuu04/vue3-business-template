@@ -158,7 +158,7 @@ function closeMobile(event: KeyboardEvent) {
             {{ g.title }}
           </p>
           <div v-else-if="gi && compact" class="my-2 h-px bg-side-line" />
-          <ul class="flex flex-col gap-1 px-4">
+          <ul class="flex flex-col gap-0.5">
             <SidebarItem
               v-for="(item, i) in g.items"
               :key="`${item.to ?? item.label}-${i}`"

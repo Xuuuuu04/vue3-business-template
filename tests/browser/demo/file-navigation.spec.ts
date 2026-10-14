@@ -17,6 +17,22 @@ test("产品菜单：子页选中、目录展开、键盘和手机导航", async
     });
     expect(Math.abs(unused)).toBeLessThan(1);
   }
+  // 选中行横跨整个侧栏、没有圆角，竖条贴着左边缘；子页和顶层页一样，父级只换文字颜色。
+  const selection = async () =>
+    nav.locator(".sidebar-row.is-current").evaluate((row) => {
+      const edge = row.closest("nav")!.getBoundingClientRect();
+      const box = row.getBoundingClientRect();
+      const bar = getComputedStyle(row, "::before");
+      return {
+        inset: Math.round(box.left - edge.left) + Math.round(edge.right - box.right),
+        radius: getComputedStyle(row).borderTopLeftRadius,
+        bar: [bar.left, bar.width],
+      };
+    });
+  expect(await selection()).toEqual({ inset: 0, radius: "0px", bar: ["0px", "3px"] });
+  const parent = nav.getByRole("link", { name: "文件管理", exact: true }).locator("xpath=ancestor::div[contains(@class,'sidebar-row')]");
+  await expect(parent).toHaveClass(/is-ancestor/);
+  expect(await parent.evaluate((row) => getComputedStyle(row).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
   await nav.getByRole("button", { name: "收起文件管理子菜单" }).click();
   await expect(nav.getByRole("link", { name: "上传文件", exact: true })).not.toBeVisible();
   const expand = nav.getByRole("button", { name: "展开文件管理子菜单" });
