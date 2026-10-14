@@ -165,11 +165,38 @@ function updateObject(
   }
   visit(source);
   if (!found) throw new Error(`缺少 ${call}.${property} 数组`);
-  const at = (found as ts.ArrayLiteralExpression).getEnd() - 1;
-  const prefix = (found as ts.ArrayLiteralExpression).elements.length
-    ? ","
-    : "";
+  return appendItem(text, found, item);
+}
+/** 空数组或已有结尾逗号时不再补逗号，否则会写出 [,item] 这样的空位。 */
+function appendItem(
+  text: string,
+  array: ts.ArrayLiteralExpression,
+  item: string,
+) {
+  const at = array.getEnd() - 1;
+  const prefix =
+    array.elements.length && !array.elements.hasTrailingComma ? "," : "";
   return text.slice(0, at) + prefix + item + text.slice(at);
+}
+/** import 放在已有 import 之后；没有 import 时放在文件头注释之后。 */
+function addImport(text: string, line: string) {
+  const source = ts.createSourceFile(
+    "flow.ts",
+    text,
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  const imports = source.statements.filter(ts.isImportDeclaration);
+  const last = imports[imports.length - 1];
+  const at = last
+    ? last.getEnd()
+    : (ts.getLeadingCommentRanges(text, 0) ?? []).reduce(
+        (end, range) => Math.max(end, range.end),
+        0,
+      );
+  const before = text.slice(0, at);
+  const after = text.slice(at).replace(/^\r?\n/, "");
+  return `${before}${before && !before.endsWith("\n") ? "\n" : ""}${line}\n${after}`;
 }
 let definition = readFileSync(`src/modules/${module}/module.ts`, "utf8");
 let flow: string | undefined;
@@ -219,12 +246,10 @@ if (kind === "page") {
   }
   visit(source);
   if (!array) throw new Error(`未找到动作 ${action}`);
-  const at = (array as ts.ArrayLiteralExpression).getEnd() - 1;
-  flow =
-    `import { ${name}Step } from './steps/${name}';\n` +
-    flow.slice(0, at) +
-    `,${name}Step` +
-    flow.slice(at);
+  flow = addImport(
+    appendItem(flow, array, `${name}Step`),
+    `import { ${name}Step } from './steps/${name}';`,
+  );
 }
 definition = updateObject(
   definition,

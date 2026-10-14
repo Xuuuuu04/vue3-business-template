@@ -103,7 +103,19 @@ export async function sendRequest<T>(
     const blob = reply.status === 204 ? undefined : await readResponse(
       reply, endpoint.maxResponseBytes ?? (endpoint.responseKind === "blob" ? 32 * 1024 * 1024 : 2 * 1024 * 1024),
     );
-    const body: unknown = !blob ? null : endpoint.responseKind === "blob" ? blob : JSON.parse(await blob.text());
+    let body: unknown = null;
+    if (blob && endpoint.responseKind === "blob") body = blob;
+    else if (blob)
+      try {
+        body = JSON.parse(await blob.text());
+      } catch {
+        // 常见于代理错误页或开发服务把未知地址回成网页：收到了回复，不是网络失败。
+        throw new ActionError(
+          "response_invalid",
+          "接口返回的不是约定的 JSON（可能是网页或代理错误页），请检查接口地址，写入请先查询实际结果。",
+          endpoint.method !== "GET",
+        );
+      }
     const parsed = endpoint.response.safeParse(body);
     if (!parsed.success)
       throw new ActionError(

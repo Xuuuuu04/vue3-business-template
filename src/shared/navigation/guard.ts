@@ -1,7 +1,7 @@
 /** 未保存输入的退出提醒同时覆盖页面导航和浏览器关闭。 */
 import { onBeforeUnmount, onMounted, type Ref } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
-export function useUnsaved(dirty: Ref<boolean>, message = "已选择的文件尚未上传。确认离开吗？") {
+export function useUnsaved(dirty: Ref<boolean>, message = "有未保存的修改。确认离开吗？") {
   const before = (event: BeforeUnloadEvent) => {
     if (dirty.value) {
       event.preventDefault();

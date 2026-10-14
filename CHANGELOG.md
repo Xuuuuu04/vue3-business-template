@@ -1,5 +1,26 @@
 # 更新记录
 
+## 1.6.0（2026-10-14）
+
+来自 10-14 前后端模板审查（模板审查-20261014.md）的一批小修，不加新概念、不放宽检查：
+- `new:step` 往空步骤数组插入不再写出 `[,step]`，import 放在文件头注释之后（FE-FILL-1）。
+- `impact` 在仓库子目录里也能找到改动（git diff 加 `--relative`），不在 Git 仓库时给出中文提示（FE-ENTRY-5）。
+- `check`、`project`、`impact`、`runs`、`api` 共用一个小的参数解析：未知参数、多余位置参数、缺值和少写 `--` 都直接报错，`-- --help` 打印中文用法，报错不带 Node 堆栈（PARITY-12、FE-ENTRY-14）。
+- `api gen` 按依赖顺序输出嵌套类型，生成的代码可以直接加载（PARITY-3 第 1 点）。
+- 改一个字不再要求先跑 `npm run docs`：check、开发守卫和打包自己重写 `src/generated/version.json`，图和函数位置不一致时直接提示运行 docs；CI 增加 `npm run docs -- --check`（FE-ENTRY-3、FE-FILL-7）。
+- 检查记录分成 `var/checks/full.json` 和 `var/checks/module-包名.json`，单包通过不再覆盖整仓失败；project 分开显示，没有当前整仓记录时写明（PARITY-4）。
+- 产品框架和模板原文一致时，完整检查跳过生成器、模板路径两个模板工具自测，打印“沿用模板验证”（PARITY-5）。
+- AGENTS.md 改成 46 行的目录式入口，带全部 Skill 路径表；根目录加 `CLAUDE.md`（一行 `@AGENTS.md`）（FE-ENTRY-6）。
+- `start:project`：CHANGELOG 从产品自己的 0.1.0 开始，不复制 `design/` 和 `doc/changes.md`，改写 AGENTS 开头，重置包名和版本，结束提示统一为 npm ci、docs、new:module（FE-FILL-10、FE-ENTRY-7、FE-ENTRY-13）。
+- 页面结构只写在 `doc/ui-recipes.md`（补会话、设置两节），其他文档改成链接；设计说明的质感与动效、ui README 的默认主题等过期说法已改正（FE-ENTRY-1、FE-UI-8、FE-ENTRY-9）。
+
+用户随后确认的三项：
+- 侧栏选中改成横跨整个侧栏宽度的整条底色，加贴着左边缘的竖条，去掉缩进和圆角；下级菜单的选中项也有竖条，上级目录只换文字颜色；浅侧栏选中用品牌色淡底和品牌色文字（FE-UI-11、FE-ENTRY-10）。
+- 每个业务包加固定的 `demo.ts`：按接口编号写演示模式下的样例回包，`tools/demo-api.ts` 统一提供，页面和步骤不能导入，生产打包不带；文件样例挪进 `src/modules/file_library/demo.ts`，新产品随样板一起删掉。没有样例的 `/api` 路径回 404 JSON（“演示服务没有这个接口”）；成功状态下回网页或坏 JSON 归为 `response_invalid`，不再说成网络失败（FE-FILL-4、CONTRACT-8）。
+- 登录接口约定挪进产品自己的 `src/app/login.config.ts`（路径、组织代码开关、请求字段、回包整理），不受框架保护；默认值与现有契约相同。`orgCode: false` 时登录页不显示组织代码。去掉只会测文件样板的 `npm run test:backend`，真实后台改用业务包自己的浏览器测试（CONTRACT-2、FIELD-6、PARITY-10）。
+
+已有产品：`update:framework` 会带上工具、Skill 和测试的改动，并补上产品里还没有的 `src/app/login.config.ts`；如果以前直接改过 `src/shared/session/login.ts`，升级会报冲突，先把改动搬进 `login.config.ts` 再升级。已有业务包没有 `demo.ts` 也能通过检查，只是演示模式下接口回 404 JSON；需要演示数据时补一个 `demo.ts`（`export default defineDemo({...})`），并登记到 module.ts 和 scaffold.json 的文件清单。`AGENTS.md`、`CLAUDE.md`、`doc/` 不在框架范围，需要时对照新版手动更新。旧的 `var/checks/latest.json` 不再读取，重新运行一次 `npm run check` 即可。
+
 ## 1.5.1（2026-10-09）
 
 - 页面配方补充详情页分工：状态行、摘要带、右侧栏各放一类信息，同一个事实只出现一次（来自朝聚咨询会话详情页：状态、接待员工、最新消息各出现三次）。

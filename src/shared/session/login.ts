@@ -1,31 +1,35 @@
-/** 登录声明只在提交登录时加载，页面启动只读取轻量会话状态。 */
+/** 登录声明只在提交登录时加载；接口路径、请求字段和回包整理来自产品的 src/app/login.config.ts。 */
 import { z } from "zod";
 import { defineAction, defineStep } from "@/shared/actions/definitions";
 import { execute } from "@/shared/actions/runtime";
 import type { Endpoint, StepTools } from "@/shared/http/client";
-const Reply = z.object({
-  access_token: z.string().min(1),
-  token_type: z.string().regex(/^bearer$/i),
-  expires_in: z.number().int().positive(),
-  org_id: z.string().min(1),
-});
+import { loginConfig } from "@/app/login.config";
+import type { LoginForm, LoginReply } from "./config";
 const Input = z
   .object({
-    org_code: z.string().min(1, "请填写组织代码"),
+    org_code: loginConfig.orgCode
+      ? z.string().min(1, "请填写组织代码")
+      : z.string(),
     username: z.string().min(1, "请填写账号"),
     password: z.string().min(1, "请填写密码"),
     otp_code: z.string(),
   })
   .strict();
-type Work = z.infer<typeof Input> & { result: z.infer<typeof Reply> };
+/** 回包整理后的三项：框架只用这些，步骤写入时按它校验。 */
+const Session: z.ZodType<LoginReply> = z.object({
+  access_token: z.string().min(1),
+  expires_in: z.number().int().positive(),
+  org_id: z.string(),
+});
+type Work = LoginForm & { result: LoginReply };
 async function signIn(data: Work, tools: StepTools) {
   data.result = await tools.request("session.login", {
-    body: {
-      org_code: data.org_code,
+    body: loginConfig.body({
+      org_code: loginConfig.orgCode ? data.org_code : "",
       username: data.username,
       password: data.password,
       otp_code: data.otp_code,
-    },
+    }),
   });
 }
 const sessionEndpoints: Endpoint[] = [
@@ -33,14 +37,11 @@ const sessionEndpoints: Endpoint[] = [
     id: "session.login",
     title: "登录",
     method: "POST",
-    path: "/api/v1/access/login",
-    response: Reply,
+    path: loginConfig.path,
+    response: loginConfig.reply,
   },
 ];
-const loginAction = defineAction<
-  z.infer<typeof Input>,
-  z.infer<typeof Reply>
->({
+const loginAction = defineAction<LoginForm, LoginReply>({
   id: "session.login",
   title: "登录账号",
   input: Input,
@@ -51,7 +52,7 @@ const loginAction = defineAction<
     username: { title: "账号", schema: z.string(), secret: true },
     password: { title: "登录密码", schema: z.string(), secret: true },
     otp_code: { title: "两步验证码", schema: z.string(), secret: true },
-    result: { title: "登录会话", schema: Reply, secret: true },
+    result: { title: "登录会话", schema: Session, secret: true },
   },
   steps: [
     defineStep<Work>({
@@ -66,7 +67,7 @@ const loginAction = defineAction<
   ],
 });
 
-export type LoginInput = z.infer<typeof Input>;
+export type LoginInput = LoginForm;
 /** 响应与权限由运行时校验，不能把令牌解码当作签名验证。 */
 export async function requestLogin(input: LoginInput) {
   const reply = await execute(loginAction, input, sessionEndpoints, new AbortController().signal);

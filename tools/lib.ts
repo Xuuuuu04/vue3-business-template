@@ -65,3 +65,67 @@ export function sourceFingerprint(root = process.cwd()) {
   }
   return hash.digest("hex");
 }
+
+/** 写错的参数直接报中文错误和用法并退出，不打印 Node 堆栈。 */
+export function usageError(message: string, usage: string): never {
+  console.error(`${message}\n\n${usage}`);
+  process.exit(1);
+}
+const npmHint =
+  "\n通过 npm 运行时，参数要写在 -- 后面，例如 npm run check -- --module 包名。";
+
+/**
+ * 命令参数只认声明过的写法：未知参数、多余位置参数和缺值一律报错，--help 打印用法。
+ * npm run 命令不写 -- 时，npm 会吃掉 --xxx，只留下环境变量 npm_config_xxx=true，这里一并拦下。
+ */
+export function parseArgs(
+  usage: string,
+  spec: { flags?: string[]; options?: string[]; positionals?: number },
+  argv = process.argv.slice(2),
+) {
+  const flagNames = spec.flags ?? [];
+  const optionNames = spec.options ?? [];
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.log(usage);
+    process.exit(0);
+  }
+  const eaten = [...flagNames, ...optionNames].filter(
+    (name) =>
+      process.env[`npm_config_${name.slice(2).replaceAll("-", "_")}`] ===
+      "true",
+  );
+  if (eaten.length)
+    usageError(
+      `${eaten.join("、")} 被 npm 当成了它自己的参数${npmHint}`,
+      usage,
+    );
+  const flags = new Set<string>();
+  const options = new Map<string, string>();
+  const positionals: string[] = [];
+  for (let index = 0; index < argv.length; index++) {
+    const token = argv[index]!;
+    if (!token.startsWith("-")) {
+      positionals.push(token);
+      continue;
+    }
+    const equal = token.indexOf("=");
+    const name = equal < 0 ? token : token.slice(0, equal);
+    if (flagNames.includes(name) && equal < 0) flags.add(name);
+    else if (optionNames.includes(name)) {
+      const value = (
+        equal < 0 ? argv[++index] : token.slice(equal + 1)
+      )?.trim();
+      if (!value || value.startsWith("--"))
+        usageError(`${name} 后面要写值`, usage);
+      if (options.has(name)) usageError(`${name} 只能写一次`, usage);
+      options.set(name, value);
+    } else usageError(`不认识的参数 ${token}${npmHint}`, usage);
+  }
+  const allowed = spec.positionals ?? 0;
+  if (positionals.length > allowed)
+    usageError(
+      `多余的参数 ${positionals.slice(allowed).join(" ")}${npmHint}`,
+      usage,
+    );
+  return { flags, options, positionals };
+}

@@ -3,6 +3,21 @@ import { permissionAllowed, useSession } from "@/shared/session/session";
 import { sendRequest } from "@/shared/http/client";
 import { z } from "zod";
 
+// 框架测试用模板默认的登录约定，不受产品改过的 src/app/login.config.ts 影响。
+vi.mock("@/app/login.config", async () => {
+  const { z } = await import("zod");
+  return {
+    loginConfig: {
+      path: "/api/v1/access/login",
+      orgCode: true,
+      body: (form: Record<string, string>) => form,
+      reply: z
+        .object({ access_token: z.string().min(1), token_type: z.string().regex(/^bearer$/i), expires_in: z.number().int().positive(), org_id: z.string().min(1) })
+        .transform(({ access_token, expires_in, org_id }) => ({ access_token, expires_in, org_id })),
+    },
+  };
+});
+
 const input = { org_code: "synthetic", username: "tester", password: "synthetic-only", otp_code: "" };
 const token = `h.${btoa(JSON.stringify({ permissions: ["orders.read"] }))}.s`;
 const response = () => Response.json({ access_token: token, token_type: "Bearer", expires_in: 60, org_id: "synthetic" });
@@ -67,4 +82,33 @@ test.each([0, -1, 1.5])("无效的 expires_in=%s 不能建立会话", async (exp
   vi.stubGlobal("fetch", async () => Response.json({ access_token: token, token_type: "bearer", expires_in, org_id: "synthetic" }));
   await expect(useSession().login(input)).rejects.toThrow();
   expect(useSession().state.value.signedIn).toBe(false);
+});
+
+test("登录约定来自产品文件：可以关掉组织代码、换路径、改请求字段和回包整理", async () => {
+  vi.resetModules();
+  vi.doMock("@/app/login.config", async () => {
+    const { z } = await import("zod");
+    return {
+      loginConfig: {
+        path: "/api/auth/token",
+        orgCode: false,
+        body: (form: { username: string; password: string }) => ({ user: form.username, pass: form.password }),
+        reply: z
+          .object({ token: z.string(), ttl: z.number() })
+          .transform(({ token: access_token, ttl }) => ({ access_token, expires_in: ttl, org_id: "" })),
+      },
+    };
+  });
+  let sent: unknown;
+  vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+    sent = { url, body: JSON.parse(init.body as string) };
+    return Response.json({ token, ttl: 60 });
+  });
+  const fresh = await import("@/shared/session/session");
+  await fresh.useSession().login({ org_code: "", username: "u", password: "p", otp_code: "" });
+  expect(sent).toEqual({ url: "/api/auth/token", body: { user: "u", pass: "p" } });
+  expect(fresh.useSession().state.value.signedIn).toBe(true);
+  expect(fresh.useSession().state.value.permissions).toEqual(["orders.read"]);
+  fresh.useSession().logoutLocal();
+  vi.doUnmock("@/app/login.config");
 });

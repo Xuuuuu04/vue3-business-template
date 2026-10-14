@@ -21,7 +21,7 @@ const selected = ref<File>();
 const dirty = computed(
   () => Boolean(selected.value) && upload.state.value.status !== "success",
 );
-useUnsaved(dirty);
+useUnsaved(dirty, "已选择的文件尚未上传。确认离开吗？");
 const state = upload.state;
 const query = list.state;
 const session = useSession();

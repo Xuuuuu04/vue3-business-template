@@ -17,7 +17,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { parse } from "@vue/compiler-sfc";
 import { baseParse, NodeTypes } from "@vue/compiler-dom";
-import { lockData } from "../../tools/framework-lock";
+import { lockData, unchangedTemplateSource } from "../../tools/framework-lock";
 function clone() {
   const root = mkdtempSync(join(tmpdir(), "vue-generator-"));
   for (const name of [
@@ -28,6 +28,11 @@ function clone() {
     "design",
     "deploy",
     "package.json",
+    "package-lock.json",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "CHANGELOG.md",
+    "README.md",
     "index.html",
     ".env.example",
     "tsconfig.json",
@@ -89,6 +94,14 @@ function browserCases(root: string) {
     JSON.stringify(left).localeCompare(JSON.stringify(right)),
   );
 }
+/** 列出目录下的普通文件（相对路径），不进入链接的 node_modules。 */
+function filesBelowRoot(root: string, directory = ""): string[] {
+  return readdirSync(join(root, directory), { withFileTypes: true }).flatMap((entry) => {
+    const name = join(directory, entry.name);
+    if (entry.isDirectory()) return filesBelowRoot(root, name);
+    return entry.isFile() ? [name] : [];
+  });
+}
 /** 比较完整隔离副本，参数错误不能修改页面、登记、图或框架记录。 */
 function filesSnapshot(root: string) {
   const files: Record<string, string> = {};
@@ -107,14 +120,14 @@ function filesSnapshot(root: string) {
   visit("");
   return files;
 }
-test("页面生成器提供四种单一任务起点，并登记真实组件与传入任务", () => {
+test("页面生成器提供五种单一任务起点，并登记真实组件与传入任务", () => {
   const root = clone();
   try {
     command(root, "tools/new-module.ts", "contacts", "--title", "联系人");
     const task = '查看 "待联系" 对象的资料与下一步';
     const title = '联系人 "资料" & <记录>';
     command(root, "tools/new-part.ts", "page", "contacts", "blank_default");
-    for (const layout of ["blank", "list", "form", "detail"])
+    for (const layout of ["blank", "list", "form", "detail", "overview"])
       command(
         root,
         "tools/new-part.ts",
@@ -145,7 +158,14 @@ test("页面生成器提供四种单一任务起点，并登记真实组件与�
     expect(
       pages.find((page) => page.id === "contacts.blank_default")?.task,
     ).toBe("填写此页唯一的用户任务");
-    for (const layout of ["blank", "list", "form", "detail"]) {
+    const mainTag: Record<string, string> = {
+      blank: "WorkArea",
+      list: "DataTable",
+      form: "WorkArea",
+      detail: "WorkArea",
+      overview: "OverviewBoard",
+    };
+    for (const layout of Object.keys(mainTag)) {
       const page = pages.find((item) => item.id === `contacts.${layout}_page`)!;
       expect(page.task).toBe(task);
       expect(page.title).toBe(title);
@@ -171,9 +191,9 @@ test("页面生成器提供四种单一任务起点，并登记真实组件与�
       const main = frame.children.find(
         (node) => node.type === NodeTypes.ELEMENT,
       )!;
-      expect(main.tag).toBe(layout === "list" ? "DataTable" : "WorkArea");
+      expect(main.tag).toBe(mainTag[layout]);
       expect(page.components).toContain(main.tag);
-      if (layout !== "blank")
+      if (layout !== "blank" && layout !== "overview")
         expect(
           main.props.some(
             (prop) => prop.type === NodeTypes.ATTRIBUTE && prop.name === "fill",
@@ -273,6 +293,43 @@ test("未知布局与不完整页面参数在写入前失败，隔离副本所�
     rmSync(root, { recursive: true, force: true });
   }
 }, 60000);
+test("new:step 往空步骤数组和已有步骤后追加，import 留在文件头注释之后", () => {
+  const root = clone();
+  try {
+    command(root, "tools/new-module.ts", "orders", "--title", "订单");
+    const flowFile = join(root, "src/modules/orders/flow.ts");
+    const header = readFileSync(flowFile, "utf8").split("\n")[0]!;
+    // 代理先声明一个空动作，再用生成器补步骤；结果字段取输入，空动作本身不会被执行。
+    writeFileSync(
+      flowFile,
+      readFileSync(flowFile, "utf8").replace(
+        "export const actions=[prepare];",
+        "export const list=defineAction<z.infer<typeof Input>,string>({id:'orders.list',title:'查看订单',input:Input,inputFields:['value'],result:'value',fields:{value:{title:'样板输入',schema:z.string()}},steps:[]});\nexport const actions=[prepare,list];",
+      ),
+    );
+    command(root, "tools/new-part.ts", "step", "orders", "read_page", "--action", "orders.list");
+    command(root, "tools/new-part.ts", "step", "orders", "present_page", "--action", "orders.list");
+    const flow = readFileSync(flowFile, "utf8");
+    expect(flow).toContain("steps:[read_pageStep,present_pageStep]");
+    expect(flow).not.toMatch(/\[\s*,/);
+    const lines = flow.split("\n");
+    expect(lines[0]).toBe(header);
+    const imports = lines.flatMap((line, index) => (line.startsWith("import ") ? [index] : []));
+    expect(imports.at(-1)! - imports[0]! + 1).toBe(imports.length);
+    expect(lines).toContain("import { read_pageStep } from './steps/read_page';");
+    command(root, "tools/export-docs.ts");
+    command(root, "tools/check.ts", "--structure");
+    const graph = JSON.parse(readFileSync(join(root, "src/generated/graph.json"), "utf8")) as Array<{
+      actions: Array<{ id: string; steps: Array<{ id: string }> }>;
+    }>;
+    expect(graph[0]!.actions.find((action) => action.id === "orders.list")!.steps.map((step) => step.id)).toEqual([
+      "orders.read_page",
+      "orders.present_page",
+    ]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}, 60000);
 test("生成器产生真实可执行的开发包，重复名称不覆盖", () => {
   const root = clone();
   try {
@@ -280,6 +337,9 @@ test("生成器产生真实可执行的开发包，重复名称不覆盖", () =>
     expect(
       existsSync(join(root, "src/modules/contacts/steps/prepare.ts")),
     ).toBe(true);
+    // 每个包都有演示样例文件，登记在固定文件里。
+    expect(readFileSync(join(root, "src/modules/contacts/demo.ts"), "utf8")).toContain("defineDemo({})");
+    expect(JSON.parse(readFileSync(join(root, "scaffold.json"), "utf8")).modules.contacts.files).toContain("demo.ts");
     command(root, "tools/export-docs.ts");
     command(root, "tools/check.ts", "--structure");
     const output = execFileSync(
@@ -315,6 +375,29 @@ test("生成器产生真实可执行的开发包，重复名称不覆盖", () =>
     );
     command(root, "tools/export-docs.ts");
     command(root, "tools/check.ts", "--structure");
+    // 只改页面文字：派生指纹由检查自己重写，不要求先跑 docs，重写后 docs --check 也一致。
+    const versionFile = join(root, "src/generated/version.json");
+    const version = readFileSync(versionFile, "utf8");
+    const pageFile = join(root, "src/modules/contacts/pages/MainPage.vue");
+    writeFileSync(
+      pageFile,
+      readFileSync(pageFile, "utf8").replace("验证输入输出", "验证输入"),
+    );
+    command(root, "tools/check.ts", "--structure");
+    expect(readFileSync(versionFile, "utf8")).not.toBe(version);
+    command(root, "tools/export-docs.ts", "--check");
+    // 步骤函数位置变了，和登记有关的生成内容仍要求运行 docs，并直接说出命令。
+    const stepFile = join(root, "src/modules/contacts/steps/prepare.ts");
+    writeFileSync(stepFile, "\n" + readFileSync(stepFile, "utf8"));
+    let failure = "";
+    try {
+      command(root, "tools/check.ts", "--structure");
+    } catch (error) {
+      failure = String((error as { stderr?: string }).stderr);
+    }
+    expect(failure).toContain("src/generated/sources.json");
+    expect(failure).toContain("请运行 npm run docs");
+    expect(failure).not.toMatch(/\n\s+at /);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -344,6 +427,31 @@ test("产品初始化清理样板业务，框架三份比较遇到冲突不写�
     expect(readFileSync(join(product, ".env.example"), "utf8")).not.toContain("VITE_ORG_ID=demo-team");
     expect(readFileSync(join(product, "README.md"), "utf8")).toContain("登录与业务接口尚未连接真实后台");
     expect(existsSync(join(product, "src/modules/file_library"))).toBe(false);
+    // 新产品用自己的口径：入口、版本记录和包信息都换掉，不带模板设计说明和历史。
+    expect(readFileSync(join(product, "CLAUDE.md"), "utf8")).toBe("@AGENTS.md\n");
+    // 样板名称拼起来写，免得这份测试复制进产品后被自己扫到。
+    const sampleName = ["文件", "管理"].join("");
+    const agents = readFileSync(join(product, "AGENTS.md"), "utf8");
+    expect(agents.startsWith("# 客户联系工作台\n")).toBe(true);
+    expect(agents).toContain(".agents/skills/vue-module/SKILL.md");
+    expect(agents).not.toContain(sampleName);
+    expect(readFileSync(join(product, "CHANGELOG.md"), "utf8")).toMatch(/^# 客户联系工作台：版本记录\n\n## 0\.1\.0\n/);
+    expect(existsSync(join(product, "design"))).toBe(false);
+    expect(existsSync(join(product, "doc/changes.md"))).toBe(false);
+    for (const file of ["package.json", "package-lock.json"]) {
+      const data = JSON.parse(readFileSync(join(product, file), "utf8"));
+      expect([data.name, data.version]).toEqual(["product", "0.1.0"]);
+    }
+    expect(JSON.parse(readFileSync(join(product, "package-lock.json"), "utf8")).packages[""].version).toBe("0.1.0");
+    // 模板历史里出现过的客户和模型名字，拼起来写，免得这行测试自己被扫到。
+    const history = new RegExp(["朝", "聚|Deep", "Seek"].join(""));
+    const leftovers = filesBelowRoot(product).filter((name) => history.test(readFileSync(join(product, name), "utf8")));
+    expect(leftovers).toEqual([]);
+    // 新产品里没有样板业务，说明文字也不能再提它。
+    const sample = filesBelowRoot(product).filter(
+      (name) => !name.startsWith(".template/") && readFileSync(join(product, name), "utf8").includes(sampleName),
+    );
+    expect(sample).toEqual([]);
     expect(existsSync(join(product, "tests/browser/demo"))).toBe(false);
     expect(existsSync(join(product, "tests/demo"))).toBe(false);
     expect(existsSync(join(product, "tests/framework/fixtures/file-openapi.ts"))).toBe(true);
@@ -359,11 +467,15 @@ test("产品初始化清理样板业务，框架三份比较遇到冲突不写�
     expect(browserCases(product)).toEqual(publicCases);
     command(product, "tools/export-docs.ts");
     command(product, "tools/check.ts", "--structure");
+    // 新产品框架没改：模板工具自测沿用模板验证；模板仓库自己和改过框架的产品照常运行。
+    expect(unchangedTemplateSource(product)).toBeTruthy();
+    expect(unchangedTemplateSource(root)).toBeUndefined();
     const file = "src/shared/ui/theme/tokens.css";
     writeFileSync(
       join(product, file),
       readFileSync(join(product, file), "utf8") + "\n/* 产品修改 */\n",
     );
+    expect(unchangedTemplateSource(product)).toBeUndefined();
     writeFileSync(
       join(root, file),
       readFileSync(join(root, file), "utf8") + "\n/* 模板修改 */\n",
@@ -408,13 +520,19 @@ test("框架更新先预览，执行时保留业务和产品单独修改", () =>
       JSON.stringify(lockData(root), null, 2) + "\n",
     );
     const catalog = readFileSync(join(product, "src/app/catalog.ts"), "utf8");
+    // 早期产品还没有登录约定文件：升级时补一份，已有的产品文件不动。
+    rmSync(join(product, "src/app/login.config.ts"));
     command(product, "tools/update-framework.ts", "--source", root);
+    expect(existsSync(join(product, "src/app/login.config.ts"))).toBe(false);
     expect(readFileSync(join(product, theme), "utf8")).toBe(original);
     command(product, "tools/update-framework.ts", "--source", root, "--apply");
     expect(readFileSync(join(product, theme), "utf8")).toBe(changed);
     expect(readFileSync(join(product, local), "utf8")).toBe(customization);
     expect(readFileSync(join(product, "src/app/catalog.ts"), "utf8")).toBe(
       catalog,
+    );
+    expect(readFileSync(join(product, "src/app/login.config.ts"), "utf8")).toBe(
+      readFileSync(join(root, "src/app/login.config.ts"), "utf8"),
     );
     expect(
       JSON.parse(readFileSync(join(product, ".template/source.json"), "utf8"))

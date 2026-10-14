@@ -105,12 +105,21 @@ export function checkEndpoints(spec: OpenApi, endpoints: FrontEndpoint[]): Probl
   return out;
 }
 
-/** JSON Schema 转 Zod 源码。引用的组件生成具名常量。 */
+/**
+ * JSON Schema 转 Zod 源码。引用的组件生成具名常量，按依赖顺序排列：
+ * 被引用的类型写完才移到 Map 末尾，输出时总在引用它的类型前面；互相引用时用 z.lazy 延后取值。
+ */
 function zodSource(spec: OpenApi, schema: Json | undefined, named: Map<string, string>, indent = ""): string {
   if (!schema) return "z.unknown()";
   if (typeof schema.$ref === "string") {
     const name = String(schema.$ref).split("/").pop()!;
-    if (!named.has(name)) { named.set(name, ""); named.set(name, zodSource(spec, spec.components?.schemas?.[name], named)); }
+    if (named.get(name) === "") return `z.lazy(() => ${name})`;
+    if (!named.has(name)) {
+      named.set(name, "");
+      const body = zodSource(spec, spec.components?.schemas?.[name], named);
+      named.delete(name);
+      named.set(name, body);
+    }
     return name;
   }
   const list = (schema.anyOf ?? schema.oneOf) as Json[] | undefined;

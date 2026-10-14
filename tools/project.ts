@@ -1,62 +1,87 @@
 /** 主代理读总图，局部代理读指定包；明确区分定义、真实检查和过期结果。 */
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import generatedGraph from "../src/generated/graph.json";
 import type { describe } from "../src/shared/modules/graph";
-import { fingerprint } from "./lib";
-const args = process.argv.slice(2);
-const named = args.indexOf("--module");
-const name = named >= 0 ? args[named + 1] : undefined;
+import { fingerprint, parseArgs, usageError } from "./lib";
+const usage = `用法：npm run project [-- --module 包名] [--json]
+  不带参数        列出全部包、页面、动作和检查情况
+  --module 包名   只看一个包
+  --json          输出完整 JSON`;
+const args = parseArgs(usage, { flags: ["--json"], options: ["--module"] });
+const name = args.options.get("--module");
 const modules = generatedGraph as unknown as ReturnType<typeof describe>;
 if (name && !modules.some((m) => m.name === name))
-  throw new Error(`未登记模块 ${name}`);
-function resultOf(file: string) {
-  if (!existsSync(file)) return { status: "未运行" };
+  usageError(
+    `未登记模块 ${name}；已登记：${modules.map((m) => m.name).join("、") || "无"}`,
+    usage,
+  );
+const currentFingerprint = fingerprint();
+/** 记录里存的是那一轮的结果；指纹不同说明代码改过，结果过期。 */
+function resultOf(file: string, missing = "未运行") {
+  if (!existsSync(file)) return { status: missing };
   const saved = JSON.parse(readFileSync(file, "utf8"));
-  const current = saved.fingerprint === fingerprint();
-  if (saved.tests) {
-    const tests = saved.tests;
-    const files = (tests.testResults || [])
-      .filter(
-        (entry: { name: string }) =>
-          !name || entry.name.includes(`/modules/${name}/`),
-      )
-      .map(
-        (entry: {
-          name: string;
-          assertionResults: {
-            fullName: string;
-            status: string;
-            duration: number;
-          }[];
-        }) => ({
-          file: entry.name.replace(process.cwd() + "/", ""),
-          cases: entry.assertionResults.map((item) => ({
-            name: item.fullName,
-            status: item.status,
-            duration: item.duration,
-          })),
-        }),
-      );
-    return {
-      status: current ? "与当前代码一致" : "代码已改变，旧检查过期",
-      scope: saved.scope,
-      checkedAt: saved.checkedAt,
-      typeCheck: saved.typeCheck,
-      structure: saved.structure,
-      files,
-    };
-  }
+  const current = saved.fingerprint === currentFingerprint;
+  const status = current
+    ? saved.status
+    : `代码已改变，旧检查过期（当时${saved.status}）`;
+  if (!saved.tests) return { ...saved, status, current };
+  const files = (saved.tests.testResults || [])
+    .filter(
+      (entry: { name: string }) =>
+        !name || entry.name.includes(`/modules/${name}/`),
+    )
+    .map(
+      (entry: {
+        name: string;
+        assertionResults: {
+          fullName: string;
+          status: string;
+          duration: number;
+        }[];
+      }) => ({
+        file: entry.name.replace(process.cwd() + "/", ""),
+        cases: entry.assertionResults.map((item) => ({
+          name: item.fullName,
+          status: item.status,
+          duration: item.duration,
+        })),
+      }),
+    );
   return {
-    ...saved,
-    status: current
-      ? saved.status || "与当前代码一致"
-      : "代码已改变，旧检查过期",
+    status,
+    current,
+    scope: saved.scope,
+    checkedAt: saved.checkedAt,
+    typeCheck: saved.typeCheck,
+    structure: saved.structure,
+    skipped: saved.skipped,
+    files,
   };
 }
+// 整仓和各包分开存，单包通过不能代替整仓检查。
+const full = resultOf("var/checks/full.json");
+const recorded = existsSync("var/checks")
+  ? readdirSync("var/checks")
+      .map((file) => /^module-(.+)\.json$/.exec(file)?.[1])
+      .filter(
+        (module): module is string => !!module && (!name || module === name),
+      )
+  : [];
 const check = {
-  frameworkAndBusiness: resultOf("var/checks/latest.json"),
+  full:
+    "current" in full && full.current
+      ? full
+      : {
+          ...full,
+          note: "没有当前的整仓检查记录；单包检查不能代替，交付前运行 npm run check",
+        },
+  modules: Object.fromEntries(
+    recorded.map((module) => [
+      module,
+      resultOf(`var/checks/module-${module}.json`),
+    ]),
+  ),
   browser: resultOf("var/checks/browser.json"),
-  backend: resultOf("var/checks/backend.json"),
 };
 const graph = name ? modules.filter((m) => m.name === name) : modules;
 const plan = existsSync("project-plan.json")
@@ -68,9 +93,20 @@ const result = {
   modules: graph,
   checks: check,
 };
-if (args.includes("--json")) console.log(JSON.stringify(result, null, 2));
+if (args.flags.has("--json")) console.log(JSON.stringify(result, null, 2));
 else {
-  console.log(`开发包 ${graph.length} 个；检查情况：${JSON.stringify(check)}`);
+  console.log(`开发包 ${graph.length} 个`);
+  console.log(
+    `整仓检查：${check.full.status}${"skipped" in check.full && check.full.skipped ? `（${check.full.skipped.reason}）` : ""}${"note" in check.full ? `。${check.full.note}` : ""}`,
+  );
+  console.log(
+    `单包检查：${
+      recorded
+        .map((module) => `${module} ${check.modules[module]!.status}`)
+        .join("；") || "没有"
+    }`,
+  );
+  console.log(`浏览器检查：${check.browser.status}`);
   for (const module of graph) {
     console.log(`\n${module.title} (${module.name})：${module.description}`);
     for (const page of module.pages)

@@ -18,7 +18,7 @@
 
 配色之外有三个独立开关：圆角（方正 / 适中 / 圆润）、疏密（紧凑 / 宽松）、侧栏（深色 / 浅色 / 品牌色）。也可以在主题面板里拖一个色相，作为自定义品牌色。
 
-- 产品默认主题：`setDefaultTheme({ palette: "sand", sidebar: "dark" })`，在 `main.ts` 的 `initTheme()` 之前调用。
+- 产品默认主题写在 `src/app/app.config.ts` 的 `theme`（配色、明暗、侧栏、疏密、背景质感），`main.ts` 启动时用它调用 `setDefaultTheme`；`main.ts` 受框架保护，不用改。
 - 用户选择保存在浏览器，换设备不会跟随。
 - 新增配色：在 `presets.ts` 加一项，再运行 `npx playwright test tests/browser/theme-contrast.spec.ts`。它检查每套配色在浅色、深色和三种侧栏下的普通文字、辅助文字与占位文字对比度，均至少 4.5:1，不达标就失败。
 
@@ -44,7 +44,7 @@ navigation: [{
 2. 工作表面：一整块浮起的实色表面，多层柔和阴影；表格、表单和文字都在实色上，保证清楚。
 3. 内容：面板、表格容器、浮层用细边框和轻阴影区分，不再叠第四层卡片。
 
-浅侧栏直接坐在画布上，当前项是一条白色实底加左边缘品牌色竖条；深色与品牌色侧栏保留自己的底色。业务页标题前自动显示所属模块的图标块，页面不用自己传。
+浅侧栏直接坐在画布上，深色与品牌色侧栏保留自己的底色。当前页是横跨整个侧栏宽度的整条底色，加一条贴着侧栏左边缘的竖条，没有缩进和圆角；下级菜单的当前页同样带竖条，层级靠文字缩进区分。当前页的上级目录只换文字颜色，不加底色。浅侧栏的当前页用品牌色淡底和品牌色文字，深色、品牌色侧栏用比侧栏略亮的底色。业务页标题前自动显示所属模块的图标块，页面不用自己传。
 
 ## 视觉与操作细节
 
@@ -62,7 +62,7 @@ navigation: [{
 
 键盘操作与鼠标等效：分段选择支持方向键、Home 和 End；表格排序、分组折叠与行内展开支持 Enter 和空格；日期清除有独立按钮。日期范围在手机显示一个月，长代码和宽表只在自身区域滚动。手机列表保留工具条与分页，字段一起横向滚动，避免左右固定列盖住内容；分页显示当前页与总页数。
 
-页面与公共样式的最终比较见项目 Skill `vue-ui/references/visual-review.md`。数据行以实际渲染高度检查，行内控件不会撑高所选疏密；类型和时间使用辅助层级。Markdown 文件预览按文档显示，文件类型用轮廓图标区分。上传页的工作区利用屏幕，文件选择区保持表单行宽与适当高度。
+页面与公共样式的最终比较见项目 Skill `vue-ui/references/visual-review.md`。数据行以实际渲染高度检查，行内控件不会撑高所选疏密；类型和时间使用辅助层级。Markdown 文件预览按文档显示，文件类型用轮廓图标区分。文件选择区（`UiFileDrop`）保持表单行宽与适当高度。
 
 ## 品牌与字体
 
@@ -81,12 +81,12 @@ navigation: [{
 | 选择 | `UiSelect`（少于 10 项）、`UiCombobox`（可搜索、可多选）、`UiTagsInput`、`UiCheckbox`、`UiSwitch`（立即生效）、`UiRadioGroup`（含卡片样式）、`UiSegmented` |
 | 数字与日期 | `UiNumberInput`（加减、上下限、单位）、`UiDatePicker`、`UiDateRangePicker`（含常用范围）、`UiFileDrop` |
 | 表单版式 | `Field`（名称、提示、错误）、`FormSection`（默认左标题右控件；`layout="stacked"` 用于整行详情）；`WorkArea form` 宽屏右侧自动显示表单目录与必填进度，传 `#aside` 换成页面自己的摘要或预览，`plain` 关闭 |
-| 总览 | `OverviewBoard` 主区 + 2–6 个 `Panel`；第一个必须是 `focus` 面板（占两列，可带 `figure` 关键数字），`more` 指向完整列表；每个面板只放一个展示组件，`loading`/`empty` 由面板处理。筛选放 `PageFrame #filters`。`ActionList` 待处理清单、`StatList` 面板内关键数字。写法见 [页面配方](../../../doc/ui-recipes.md) |
+| 总览 | `OverviewBoard` 主区、`Panel`（`focus` 占两列，可带 `figure` 关键数字，`more` 指向完整列表，`loading`/`empty` 由面板处理）、`ActionList` 待处理清单、`StatList` 面板内关键数字。写法见 [页面配方](../../../doc/ui-recipes.md) |
 | 执行过程 | `TraceWaterfall`：每段从何时开始、用了多久、结果如何，可带子行；用于操作记录、后台流程阶段 |
 | 标记 | `UiTag`（状态 ok、warn、bad；编码 code）、`UiAvatar`、`UiAvatarGroup`、`UiFileIcon`、`UiTime`（“3 小时前”，悬停看完整时间）、`UiCopy` |
 | 浮层 | `UiDialog`（短决定）、`UiDrawer`（从列表快速查看）、`useToast()`、`UiTip` |
 | 状态与反馈 | `UiAlert`（提示条）、`UiResult`（结果页）、`UiProgress`、`UiSteps`、`UiSkeleton`、`UiEmpty`、`StatusMessage`（动作失败或结果未知）、`BatchProgress`（批量逐项结果，配合 `useBatch`） |
-| 版式 | `PageFrame`（`back` 返回、`#icon`、`#actions`、`#tabs`、`#status`）、`Stack`、`Row`、`Grid`、`WorkArea`、`StatusLine`、`UiTabs`、`UiAccordion` |
+| 版式 | `PageFrame`（`back` 返回、`#icon`、`#actions`、`#tabs`、`#filters`、`#status`）、`Stack`、`Row`、`Grid`、`WorkArea`、`StatusLine`、`UiTabs`、`UiAccordion` |
 | 数据 | `DataTable`（`fill flat` 占满主区）、`CellText`、`FilterBar`、`FilterItem`、`MetricStrip`、`DescriptionList`、`Timeline`、`ActivityFeed`、`FilePreview`、`SelectList` |
 | 图表 | `LineChart`、`BarChart`、`DonutChart`、`BarList`、`Sparkline` |
 | AI 应用 | `ChatThread`（对话）、`PromptInput`（回车发送、停止生成）、`Markdown`（不执行 HTML）、`CodeBlock`、`UsageMeter` |
@@ -100,27 +100,9 @@ navigation: [{
 
 完整功能页面见 `/dev/examples` 和 [功能示例说明](../../../doc/ui-examples.md)。`SplitWorkspace` 提供同一任务的选择区与内容区：桌面并排，手机通过 `v-model:view="list|detail"` 切换，插槽为 `listHeader`、`list`、`heading`、默认内容与 `composer`。`ConversationList` 显示姓名、最后消息、未读和处理状态；`ConversationThread` 用纯文字展示人员消息并保留换行。`PromptInput` 可传 `ariaLabel` 命名输入，默认仍为输入问题。未读、草稿、权限和发送结果由页面或业务模块管理。
 
-## 单一任务的页面规则
+## 页面结构
 
-1. 在 `module.ts` 的页面登记中写 `task`，用一句话说明用户要完成什么。不能把互不相关的任务都叫“总览”。
-2. 页面只有一个 `PageFrame workspace`。标题由它提供，主操作放 `#actions`，整页最多一个 `primary`。独立确认弹层另算。
-3. 正文只有一个 `DataTable` 或 `WorkArea` 主区。业务页不能导入 `Card`，也不能在主区之前加说明段落或重复大标题。
-4. `#status` 只接受 `StatusMessage` 或 `StatusLine`。它表达实际失败、未知结果或必要业务状态，不承载页面宣传和开发说明。
-5. 低频信息按需展示：字段提示贴近字段，同一对象的补充信息用折叠区域，快速查看用抽屉；复杂处理用独立页。导航默认一到两层，需要更深时先说明实际用途。
-6. 主工作区使用可用宽高。表格只有表体滚动，分页留在底部；表单限制文字行宽，避免把输入框无限拉长。公共入口不提供 `Card`；组件目录也逐项展示示例，不拼成多面板页面。
-
-生成器直接生成上述结构。`npm run check`、开发保存和打包检查会阻止卡片导入（包括改名导入）、多个主区、正文前的说明段落、重复 h1 和多个主要按钮。它检查结构，不能代替人判断任务是否清楚。
-
-| 页面 | 推荐结构 |
-| --- | --- |
-| 列表 | `PageFrame workspace` → `DataTable fill flat`；筛选放表格工具条，新增入口放页头 |
-| 详情 | `PageFrame workspace` → `WorkArea fill`；围绕同一个对象，次要信息按需展开 |
-| 表单 | `PageFrame workspace` → `WorkArea form fill` → 表单；保存入口放页头，字段说明留在字段附近 |
-| 设置 | `PageFrame workspace` → 标签切换 → 一个 `WorkArea form fill` |
-| 总览 | 先明确是比较数据、查看地图还是处理异常，再选择一个主视图；不默认堆指标、图表和卡片 |
-| 登录 | `AuthLayout` → 登录字段 → 一个登录按钮 |
-
-可直接查看文件管理的列表、详情、上传页，以及 `/settings`。开发者组件目录为了比较组件而集中展示，不是业务页面布局样板。
+总览、列表、表单、详情、会话、设置怎么搭，只看[页面配方](../../../doc/ui-recipes.md)。这份说明只讲组件、主题和表格用法。
 
 ## 按钮图标与模块图标
 

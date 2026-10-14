@@ -7,7 +7,7 @@ async function showFile(
   declaredSize = Buffer.byteLength(body),
 ) {
   await page.goto("/welcome");
-  // 用真实公共组件验证预览规则，不要求产品保留 file_library 样例。
+  // 用真实公共组件验证预览规则，不依赖样板业务。
   await page.evaluate(
     async ({ name, body, declaredSize }) => {
       const path = "/src/shared/ui/data/FilePreview.vue";

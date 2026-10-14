@@ -12,6 +12,7 @@ import {
   lockData,
   verifyLock,
   isFrameworkPath,
+  productFiles,
 } from "./framework-lock";
 import { sourceFingerprint } from "./lib";
 import { relative } from "node:path";
@@ -49,7 +50,7 @@ const incoming = Object.fromEntries(
     .filter((file) => relative(source, file) !== "scaffold.json")
     .map((file) => [relative(source, file), readFileSync(file, "utf8")]),
 );
-const changes: { file: string; content?: string }[] = [];
+const changes: { file: string; content?: string; product?: boolean }[] = [];
 const conflicts: string[] = [];
 for (const file of new Set([...Object.keys(base), ...Object.keys(incoming)])) {
   safeTemplatePath(process.cwd(), file);
@@ -68,13 +69,23 @@ for (const file of new Set([...Object.keys(base), ...Object.keys(incoming)])) {
   }
   changes.push({ file, content: next });
 }
+// 新版模板新增的产品文件（例如登录约定）：产品里还没有时补一份，已有的一律不动。
+for (const file of productFiles) {
+  const from = safeTemplatePath(source, file);
+  if (existsSync(from) && !existsSync(safeTemplatePath(process.cwd(), file)))
+    changes.push({ file, content: readFileSync(from, "utf8"), product: true });
+}
 console.log(
   JSON.stringify(
     {
       mode: args.includes("--apply") ? "执行" : "预览",
       changes: changes.map((c) => ({
         file: c.file,
-        operation: c.content === undefined ? "删除" : "更新",
+        operation: c.product
+          ? "补上产品文件"
+          : c.content === undefined
+            ? "删除"
+            : "更新",
       })),
       conflicts,
     },

@@ -56,13 +56,30 @@ export async function documentation() {
   }
   return docs;
 }
+/** 只由源码指纹算出的派生文件，和登记无关：本机检查、开发守卫和打包自己重新生成。 */
+const derived = new Set(["src/generated/version.json"]);
+/**
+ * 本机检查用：派生文件不同就直接重写，和登记有关的生成内容只比较，返回需要运行 docs 的文件。
+ * docs --check 仍然逐个比较全部文件，留给 CI。
+ */
+export async function refreshDerived() {
+  const stale: string[] = [];
+  for (const [file, content] of Object.entries(await documentation())) {
+    if (existsSync(file) && readFileSync(file, "utf8") === content) continue;
+    if (derived.has(file)) {
+      mkdirSync(file.slice(0, file.lastIndexOf("/")), { recursive: true });
+      writeFileSync(file, content);
+    } else stale.push(file);
+  }
+  return stale;
+}
 export async function exportDocs(check = false) {
   const expected = await documentation();
   const errors: string[] = [];
   for (const [file, content] of Object.entries(expected)) {
     if (check) {
       if (!existsSync(file) || readFileSync(file, "utf8") !== content)
-        errors.push(`${file} 需要重新生成`);
+        errors.push(`${file} 需要重新生成：请运行 npm run docs`);
     } else {
       mkdirSync(file.slice(0, file.lastIndexOf("/")), { recursive: true });
       writeFileSync(file, content);

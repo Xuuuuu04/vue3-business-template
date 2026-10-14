@@ -1,12 +1,16 @@
 /** 读取浏览器导出的实际记录，为接手代理提供限定动作的中文报告。 */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { z } from "zod";
-const args = process.argv.slice(2);
-const fi = args.indexOf("--file");
-if (fi < 0 || !args[fi + 1])
-  throw new Error(
-    "先从运行页面导出 JSON，再用 npm run runs -- --file 文件路径 [--run 运行编号] [--json]",
-  );
+import { parseArgs, usageError } from "./lib";
+const usage = `用法：npm run runs -- --file 文件路径 [--run 运行编号] [--json]
+  先在「开发者工具 → 操作记录」导出 JSON，再用这条命令读取。`;
+const args = parseArgs(usage, {
+  flags: ["--json"],
+  options: ["--file", "--run"],
+});
+const file = args.options.get("--file");
+if (!file) usageError("缺少 --file", usage);
+if (!existsSync(file)) usageError(`找不到文件 ${file}`, usage);
 const Step = z.object({
   id: z.string(),
   title: z.string(),
@@ -51,14 +55,28 @@ const Run = z.object({
   steps: z.array(Step),
   error: z.string().optional(),
 });
-const report = z
+let exported: unknown;
+try {
+  exported = JSON.parse(readFileSync(file, "utf8"));
+} catch {
+  usageError(`${file} 不是 JSON 文件`, usage);
+}
+const parsed = z
   .object({ removed: z.number(), runs: z.array(Run) })
-  .parse(JSON.parse(readFileSync(args[fi + 1]!, "utf8")));
-const ri = args.indexOf("--run");
-const selected =
-  ri < 0 ? report.runs : report.runs.filter((run) => run.id === args[ri + 1]);
-if (!selected.length) throw new Error("没有找到指定运行");
-if (args.includes("--json"))
+  .safeParse(exported);
+if (!parsed.success)
+  usageError(
+    `${file} 不是操作记录导出的文件：${parsed.error.issues[0]?.message}`,
+    usage,
+  );
+const report = parsed.data;
+const runId = args.options.get("--run");
+const selected = runId
+  ? report.runs.filter((run) => run.id === runId)
+  : report.runs;
+if (!selected.length)
+  usageError(runId ? `没有找到运行 ${runId}` : `${file} 里没有运行记录`, usage);
+if (args.flags.has("--json"))
   console.log(
     JSON.stringify({ removed: report.removed, runs: selected }, null, 2),
   );
