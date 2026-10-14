@@ -82,7 +82,6 @@ const check = {
     ]),
   ),
   browser: resultOf("var/checks/browser.json"),
-  backend: resultOf("var/checks/backend.json"),
 };
 const graph = name ? modules.filter((m) => m.name === name) : modules;
 const plan = existsSync("project-plan.json")
@@ -108,7 +107,6 @@ else {
     }`,
   );
   console.log(`浏览器检查：${check.browser.status}`);
-  console.log(`真实后台：${check.backend.status}`);
   for (const module of graph) {
     console.log(`\n${module.title} (${module.name})：${module.description}`);
     for (const page of module.pages)

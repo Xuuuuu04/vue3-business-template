@@ -520,13 +520,19 @@ test("框架更新先预览，执行时保留业务和产品单独修改", () =>
       JSON.stringify(lockData(root), null, 2) + "\n",
     );
     const catalog = readFileSync(join(product, "src/app/catalog.ts"), "utf8");
+    // 早期产品还没有登录约定文件：升级时补一份，已有的产品文件不动。
+    rmSync(join(product, "src/app/login.config.ts"));
     command(product, "tools/update-framework.ts", "--source", root);
+    expect(existsSync(join(product, "src/app/login.config.ts"))).toBe(false);
     expect(readFileSync(join(product, theme), "utf8")).toBe(original);
     command(product, "tools/update-framework.ts", "--source", root, "--apply");
     expect(readFileSync(join(product, theme), "utf8")).toBe(changed);
     expect(readFileSync(join(product, local), "utf8")).toBe(customization);
     expect(readFileSync(join(product, "src/app/catalog.ts"), "utf8")).toBe(
       catalog,
+    );
+    expect(readFileSync(join(product, "src/app/login.config.ts"), "utf8")).toBe(
+      readFileSync(join(root, "src/app/login.config.ts"), "utf8"),
     );
     expect(
       JSON.parse(readFileSync(join(product, ".template/source.json"), "utf8"))

@@ -25,7 +25,6 @@
     "dev:real": "VITE_API_MODE=real npm run dev",
     "runs": "tsx tools/runs.ts",
     "impact": "tsx tools/impact.ts",
-    "test:backend": "tsx tools/test-backend.ts",
     "api": "tsx tools/api.ts"
   },
   "dependencies": {

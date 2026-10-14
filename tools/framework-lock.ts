@@ -24,7 +24,12 @@ const singles = [
   "tsconfig.json",
   ".github/workflows/check.yml",
 ];
-const productFiles = ["src/app/catalog.ts", "src/app/app.config.ts"];
+/** 产品自己的文件：不受保护，升级时只在产品里还没有时补一份。 */
+export const productFiles = [
+  "src/app/catalog.ts",
+  "src/app/app.config.ts",
+  "src/app/login.config.ts",
+];
 
 /** 旧版本清单也只能指向框架范围，不能把业务或任意文件交给更新器。 */
 export function isFrameworkPath(name: string) {

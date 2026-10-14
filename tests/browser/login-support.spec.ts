@@ -28,3 +28,22 @@ for (const support of [
     }
   });
 }
+
+test("产品关掉组织代码后，登录页不显示这一栏，请求也不带 org_code", async ({ page }) => {
+  await page.route("**/src/app/login.config.ts*", async (route) => {
+    const reply = await route.fetch();
+    await route.fulfill({ response: reply, body: (await reply.text()) + "\nloginConfig.orgCode = false;\n" });
+  });
+  let sent: Record<string, unknown> | undefined;
+  await page.route("**/api/v1/access/login", (route) => {
+    sent = route.request().postDataJSON() as Record<string, unknown>;
+    return route.fulfill({ json: { access_token: "h.e30.s", token_type: "bearer", expires_in: 60, org_id: "acme" } });
+  });
+  await page.goto("/login");
+  await expect(page.getByLabel("组织代码")).toHaveCount(0);
+  await page.getByLabel("账号", { exact: true }).fill("tester");
+  await page.getByLabel("密码", { exact: true }).fill("synthetic-only");
+  await page.getByRole("button", { name: "登录", exact: true }).click();
+  await expect(page).not.toHaveURL(/\/login$/);
+  expect(sent).toEqual({ username: "tester", password: "synthetic-only", otp_code: "" });
+});

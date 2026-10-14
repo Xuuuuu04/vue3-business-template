@@ -5,7 +5,7 @@ description: 前端要对接 FastAPI 后端、核对接口路径与字段、或�
 
 # 对接后端
 
-公共登录声明在 `src/shared/session/login.ts`，提交时按需加载。POST `/api/v1/access/login` 输入组织、账号、密码和验证码，响应至少有非空 `access_token`、Bearer `token_type`、正整数 `expires_in` 和非空 `org_id`。前端不保存或自动使用刷新令牌，不要求未使用的响应字段。实际后台必须验证身份与权限。
+登录接口约定写在产品自己的 `src/app/login.config.ts`（不受框架保护，改了不用 `--accept`）：接口路径、是否填写组织代码、请求字段、回包怎么整理成 `access_token`、`expires_in`、`org_id`。默认值与后端模板的账号包一致：POST `/api/v1/access/login`，请求 `org_code`、`username`、`password`、`otp_code`，回包至少有非空 `access_token`、Bearer `token_type`、正整数 `expires_in` 和非空 `org_id`。后台不分组织时把 `orgCode` 改成 `false`。框架只负责调用、校验回包和把令牌存在页面内存里，不保存或自动使用刷新令牌。实际后台必须验证身份与权限。
 
 接口路径和响应类型写在包的 `api.ts` 与 `data.ts`，现在是手写的，要和后端保持一致。后端导出的 `doc/api/openapi.json`（FastAPI 模板里由 `fastapi-docs` 生成）是对照来源。
 
@@ -18,7 +18,7 @@ npm run api -- check --openapi ../后端/doc/api/openapi.json [--module 包名]
 npm run api -- gen --openapi ../后端/doc/api/openapi.json --prefix /api/v1/orders --module orders
 ```
 
-`check` 有问题时退出码为 1，可以放进交付前检查。它只比较文档声明，不能证明后端真的这样返回；真实返回仍以运行时的响应检查和 `test:backend` 为准。
+`check` 有问题时退出码为 1，可以放进交付前检查。它只比较文档声明，不能证明后端真的这样返回；真实返回仍以运行时的响应检查和真实后台验证为准。
 
 ## 新接一个接口
 
@@ -29,11 +29,7 @@ npm run api -- gen --openapi ../后端/doc/api/openapi.json --prefix /api/v1/ord
 
 ## 真实后台验证
 
-只在用户明确提供的隔离测试账号和数据上运行，脚本会上传再删除一个文件：
-
-```bash
-TEMPLATE_TEST_PASSWORD=*** npm run test:backend -- --frontend http://127.0.0.1:5182 --org 组织代码 --username 账号 [--readonly-user 只读账号]
-```
+模板不再带专门的真实后台脚本。接上真实后台后（`.env` 里设 `VITE_API_MODE=real` 和 `API_PROXY_TARGET`，运行 `npm run dev:real`），用业务包自己的浏览器测试走一遍：登录、这个包的一个读取动作，有写入的再加一次写入和查询结果。只在用户明确提供的隔离测试账号和数据上运行，密码从环境变量读，不写进代码。
 
 演示服务和模拟测试不是真实后台验收。验收结果要写明：后台版本、使用的账号角色、数据来源、通过了哪些操作，没验证的保持"未验证"。
 
