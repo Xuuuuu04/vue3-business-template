@@ -359,6 +359,29 @@ test("生成器产生真实可执行的开发包，重复名称不覆盖", () =>
     );
     command(root, "tools/export-docs.ts");
     command(root, "tools/check.ts", "--structure");
+    // 只改页面文字：派生指纹由检查自己重写，不要求先跑 docs，重写后 docs --check 也一致。
+    const versionFile = join(root, "src/generated/version.json");
+    const version = readFileSync(versionFile, "utf8");
+    const pageFile = join(root, "src/modules/contacts/pages/MainPage.vue");
+    writeFileSync(
+      pageFile,
+      readFileSync(pageFile, "utf8").replace("验证输入输出", "验证输入"),
+    );
+    command(root, "tools/check.ts", "--structure");
+    expect(readFileSync(versionFile, "utf8")).not.toBe(version);
+    command(root, "tools/export-docs.ts", "--check");
+    // 步骤函数位置变了，和登记有关的生成内容仍要求运行 docs，并直接说出命令。
+    const stepFile = join(root, "src/modules/contacts/steps/prepare.ts");
+    writeFileSync(stepFile, "\n" + readFileSync(stepFile, "utf8"));
+    let failure = "";
+    try {
+      command(root, "tools/check.ts", "--structure");
+    } catch (error) {
+      failure = String((error as { stderr?: string }).stderr);
+    }
+    expect(failure).toContain("src/generated/sources.json");
+    expect(failure).toContain("请运行 npm run docs");
+    expect(failure).not.toMatch(/\n\s+at /);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

@@ -7,6 +7,8 @@ export function developmentGuard(): Plugin {
     name: "architecture-on-save",
     handleHotUpdate(context) {
       const name = relative(process.cwd(), context.file);
+      // 结构检查会顺手重写这个派生指纹；它只供运行记录使用，不再触发检查和整页刷新。
+      if (name === "src/generated/version.json") return [];
       if (!/^(src\/|tools\/|framework\.lock|scaffold\.json|doc\/)/.test(name))
         return;
       try {
@@ -16,7 +18,11 @@ export function developmentGuard(): Plugin {
           { stdio: "pipe" },
         );
       } catch (error) {
-        const message = error instanceof Error ? error.message : "结构检查失败";
+        const output = String(
+          (error as { stderr?: Buffer }).stderr ?? "",
+        ).trim();
+        const message =
+          output || (error instanceof Error ? error.message : "结构检查失败");
         context.server.ws.send({
           type: "error",
           err: {
