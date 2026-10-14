@@ -17,7 +17,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { parse } from "@vue/compiler-sfc";
 import { baseParse, NodeTypes } from "@vue/compiler-dom";
-import { lockData } from "../../tools/framework-lock";
+import { lockData, unchangedTemplateSource } from "../../tools/framework-lock";
 function clone() {
   const root = mkdtempSync(join(tmpdir(), "vue-generator-"));
   for (const name of [
@@ -426,11 +426,15 @@ test("产品初始化清理样板业务，框架三份比较遇到冲突不写�
     expect(browserCases(product)).toEqual(publicCases);
     command(product, "tools/export-docs.ts");
     command(product, "tools/check.ts", "--structure");
+    // 新产品框架没改：模板工具自测沿用模板验证；模板仓库自己和改过框架的产品照常运行。
+    expect(unchangedTemplateSource(product)).toBeTruthy();
+    expect(unchangedTemplateSource(root)).toBeUndefined();
     const file = "src/shared/ui/theme/tokens.css";
     writeFileSync(
       join(product, file),
       readFileSync(join(product, file), "utf8") + "\n/* 产品修改 */\n",
     );
+    expect(unchangedTemplateSource(product)).toBeUndefined();
     writeFileSync(
       join(root, file),
       readFileSync(join(root, file), "utf8") + "\n/* 模板修改 */\n",

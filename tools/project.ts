@@ -98,7 +98,7 @@ if (args.flags.has("--json")) console.log(JSON.stringify(result, null, 2));
 else {
   console.log(`开发包 ${graph.length} 个`);
   console.log(
-    `整仓检查：${check.full.status}${"note" in check.full ? `。${check.full.note}` : ""}`,
+    `整仓检查：${check.full.status}${"skipped" in check.full && check.full.skipped ? `（${check.full.skipped.reason}）` : ""}${"note" in check.full ? `。${check.full.note}` : ""}`,
   );
   console.log(
     `单包检查：${

@@ -8,12 +8,14 @@ description: 验证前端改动时使用：运行结构、类型、单元、浏�
 ```bash
 npm run docs                         # 生成图与函数位置；check 报“请运行 npm run docs”时运行
 npm run check -- --module 包名       # 只检查一个包：最快，不能证明几个包放在一起是对的
-npm run check                        # 完整：结构、类型、单元样例、生成器
+npm run check                        # 完整：结构、类型、全部单元样例和模板工具自测
 npm run test:browser                 # 浏览器行为（含主题对比度）；会启动开发服务
 VITE_API_MODE=real npm run build     # 生产打包
 ```
 
 check 会自己重写 `src/generated/version.json` 这类派生文件；新建包、页面、步骤，改 module.ts 或步骤函数位置后，图和函数位置要用 docs 重新生成，check 会直接指出。`npm run docs -- --check` 逐个比较全部生成文件，CI 会跑。
+
+产品里框架文件和 `.template/base.json` 记下的模板原文逐个一致时，完整检查跳过生成器和模板路径两个模板工具自测，并打印“沿用模板验证”；模板仓库自己、改过框架的产品照常运行。
 
 怎么选：改一个包用 `--module`；改了 `src/shared`、`tools`、界面系统或不确定影响哪里，跑完整检查；整批交付和发布前，完整检查加浏览器检查都要跑。
 

@@ -6,7 +6,11 @@ import {
 } from "../src/shared/modules/definitions";
 import { modules as registeredModules } from "../src/app/catalog";
 import { inspectProject, sourceIndex } from "./inspect";
-import { verifyLock } from "./framework-lock";
+import {
+  verifyLock,
+  templateToolTests,
+  unchangedTemplateSource,
+} from "./framework-lock";
 import { fingerprint, run, parseArgs, usageError } from "./lib";
 import { refreshDerived } from "./export-docs";
 const usage = `用法：npm run check [-- --module 包名]
@@ -74,12 +78,25 @@ if (errors.length) {
 console.log("文件登记、依赖方向、步骤、页面样式和框架保护检查通过。");
 if (!structural) {
   const testOutput = "var/checks/tests.json";
+  // 产品框架和模板原文一致时，生成器与模板路径自测沿用模板的结果，省下大部分时间。
+  const inherited = moduleName ? undefined : unchangedTemplateSource();
+  const skipped = inherited
+    ? {
+        files: templateToolTests,
+        reason: `框架文件与模板来源 ${inherited} 一致，沿用模板验证`,
+      }
+    : undefined;
+  if (skipped)
+    console.log(
+      `${skipped.reason}：跳过 ${templateToolTests.join("、")}。改过框架后会照常运行。`,
+    );
   try {
     run("npx", ["vue-tsc", "--noEmit"]);
     run("npx", [
       "vitest",
       "run",
       ...(moduleName ? [`src/modules/${moduleName}/tests`] : []),
+      ...(skipped ? skipped.files.flatMap((file) => ["--exclude", file]) : []),
       "--reporter=default",
       "--reporter=json",
       `--outputFile=${testOutput}`,
@@ -94,6 +111,7 @@ if (!structural) {
     status: "通过",
     typeCheck: "通过",
     structure: "通过",
+    skipped,
     tests: JSON.parse(readFileSync(testOutput, "utf8")),
   });
   console.log(`实际检查结果已写入 ${record}；浏览器和真实后台测试另行运行。`);
