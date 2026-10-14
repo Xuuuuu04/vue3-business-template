@@ -1,5 +1,8 @@
 /** 前后端接口对照：字段缺失、必填变可选、可空、接口不存在都要被发现；生成的代码可以作为 api.ts 的起点。 */
 import { expect, test } from "vitest";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { checkEndpoints, generateApi } from "../../tools/openapi";
 import { z, type Endpoint } from "../../src/shared/public";
 import { fileOpenApi } from "./fixtures/file-openapi";
@@ -49,4 +52,41 @@ test("按路径前缀生成接口登记与类型代码", () => {
   expect(code).toContain('responseKind: "blob"');
   expect(code).toContain("response: z.null()");
   expect(code).toContain('id: "file_library.list_files"');
+});
+
+test("生成的代码可以直接加载：嵌套类型排在引用它的类型前面", async () => {
+  const spec = fileOpenApi();
+  // 再加一层嵌套：分页引用文件，文件引用上传人，确认多层也按依赖顺序输出。
+  const file = spec.components!.schemas!.FileView as { required: string[]; properties: Record<string, unknown> };
+  file.properties.owner = { $ref: "#/components/schemas/Owner" };
+  spec.components!.schemas!.Owner = { type: "object", required: ["name"], properties: { name: { type: "string" } } };
+  const directory = mkdtempSync(join(tmpdir(), "vue-openapi-"));
+  try {
+    const target = join(directory, "generated-api.ts");
+    writeFileSync(target, generateApi(spec, "/api/v1/files", "file_library"));
+    const generated = (await import(target)) as Record<string, z.ZodType> & { endpoints: Endpoint[] };
+    expect(generated.endpoints.map((e) => e.id)).toContain("file_library.list_files");
+    const page = generated.FilePage!.parse({
+      items: [{ id: "f1", org_id: "o1", name: "a.txt", size: 1, sha256: "0".repeat(64), content_type: "text/plain", created_at: "2026-10-14T00:00:00Z", owner: { name: "小王" } }],
+      total: 1, offset: 0, limit: 20,
+    }) as { items: Array<{ owner?: { name: string } }> };
+    expect(page.items[0]!.owner?.name).toBe("小王");
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("互相引用的类型用 z.lazy 延后取值，生成的代码同样能加载", async () => {
+  const spec = fileOpenApi();
+  spec.components!.schemas!.Folder = { type: "object", required: ["name"], properties: { name: { type: "string" }, parent: { $ref: "#/components/schemas/Folder" } } };
+  spec.paths["/api/v1/files/{org}/folders"] = { get: { operationId: "list_folders", responses: { "200": { content: { "application/json": { schema: { $ref: "#/components/schemas/Folder" } } } } } } };
+  const directory = mkdtempSync(join(tmpdir(), "vue-openapi-"));
+  try {
+    const target = join(directory, "generated-api.ts");
+    writeFileSync(target, generateApi(spec, "/api/v1/files", "file_library"));
+    const generated = (await import(target)) as Record<string, z.ZodType>;
+    expect(generated.Folder!.parse({ name: "根", parent: { name: "上级" } })).toEqual({ name: "根", parent: { name: "上级" } });
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
