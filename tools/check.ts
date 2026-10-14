@@ -7,16 +7,22 @@ import {
 import { modules as registeredModules } from "../src/app/catalog";
 import { inspectProject, sourceIndex } from "./inspect";
 import { verifyLock } from "./framework-lock";
-import { fingerprint, run } from "./lib";
+import { fingerprint, run, parseArgs } from "./lib";
 import { exportDocs } from "./export-docs";
+const args = parseArgs(
+  `用法：npm run check [-- --module 包名]
+  不带参数        检查全部框架和业务包
+  --module 包名   只跑这个包的测试，类型检查仍覆盖全仓
+  --structure     只做结构检查（开发服务和打包会自动运行）`,
+  { flags: ["--structure"], options: ["--module"] },
+);
 const modules = await loadBusinessModules(registeredModules);
 validateEnabledModules(
   modules,
   new Set((process.env.VITE_DISABLED_MODULES || "").split(",").filter(Boolean)),
 );
-const structural = process.argv.includes("--structure");
-const moduleIndex = process.argv.indexOf("--module");
-const moduleName = moduleIndex >= 0 ? process.argv[moduleIndex + 1] : undefined;
+const structural = args.flags.has("--structure");
+const moduleName = args.options.get("--module");
 if (!structural) {
   mkdirSync("var/checks", { recursive: true });
   writeFileSync(

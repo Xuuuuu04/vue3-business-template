@@ -2,13 +2,19 @@
 import { readFileSync, existsSync } from "node:fs";
 import generatedGraph from "../src/generated/graph.json";
 import type { describe } from "../src/shared/modules/graph";
-import { fingerprint } from "./lib";
-const args = process.argv.slice(2);
-const named = args.indexOf("--module");
-const name = named >= 0 ? args[named + 1] : undefined;
+import { fingerprint, parseArgs, usageError } from "./lib";
+const usage = `用法：npm run project [-- --module 包名] [--json]
+  不带参数        列出全部包、页面、动作和检查情况
+  --module 包名   只看一个包
+  --json          输出完整 JSON`;
+const args = parseArgs(usage, { flags: ["--json"], options: ["--module"] });
+const name = args.options.get("--module");
 const modules = generatedGraph as unknown as ReturnType<typeof describe>;
 if (name && !modules.some((m) => m.name === name))
-  throw new Error(`未登记模块 ${name}`);
+  usageError(
+    `未登记模块 ${name}；已登记：${modules.map((m) => m.name).join("、") || "无"}`,
+    usage,
+  );
 function resultOf(file: string) {
   if (!existsSync(file)) return { status: "未运行" };
   const saved = JSON.parse(readFileSync(file, "utf8"));
@@ -68,7 +74,7 @@ const result = {
   modules: graph,
   checks: check,
 };
-if (args.includes("--json")) console.log(JSON.stringify(result, null, 2));
+if (args.flags.has("--json")) console.log(JSON.stringify(result, null, 2));
 else {
   console.log(`开发包 ${graph.length} 个；检查情况：${JSON.stringify(check)}`);
   for (const module of graph) {
