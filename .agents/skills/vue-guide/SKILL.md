@@ -33,15 +33,7 @@ npm run dev        # 样板：http://127.0.0.1:5180，用演示服务
 
 ## 按任务选 Skill
 
-| 要做的事 | 读哪个 |
-| --- | --- |
-| 新建开发包、页面、步骤 | `vue-module` |
-| 页面任务、参考外观、组件与最终画面检查 | `vue-ui` |
-| 运行检查、写测试、更新框架保护记录 | `vue-check` |
-| 看计划、总览、影响范围、运行记录 | `vue-project` |
-| 把旧前端的页面逐项迁进来 | `vue-migration` |
-| 对接后端接口、真实后台验证 | `vue-backend` |
-| 创建新产品、更新框架 | `vue-template` |
+根目录 [AGENTS.md](../../../AGENTS.md) 有全部 Skill 的路径表：开发包看 `vue-module`，页面看 `vue-ui`，检查看 `vue-check`，总览和影响范围看 `vue-project`，迁移、对接后端、建产品分别看 `vue-migration`、`vue-backend`、`vue-template`。
 
 ## 复制项目时
 

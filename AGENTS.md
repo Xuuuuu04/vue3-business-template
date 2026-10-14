@@ -1,80 +1,46 @@
 # Vue3 企业后台模板
 
-## 项目是什么
-
-这是供 AI 开发、迁移企业后台的 Vue3 模板，默认文件管理用于演示。主代理从模块图安排工作，局部代理填写固定开发包。真实产品先填 project-plan.json 和对应业务说明。
+这是供 AI 开发和迁移企业后台的 Vue3 模板。业务按固定开发包组织，界面系统在 `src/shared/ui`，页面只拼装公共组件。模板带一个文件管理样板（`src/modules/file_library`），用 `npm run start:project` 建出的新产品不带它。
 
 ## 怎么运行
 
-使用 Node.js 22.12 以上的 22.x、24.x 或 26.x。
+使用 Node.js 22.12 以上的 22.x、24.x 或 26.x，在本目录执行：
 
-- 安装：`npm ci`
-- 样板：`npm run dev`，地址 http://127.0.0.1:5180
-- 总览：`npm run project -- --json`
-- 局部：`npm run project -- --module 包名 --json`
-- 检查：`npm run check`；单包追加 `-- --module 包名`
-- 浏览器：`npm run test:browser`
-- 生产：`VITE_API_MODE=real npm run build`
+```bash
+npm ci
+npm run dev                        # http://127.0.0.1:5180
+npm run project                    # 包、页面、动作和检查情况；完整结构加 -- --json
+npm run check                      # 完整检查；单包 npm run check -- --module 包名
+npm run test:browser               # 浏览器检查
+VITE_API_MODE=real npm run build   # 生产打包
+```
 
-先读 project 输出、doc/development.md、相关包 rules.md，再看计算图和具体步骤。不必先读完整仓库。
+命令参数写在 `--` 后面，写错会直接报错；`npm run 命令 -- --help` 看用法。
 
-## 目录地图
+## 按任务找入口
 
-- src/app：入口、导航、开发工具；catalog.ts 是业务登记入口。
-- src/modules/包名：固定业务开发包。
-- src/shared：步骤执行、请求、状态、导航；src/shared/ui 是界面系统（主题、组件、版式），说明见 src/shared/ui/README.md。
-- src/generated：自动生成的图与函数位置。
-- doc/包名：需求、规则和生成的流程说明。
-- design：模板设计目的与取舍。
-- tools：生成、检查、查询、产品初始化和模板更新。
-- tests：框架错误场景、架构限制与浏览器行为；tests/demo 与 tests/browser/demo 只放样例业务用例，初始化新产品时整体移除，公共检查及 tests/framework/fixtures 中的已知输入继续保留。
-- var：本机检查结果，不提交。
-- .agents：本机进度与证据，不提交，项目 Skill 除外。
+| 任务 | Skill |
+| --- | --- |
+| 第一次接触、目录、数据流、开发顺序 | [vue-guide](.agents/skills/vue-guide/SKILL.md) |
+| 新建开发包、页面、步骤 | [vue-module](.agents/skills/vue-module/SKILL.md) |
+| 页面结构、组件、画面检查 | [vue-ui](.agents/skills/vue-ui/SKILL.md) |
+| 检查、写测试、框架保护记录 | [vue-check](.agents/skills/vue-check/SKILL.md) |
+| 计划、总览、影响范围、运行记录 | [vue-project](.agents/skills/vue-project/SKILL.md) |
+| 把旧前端逐项迁进来 | [vue-migration](.agents/skills/vue-migration/SKILL.md) |
+| 对接后端接口、真实后台验证 | [vue-backend](.agents/skills/vue-backend/SKILL.md) |
+| 创建新产品、更新框架 | [vue-template](.agents/skills/vue-template/SKILL.md) |
 
-## 去哪里找
+页面怎么搭只看[页面配方](doc/ui-recipes.md)。业务需求和规则在 `doc/包名/`，生成的总图在 `doc/structure.md`。
 
-业务目标与规则：doc/包名/needs.md、rules.md。多级侧栏：module.ts 的 navigation 引用已登记页面编号，children 表示下级目录。页面主要任务：module.ts 的 task。字段：data.ts、flow.ts 的 title。页面与动作：module.ts。计算顺序：flow.ts、steps/。状态：state.ts。接口：api.ts。样式与组件：src/shared/ui/。
+## 长期约定
 
-出错先看「开发者工具 → 操作记录」里失败的操作与步骤，再按规则编号和「功能地图」里的代码位置读代码。运行记录只是当前页面内的有限历史，重要业务结果以后台为准。
+文件登记、导入范围、页面结构、样式和框架保护都有检查，按报错改，不删检查、不放宽规则。下面几条检查管不到：
 
-界面组件在设计预览中逐项查看。类别与示例保存在地址里，例如 `/dev/design?section=forms&example=dates`；组件目录、业务样板和窄屏效果都要实际操作。
-
-做页面先读 [页面配方](doc/ui-recipes.md)，选一种配方照骨架填写；配方外的结构会被检查拦下。完整功能页面在[功能示例](http://127.0.0.1:5180/dev/examples)，包括客户列表、活动编辑、采购审批和客服会话。入口与复用方式见 [doc/ui-examples.md](doc/ui-examples.md)。这些开发工具示例只修改当前页面内存，不代表后台保存或真实发送。
-
-## 数据流动概要
-
-页面输入 → state.ts 中的动作 → 输入类型检查 → 固定计算步骤 → 声明接口 → 响应类型检查 → 新的只读状态 → Vue 更新页面。
-
-每次动作有独立数据。步骤只能读取 reads、写入 writes，并且必须真的产生声明输出。步骤不 return 结果。请求只能通过工具 request 调用声明接口；输出默认只保存类型、大小或条数。
-
-## 本项目的约定
-
-1. 新包使用 `npm run new:module -- 包名 --title 中文名`。
-2. 新页用 new:page，可选 --layout blank|list|form|detail|overview 和 --task 声明唯一任务；新步骤用 new:step 并指定所属动作。脚本登记文件，不手工补登记表。
-3. 先写业务规则、编号、异常情况与确认样例；未知规则标待确认。
-4. 固定文件分别负责清单、公开能力、数据、接口、流程、状态、步骤、页面、测试。
-5. 业务只导入 shared/public、shared/ui/public 和已声明依赖的其他包 public。
-6. 页面只管理展示输入，通过只读动作状态显示结果。业务请求和关键计算进入步骤。
-7. 查询以最新一次为准；提交禁止重复。写入中断保留结果未知，先查询，禁止自动重发。
-   表单错误用 `state.fieldErrors?.字段路径` 接入 `Field error`；提交中停用字段与明细重排，失败保留草稿。字段路径按真实请求对应，不自动猜测名称。
-8. 返回保持 URL 筛选、分页和浏览器滚动；独立详情支持直接进入和刷新。
-9. 业务页只用一个 PageFrame workspace，正文只用一个 WorkArea 或 DataTable。页面登记写 task；整页最多一个 primary，独立确认弹层另算。不能用 Card 拼业务页，不能在主区前加解释段落或重复 h1。
-10. 字号、颜色、间距、控件与布局统一由 src/shared/ui 管理，业务页面只组合公共组件，不写 style、class 或单独 CSS。默认正文与输入控件 16px，辅助文字不小于 12px；名称、类型、时间使用相应阅读层级。工作区利用屏幕，表单保持合适行宽，不为填屏扩大空框。
-11. 测试预期来自确认规则。运行 docs 后再 check；图存在不等于业务检查通过。
-    页面交付按 [产品交付](doc/delivery.md) 检查。列表失败用 `DataTable error` 和明确的重新读取入口；读取中不校正临时总数。`PromptInput` 由页面确认发送成功后清空草稿。
-12. 共用框架修改单独说明和检查，再执行 `npm run framework -- --accept`。不得为通过检查删除限制或放宽规则。
-13. 启动、打包、本机检查与 CI 使用同一套结构检查。
-
-不要复制目录创建开发包，不要手改 scaffold.json 接纳任意文件。不要导入其他包内部、直接调用 fetch、读取浏览器存储或在步骤中藏外部效果。不要原地修改步骤读到的对象。不要偷偷重试写入、吞掉错误或用空数组替换失败。
-
-不要在业务页面写颜色、字号、局部样式、动态 style 或自制卡片。需要新布局或控件时先确定真实用途，再修改 src/shared/ui；组件里只用语义色，新增配色后运行主题对比度测试。页面标题下面不放说明小字，状态行只说明实际状态；帮助贴近相关操作，低频内容按需展开。导航默认一到两层。用户确认的视觉参考直接沿用；实际画面比较见 [.agents/skills/vue-ui/references/visual-review.md](.agents/skills/vue-ui/references/visual-review.md)，测试通过不能代替视觉验收。
-
-不要提交密钥、真实数据、node_modules、var、测试中间输出或本机 .agents。不要把演示服务和模拟测试当作真实后台验收。
-
-演示服务每次重启恢复样板文件，不返回伪造的后台运行编号。列表筛选只作用于当前页，后台没有文件名搜索接口。
-
-生产打包要求 VITE_API_MODE=real。开发工具默认只在开发时注册；生产显式开启需要服务器另行限制访问。
-
-访问令牌只在页面内存保存，刷新后重新登录。UI 权限只帮助显示按钮，后台仍检查身份和组织范围。退出当前页面只清除前端凭据，不代表后台撤销其他会话。
-
-框架文件保护防止误改，不能防止拥有整个仓库写权限的代理恶意重写保护记录。需要硬限制时由主代理和操作系统控制写入范围。
+- 先写业务规则、编号、异常情况和确认样例；没定的标“待确认”，不自己补业务含义。测试预期来自确认样例，不来自代码现在的输出。
+- 查询以最新一次为准，写入不自动重发。写入中断或响应不能确认时是“结果未知”，先查询再决定；不吞错误，不用空数组替换失败。
+- 页面登记的 `task` 写清这页唯一的用户任务。标题下不放说明小字，状态行只写实际状态。
+- 测试通过不能代替看画面：页面改动按 vue-ui 的画面比较实际截图。
+- 单包检查不能写成全仓通过；演示服务和模拟测试不是真实后台验收。
+- 共用框架（`src/shared`、`src/app`、`tools`、框架测试、`.agents/skills`）确需修改时，先写明用途、影响和验证，再运行 `npm run framework -- --accept`。
+- 访问令牌只存页面内存；前端权限只决定按钮显示，后台仍要检查身份和组织范围。
+- 不提交密钥、真实数据、`node_modules`、`var` 和本机 `.agents`（项目 Skill 除外）。
