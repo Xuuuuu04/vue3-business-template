@@ -10,6 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { execFile, execFileSync } from "node:child_process";
+import { fingerprint } from "../../tools/lib";
 
 interface Outcome {
   status: number;
@@ -136,5 +137,38 @@ test("impact 在仓库子目录里按当前目录换算路径，不在 Git 仓�
   } finally {
     rmSync(root, { recursive: true, force: true });
     rmSync(outside, { recursive: true, force: true });
+  }
+}, 60000);
+
+test("project 分开显示整仓和单包记录，单包通过不能代替整仓检查", async () => {
+  const root = mkdtempSync(join(tmpdir(), "vue-records-"));
+  try {
+    symlinkSync(resolve("node_modules"), join(root, "node_modules"), "dir");
+    mkdirSync(join(root, "var/checks"), { recursive: true });
+    const save = (file: string, record: Record<string, unknown>) =>
+      writeFileSync(join(root, "var/checks", file), JSON.stringify(record));
+    // 整仓那一轮失败后代码又改了；之后单包检查通过。
+    save("full.json", {
+      fingerprint: "旧代码",
+      scope: "全部框架和业务包",
+      status: "本轮尚未通过",
+    });
+    save("module-orders.json", {
+      fingerprint: fingerprint(root),
+      scope: "orders",
+      status: "通过",
+    });
+    const output = await command("tools/project.ts", ["--json"], { cwd: root });
+    const checks = JSON.parse(output.stdout).checks;
+    expect(checks.full.status).toBe(
+      "代码已改变，旧检查过期（当时本轮尚未通过）",
+    );
+    expect(checks.full.note).toContain("没有当前的整仓检查记录");
+    expect(checks.modules.orders.status).toBe("通过");
+    const text = await command("tools/project.ts", [], { cwd: root });
+    expect(text.stdout).toContain("单包检查：orders 通过");
+    expect(text.stdout).toContain("没有当前的整仓检查记录");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
 }, 60000);
