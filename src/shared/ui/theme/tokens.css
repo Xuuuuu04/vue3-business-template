@@ -295,7 +295,7 @@
 .brand-tile > span { position: relative; z-index: 1; text-shadow: 0 1px 1px oklch(0 0 0 / 0.15); }
 .brand-tile.is-inverse { color: var(--auth-bg); background: linear-gradient(140deg, oklch(1 0 0), oklch(0.9 0.02 var(--b-h))); box-shadow: inset 0 -1px 0 oklch(0 0 0 / 0.1), 0 4px 14px -2px oklch(0 0 0 / 0.4); }
 
-/* 页面进入：内容淡入并上移 6px；只在切换页面时出现一次。 */
+/* 页面进入：内容只淡入、不位移，避免影响定位与滚动；只在切换页面时出现一次。 */
 @keyframes page-in { from { opacity: 0; } }
 @keyframes bar-in { from { transform: scaleY(0.3); opacity: 0; } }
 @keyframes rise-in { from { opacity: 0; transform: translateY(4px); } }

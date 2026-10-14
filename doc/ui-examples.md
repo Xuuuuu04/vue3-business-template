@@ -18,9 +18,7 @@
 
 先确定用户要完成的一个任务，再参考相应例子的布局。业务开发仍使用 `new:module` 和 `new:page` 生成固定文件，页面通过动作状态调用已声明接口；不能直接复制示例的内存状态作为生产保存。
 
-- 列表用 `PageFrame workspace → DataTable fill flat`，筛选放工具条，创建放页头。
-- 编辑和详情用一个 `WorkArea`，分节用 `Stack gap="none" → FormSection`，详情可选 `layout="stacked"` 让内容使用整行。字段提示贴近输入，次要记录按标签查看。
-- 同一任务需要选择列表和内容区时，用 `WorkArea fill → SplitWorkspace`。`view` 控制窄屏的列表与详情切换；宽屏同时显示两区。会话可用 `ConversationList`、`ConversationThread` 和 `PromptInput`，页面负责数据、未读和处理规则。
+- 页面结构照[页面配方](ui-recipes.md)选，示例只用来看交互和真实数据下的效果。
 - `useUnsaved` 接受页面自己的离开提醒；关闭浏览器时使用浏览器标准提醒。
 
 颜色、间距、排版和窄屏规则仍由公共界面系统管理，不另写卡片样式或默认副标题。

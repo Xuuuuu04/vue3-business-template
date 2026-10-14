@@ -426,10 +426,12 @@ test("产品初始化清理样板业务，框架三份比较遇到冲突不写�
     expect(existsSync(join(product, "src/modules/file_library"))).toBe(false);
     // 新产品用自己的口径：入口、版本记录和包信息都换掉，不带模板设计说明和历史。
     expect(readFileSync(join(product, "CLAUDE.md"), "utf8")).toBe("@AGENTS.md\n");
+    // 样板名称拼起来写，免得这份测试复制进产品后被自己扫到。
+    const sampleName = ["文件", "管理"].join("");
     const agents = readFileSync(join(product, "AGENTS.md"), "utf8");
     expect(agents.startsWith("# 客户联系工作台\n")).toBe(true);
     expect(agents).toContain(".agents/skills/vue-module/SKILL.md");
-    expect(agents).not.toContain("文件管理");
+    expect(agents).not.toContain(sampleName);
     expect(readFileSync(join(product, "CHANGELOG.md"), "utf8")).toMatch(/^# 客户联系工作台：版本记录\n\n## 0\.1\.0\n/);
     expect(existsSync(join(product, "design"))).toBe(false);
     expect(existsSync(join(product, "doc/changes.md"))).toBe(false);
@@ -442,6 +444,11 @@ test("产品初始化清理样板业务，框架三份比较遇到冲突不写�
     const history = new RegExp(["朝", "聚|Deep", "Seek"].join(""));
     const leftovers = filesBelowRoot(product).filter((name) => history.test(readFileSync(join(product, name), "utf8")));
     expect(leftovers).toEqual([]);
+    // 新产品里没有样板业务，说明文字也不能再提它。
+    const sample = filesBelowRoot(product).filter(
+      (name) => !name.startsWith(".template/") && readFileSync(join(product, name), "utf8").includes(sampleName),
+    );
+    expect(sample).toEqual([]);
     expect(existsSync(join(product, "tests/browser/demo"))).toBe(false);
     expect(existsSync(join(product, "tests/demo"))).toBe(false);
     expect(existsSync(join(product, "tests/framework/fixtures/file-openapi.ts"))).toBe(true);

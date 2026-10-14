@@ -1,6 +1,8 @@
 # 页面配方
 
-做页面先选配方，照骨架填数据。配方之外的写法会被结构检查拦下（`npm run check`），不用凭感觉排版。
+做页面先选配方，照骨架填数据。这里是页面结构的唯一说明，AGENTS、Skill 和其他文档都只链接到这里。
+
+结构检查（`npm run check`、开发服务保存、打包）会拦下多个主区、多个主要按钮、Card 拼页、正文前的说明段落、重复 h1 和原生表单控件，总览面板和筛选条的写法也会逐条检查；详情、表单、会话的内部排布检查管不到，要照配方写。
 
 ## 先回答三个问题
 
@@ -19,6 +21,7 @@
 | 新建或修改一个对象 | 表单 | 表单本身（右侧自动目录） |
 | 查看并处理一个对象 | 详情 | 摘要带 + 主体内容 |
 | 与客户或模型对话 | 会话 | 消息流 |
+| 调整一类设置 | 设置 | 当前这一类设置 |
 
 参考实现都在 `/dev/examples`，源码 `src/app/dev/examples/`。
 
@@ -50,7 +53,7 @@
 
 - 面板 2–6 个。第一个必须是 `focus`，放本页最重要的趋势、分布或排名，可带一个关键数字 `figure`。
 - 第二个通常是“待处理”：`ActionList`，每行一件要去处理的事、数量和去处；数量为 0 的行自动收起。
-- 每个面板只放一个展示组件：`LineChart`、`BarChart`、`BarList`、`DonutChart`、`DataTable`、`ActionList`、`StatList`、`ActivityFeed`、`Timeline`。
+- 每个面板只放一个展示组件：`LineChart`、`BarChart`、`BarList`、`DonutChart`、`DataTable`、`ActionList`、`StatList`、`ActivityFeed`、`Timeline`、`TraceWaterfall`。
 - 读取中、没数据用面板的 `loading`、`empty`、`empty-title`，不写 `v-if/v-else` 占位文字。
 - 筛选放 `#filters`，作用于整页；控件用 `aria-label`，不套 `Field`。不分标签页，每个视角各占一个面板。
 - 面板标题是固定文字，说明这一块回答什么问题，不重复。统计口径写进标题（如“任一眼低于 5.0 的比例”），不写在状态行。
@@ -75,6 +78,31 @@
 - 右侧栏：流程进度、关联对象、可操作的下一步；不重复摘要带里已有的状态、负责人和时间。
 
 写完数一数：同一个名称或数值出现两次以上，就删掉多余的。
+
+## 会话
+
+```vue
+<PageFrame title="客服会话" workspace>
+  <WorkArea fill>
+    <SplitWorkspace v-model:view="view" list-label="会话列表" :detail-label="`${active.name}的会话`">
+      <template #listHeader><UiSearchInput v-model="search" placeholder="搜索姓名或主题" /></template>
+      <template #list><ConversationList v-model="selected" :items="items" label="选择会话" /></template>
+      <template #heading><!-- 当前对象名称、处理状态、标记已处理 --></template>
+      <ConversationThread :thread-id="active.id" :messages="active.messages" :label="active.name" />
+      <template #composer><PromptInput v-model="draft" aria-label="回复客户" @send="send" /></template>
+    </SplitWorkspace>
+  </WorkArea>
+</PageFrame>
+```
+
+- 选择区和消息流属于同一个任务，用一个 `SplitWorkspace`：桌面并排，手机用 `v-model:view` 在列表和内容之间切换。
+- 搜索和范围切换放 `#listHeader`；当前对象的名称、状态和处理操作放 `#heading`，不放状态行。
+- 草稿按对象分开保存。`PromptInput` 只发出 `send`，页面确认发送成功后才清空与本次发送相同的草稿；失败或结果未知时保留。
+- 未读、处理状态和权限由页面或业务包管理。参考 `/dev/examples/inbox`。
+
+## 设置
+
+`PageFrame workspace` → `#tabs` 放 `UiTabs` 切换设置类别 → 一个 `WorkArea form fill`，一次只显示一类设置。每类用 `FormSection` 分组，名称和说明在左、控件在右。立即生效的开关用 `UiSwitch`，不另放保存按钮；需要保存的设置把保存放页头 primary。参考 `/settings`。
 
 ## 演示数据
 

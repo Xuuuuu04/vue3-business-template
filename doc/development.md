@@ -52,7 +52,7 @@ npm run docs
 npm run check -- --module contacts
 ```
 
-`contacts` 需要已经通过 `new:module` 创建。`--layout` 支持 `blank`、`list`、`form`、`detail`，默认 `blank` 保持原来的空白页用法。列表使用 `DataTable fill flat`，表单使用 `WorkArea form fill`，详情使用 `WorkArea fill`；页面和组件同时登记。不传 `--task` 时仍需补上待填写的页面任务。页面只接受 `--title`、`--layout`、`--task`；未知参数、未知布局，以及参数缺值或重复，都会在写入任何文件之前报错。
+`contacts` 需要已经通过 `new:module` 创建。`--layout` 支持 `blank`、`list`、`form`、`detail`、`overview`，默认 `blank` 保持原来的空白页用法；各自的完整结构见[页面配方](ui-recipes.md)。页面和组件同时登记。不传 `--task` 时仍需补上待填写的页面任务。页面只接受 `--title`、`--layout`、`--task`；未知参数、未知布局，以及参数缺值或重复，都会在写入任何文件之前报错。
 
 这些版式只有展示结构：列表还未接入数据，表单的样板字段停用且尚无保存操作，详情还没有对象查询。按已确认规则替换字段、声明查询或提交动作，补上加载、失败、结果未知等状态后，再提供真实操作入口。样板不生成模拟请求、成功提示或可点击的空保存按钮。
 
