@@ -1,4 +1,3 @@
-/** 含敏感输入时不回显校验器的动态说明或嵌套路径，避免泄漏默认值与转换结果。 */
 import type { Action } from "./definitions";
 import { fieldErrorsFrom } from "@/shared/http/field-errors";
 import type { RecordPrivacy } from "@/shared/records/privacy";

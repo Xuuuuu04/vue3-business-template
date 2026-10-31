@@ -1,4 +1,3 @@
-/** 更新失败必须在写入之前发生，项目外文件与业务文件始终保留。 */
 import { afterEach, expect, test } from "vitest";
 import { execFileSync } from "node:child_process";
 import {
@@ -113,6 +112,48 @@ test("正常更新仍写入框架并保留产品文件", () => {
   );
   expect(readFileSync(join(f.product, "src/app/app.config.ts"), "utf8")).toBe(
     "product-brand",
+  );
+});
+
+test("更新来源使用新版提交，并明确记录未提交的改动", () => {
+  const f = fixture();
+  const git = (...args: string[]) =>
+    execFileSync("git", args, {
+      cwd: f.source,
+      encoding: "utf8",
+      stdio: "pipe",
+    });
+  git("init", "-q");
+  git("add", ".");
+  git(
+    "-c",
+    "user.name=检查",
+    "-c",
+    "user.email=check@example.com",
+    "commit",
+    "-qm",
+    "模板",
+  );
+  const commit = git("rev-parse", "HEAD").trim();
+  const metadata = join(f.product, ".template/source.json");
+  writeFileSync(
+    metadata,
+    JSON.stringify({ commit: "旧版本", createdAt: "创建日期" }),
+  );
+  update(f.source, f.product);
+  let saved = JSON.parse(readFileSync(metadata, "utf8"));
+  expect(saved).toMatchObject({ commit, dirty: false, createdAt: "创建日期" });
+  expect(saved.sourceFingerprint).toMatch(/^[a-f0-9]{64}$/);
+  writeFileSync(join(f.source, "deploy/nginx.conf"), "next");
+  writeFileSync(
+    join(f.source, "framework.lock"),
+    JSON.stringify(lockData(f.source)),
+  );
+  update(f.source, f.product);
+  saved = JSON.parse(readFileSync(metadata, "utf8"));
+  expect(saved).toMatchObject({ commit, dirty: true });
+  expect(readFileSync(join(f.product, "deploy/nginx.conf"), "utf8")).toBe(
+    "next",
   );
 });
 

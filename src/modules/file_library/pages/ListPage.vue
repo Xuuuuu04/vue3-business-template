@@ -23,7 +23,7 @@ import {
   type SortState,
 } from "@/shared/ui/public";
 import { useFileLibrary, type FileView } from "../public";
-/** 每页条数的可选值；默认 20 条，写在地址里，返回列表时保持。 */
+
 const SIZES = [10, 20, 50];
 const route = useRoute();
 const router = useRouter();
@@ -95,14 +95,14 @@ function openFile(file: FileView) {
     query: { returnTo: route.fullPath },
   });
 }
-/** 勾选的文件编号；翻页、改条数后清空，避免操作看不见的文件。 */
+
 const selected = ref<string[]>([]);
 watch([offset, size], () => (selected.value = []));
 const picked = computed(() =>
   (state.value.data?.items ?? []).filter((f) => selected.value.includes(f.id)),
 );
 const batch = useBatch();
-/** 批量弹窗：先确认删除，或直接显示下载进度；执行中不能关闭。 */
+
 const batchMode = ref<"" | "confirm" | "delete" | "download">("");
 const batchOpen = computed({
   get: () => batchMode.value !== "",
@@ -219,7 +219,9 @@ async function downloadFile(file: FileView) {
           ></Row
         ></template
       >
-      <template #cell-kind="{ row }"><UiTag>{{ row.kind }}</UiTag></template>
+      <template #cell-kind="{ row }"
+        ><UiTag>{{ row.kind }}</UiTag></template
+      >
       <template #cell-size="{ row }">{{ formatBytes(row.size) }}</template>
       <template #cell-created_at="{ row }"
         ><UiTime :value="row.created_at"
@@ -233,10 +235,8 @@ async function downloadFile(file: FileView) {
               icon="download"
               :aria-label="`下载 ${row.name}`"
               :disabled="download.state.value.status === 'loading'"
-              @click="downloadFile(row)" /></UiTip
-          ></Row
-        ></template
-      >
+              @click="downloadFile(row)" /></UiTip></Row
+      ></template>
       <template #bulk
         ><UiButton size="sm" icon="download" @click="batchDownload"
           >下载</UiButton

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-/** 单行输入。前后缀用插槽放图标或单位；invalid 由表单字段统一设置。 */
 import { useAttrs } from "vue";
 import { useFieldControl } from "../lib/field";
 defineOptions({ inheritAttrs: false });
@@ -11,19 +10,24 @@ const props = defineProps<{
   invalid?: boolean;
   size?: "md" | "lg";
   align?: "left" | "right";
-  /** 后缀是单位（如“元”）时设为 true，显示成带底色的单位格。 */
+
   unit?: boolean;
-  inputmode?: "text" | "decimal" | "numeric" | "search" | "email" | "tel" | "url";
+  inputmode?:
+    "text" | "decimal" | "numeric" | "search" | "email" | "tel" | "url";
   autocomplete?: string;
   id?: string;
   name?: string;
 }>();
 const attrs = useAttrs();
 const { attributes, invalid: fieldInvalid } = useFieldControl(() => ({
-  id: props.id, label: attrs["aria-label"] as string | undefined,
+  id: props.id,
+  label: attrs["aria-label"] as string | undefined,
   labelledBy: attrs["aria-labelledby"] as string | undefined,
   describedBy: attrs["aria-describedby"] as string | undefined,
-  invalid: props.invalid || attrs["aria-invalid"] === true || attrs["aria-invalid"] === "true",
+  invalid:
+    props.invalid ||
+    attrs["aria-invalid"] === true ||
+    attrs["aria-invalid"] === "true",
 }));
 </script>
 <template>
@@ -36,7 +40,9 @@ const { attributes, invalid: fieldInvalid } = useFieldControl(() => ({
       disabled && 'pointer-events-none opacity-50',
     ]"
   >
-    <span v-if="$slots.prefix" class="flex items-center pl-2.5 text-fg-faint"><slot name="prefix" /></span>
+    <span v-if="$slots.prefix" class="flex items-center pl-2.5 text-fg-faint"
+      ><slot name="prefix"
+    /></span>
     <input
       v-bind="{ ...$attrs, ...attributes() }"
       :name="name"
@@ -49,6 +55,11 @@ const { attributes, invalid: fieldInvalid } = useFieldControl(() => ({
       class="h-full min-w-0 flex-1 bg-transparent px-2.5 text-fg outline-none placeholder:text-fg-faint tabular-nums"
       :class="align === 'right' && 'text-right'"
     />
-    <span v-if="$slots.suffix" class="flex h-full items-center px-2.5 text-help text-fg-muted" :class="unit && 'border-l border-line bg-muted'"><slot name="suffix" /></span>
+    <span
+      v-if="$slots.suffix"
+      class="flex h-full items-center px-2.5 text-help text-fg-muted"
+      :class="unit && 'border-l border-line bg-muted'"
+      ><slot name="suffix"
+    /></span>
   </div>
 </template>

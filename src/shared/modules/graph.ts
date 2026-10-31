@@ -1,4 +1,3 @@
-/** 图由实际登记内容导出；前端页面和命令行使用相同的数据结构。 */
 import type { BusinessModule } from "./definitions";
 import { sourceOf } from "@/shared/records/store";
 export function describe(modules: BusinessModule[], lookup = sourceOf) {

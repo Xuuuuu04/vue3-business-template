@@ -1,4 +1,3 @@
-/** 新产品复制框架，删除样板业务、检查历史和 Git 历史。 */
 import {
   cpSync,
   existsSync,
@@ -10,11 +9,11 @@ import {
   lstatSync,
 } from "node:fs";
 import { resolve, relative, basename, dirname } from "node:path";
-import { execFileSync } from "node:child_process";
+import { readTemplateSource } from "./template-source";
 import { protectedFiles, lockData } from "./framework-lock";
 import { sourceFingerprint, filesBelow, usageError } from "./lib";
 import { sourceIndex } from "./inspect";
-import { assertFramework, htmlTitle } from "./scaffold";
+import { assertFramework, htmlTitle, formatSource } from "./scaffold";
 import { safeTemplatePath } from "./template-paths";
 const usage = `用法：npm run start:project -- /绝对路径/新产品 [--name 产品名称]
   不写 --name 时用目录名作产品名称。`;
@@ -25,7 +24,7 @@ if (destination === "--help" || destination === "-h") {
 }
 if (!destination || destination.startsWith("-"))
   usageError("缺少新产品目录", usage);
-// 先解析已存在的祖先目录，避免用目录别名把副本建回模板内部。
+
 let ancestor = resolve(destination);
 const missing: string[] = [];
 while (!existsSync(ancestor)) {
@@ -59,13 +58,13 @@ const entries = readdirSync(source).filter(
         "playwright-report",
         "test-results",
         ".env",
-        // 模板的设计说明和版本历史不进新产品，产品从自己的 0.1.0 开始记录。
+
         "design",
       ].includes(entry) ||
       (entry.startsWith(".env.") && entry !== ".env.example")
     ),
 );
-// 全部路径先检查再复制；包括不在框架摘要里的环境样例和产品素材。
+
 for (const entry of [...entries, ".agents/skills"]) {
   const path = safeTemplatePath(source, entry);
   if (!existsSync(path)) continue;
@@ -76,7 +75,7 @@ mkdirSync(target, { recursive: true });
 for (const entry of entries) {
   cpSync(resolve(source, entry), resolve(target, entry), { recursive: true });
 }
-// 本机的 .agents 内容不复制，只带项目 Skill。
+
 if (existsSync(resolve(source, ".agents/skills")))
   cpSync(resolve(source, ".agents/skills"), resolve(target, ".agents/skills"), {
     recursive: true,
@@ -86,12 +85,15 @@ rmSync(resolve(target, "src/modules"), { recursive: true, force: true });
 mkdirSync(resolve(target, "src/modules"), { recursive: true });
 rmSync(resolve(target, "doc/file_library"), { recursive: true, force: true });
 rmSync(resolve(target, "doc/changes.md"), { force: true });
-// 样例业务检查集中在两个 demo 目录；公共检查与受保护的已知输入继续保留。
+
 rmSync(resolve(target, "tests/demo"), { recursive: true, force: true });
 rmSync(resolve(target, "tests/browser/demo"), { recursive: true, force: true });
 writeFileSync(
   resolve(target, "src/app/catalog.ts"),
-  `import type { Module } from '@/shared/public';\nexport const modules: Module[] = [];\n`,
+  await formatSource(
+    "catalog.ts",
+    `import type { Module } from '@/shared/public';\nexport const modules: Module[] = [];\n`,
+  ),
 );
 writeFileSync(
   resolve(target, "scaffold.json"),
@@ -101,7 +103,7 @@ writeFileSync(
   resolve(target, "project-plan.json"),
   JSON.stringify({ product: productName, businessLines: [] }, null, 2) + "\n",
 );
-/** 新产品有自己的身份，不继承样板业务宣传。 */
+
 const brandFile = resolve(target, "src/app/app.config.ts");
 let brand = readFileSync(brandFile, "utf8");
 const ts = (await import("typescript")).default;
@@ -148,7 +150,7 @@ if (replacements.length !== Object.keys(values).length)
   throw new Error("产品品牌配置格式无法识别");
 for (const part of replacements.sort((a, b) => b.start - a.start))
   brand = brand.slice(0, part.start) + part.text + brand.slice(part.end);
-writeFileSync(brandFile, brand);
+writeFileSync(brandFile, await formatSource(brandFile, brand));
 const htmlFile = resolve(target, "index.html");
 writeFileSync(
   htmlFile,
@@ -177,7 +179,7 @@ writeFileSync(
   resolve(target, "CHANGELOG.md"),
   `# ${productName}：版本记录\n\n## 0.1.0\n\n从 Vue3 企业后台模板 ${templateVersion} 初始化，尚未完成产品业务。框架来源见 .template/source.json。\n`,
 );
-// 包名只能用小写字母、数字和 . _ -；中文目录名退回 frontend。
+
 const packageName =
   basename(target)
     .toLowerCase()
@@ -195,7 +197,7 @@ for (const file of ["package.json", "package-lock.json"]) {
     if (entry) Object.assign(entry, { name: packageName, version: "0.1.0" });
   writeFileSync(path, JSON.stringify(data, null, 2) + "\n");
 }
-/** AGENTS 开头换成产品自己的说明，后面的命令、Skill 表和约定原样保留。 */
+
 const agentsFile = resolve(target, "AGENTS.md");
 const agents = readFileSync(agentsFile, "utf8");
 const firstSection = agents.indexOf("\n## ");
@@ -216,21 +218,12 @@ writeFileSync(
   resolve(target, ".template/base.json"),
   JSON.stringify(originals, null, 2) + "\n",
 );
-let commit = "uncommitted";
-try {
-  commit = execFileSync("git", ["rev-parse", "HEAD"], {
-    encoding: "utf8",
-    stdio: "pipe",
-  }).trim();
-} catch {
-  /* 没有提交时明确记录来源尚未提交。 */
-}
 writeFileSync(
   resolve(target, ".template/source.json"),
   JSON.stringify(
     {
       repository: "https://github.com/Xuuuuu04/vue3-business-template",
-      commit,
+      ...readTemplateSource(source),
       createdAt: new Date().toISOString(),
     },
     null,

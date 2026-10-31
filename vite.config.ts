@@ -26,7 +26,12 @@ export default defineConfig(({ mode, command }) => {
       "生产打包必须设置 VITE_API_MODE=real；样板预览请显式设置 ALLOW_DEMO_BUILD=true",
     );
   return {
-    plugins: [vue(), tailwindcss(), developmentGuard(), ...(demo ? [demoApi()] : [])],
+    plugins: [
+      vue(),
+      tailwindcss(),
+      developmentGuard(),
+      ...(demo ? [demoApi()] : []),
+    ],
     define: {
       "import.meta.env.VITE_CODE_VERSION": JSON.stringify(
         env.VITE_CODE_VERSION || sourceFingerprint().slice(0, 16),

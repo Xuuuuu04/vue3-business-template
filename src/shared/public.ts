@@ -1,4 +1,3 @@
-/** 业务包唯一共用入口。内部实现可以修改，业务不依赖其文件布局。 */
 export { z } from "zod";
 export {
   defineAction,

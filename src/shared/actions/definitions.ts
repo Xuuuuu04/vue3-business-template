@@ -1,4 +1,3 @@
-/** 可执行的业务动作、步骤和字段说明；图与运行检查共同使用。 */
 import type { z } from "zod";
 import type { StepTools } from "@/shared/http/client";
 
@@ -40,7 +39,6 @@ export interface Action<I extends object = object, O = unknown> {
   output?: O;
 }
 
-/** 步骤只取得已声明的数据和接口；业务函数仍保持普通函数写法。 */
 export function defineStep<W extends object>(
   part: Omit<Step, "run"> & {
     run: (data: W, tools: StepTools) => void | Promise<void>;
@@ -49,7 +47,6 @@ export function defineStep<W extends object>(
   return Object.freeze({ ...part, run: part.run as unknown as Step["run"] });
 }
 
-/** 定义命名条件，避免图上只出现无法解释的匿名表达式。 */
 export function defineCondition<W extends object>(
   part: Omit<Condition, "run"> & {
     run: (data: W) => boolean;
@@ -61,7 +58,6 @@ export function defineCondition<W extends object>(
   });
 }
 
-/** 动作在登记时验证字段来源，启动和测试使用相同检查。 */
 export function defineAction<I extends object, O>(
   action: Action<I, O>,
 ): Action<I, O> {
@@ -69,7 +65,6 @@ export function defineAction<I extends object, O>(
   return Object.freeze(action);
 }
 
-/** 查明缺字段、多写入者、条件结果缺失和重复步骤，指出具体动作。 */
 export function validateAction(action: Action): void {
   const errors: string[] = [];
   const known = new Set(action.inputFields);

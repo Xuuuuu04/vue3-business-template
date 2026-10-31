@@ -1,6 +1,12 @@
-import { inject, onBeforeUnmount, useAttrs, watchEffect, type ComputedRef, type InjectionKey } from "vue";
+import {
+  inject,
+  onBeforeUnmount,
+  useAttrs,
+  watchEffect,
+  type ComputedRef,
+  type InjectionKey,
+} from "vue";
 
-/** 一个 Field 管理一个主要控件，统一关联名称、说明与错误，不替业务执行校验。 */
 export interface FieldContext {
   id: string;
   labelId: string;
@@ -9,39 +15,69 @@ export interface FieldContext {
   required: boolean;
   register: (owner: symbol, id?: string) => void;
 }
-export const fieldContext: InjectionKey<ComputedRef<FieldContext>> = Symbol("ui-field");
+export const fieldContext: InjectionKey<ComputedRef<FieldContext>> =
+  Symbol("ui-field");
 
-/** 控件也可独立使用；显式指定的名称、编号和外部说明优先保留。 */
-export function useFieldControl(options: () => {
-  id?: string;
-  label?: string;
-  labelledBy?: string;
-  describedBy?: string;
-  invalid?: boolean;
-  required?: boolean;
-} = () => ({})) {
+export function useFieldControl(
+  options: () => {
+    id?: string;
+    label?: string;
+    labelledBy?: string;
+    describedBy?: string;
+    invalid?: boolean;
+    required?: boolean;
+  } = () => ({}),
+) {
   const field = inject(fieldContext, undefined);
   const attrs = useAttrs();
   const owner = Symbol("field-control");
-  const explicitId = () => options().id ?? attrs.id as string | undefined;
+  const explicitId = () => options().id ?? (attrs.id as string | undefined);
   watchEffect(() => field?.value.register(owner, explicitId()));
   onBeforeUnmount(() => field?.value.register(owner));
-  const invalid = () => Boolean(options().invalid || attrs["aria-invalid"] === true || attrs["aria-invalid"] === "true" || field?.value.invalid);
+  const invalid = () =>
+    Boolean(
+      options().invalid ||
+      attrs["aria-invalid"] === true ||
+      attrs["aria-invalid"] === "true" ||
+      field?.value.invalid,
+    );
   const attributes = () => {
     const explicit = options();
-    const label = explicit.label ?? attrs["aria-label"] as string | undefined;
-    const labelledBy = explicit.labelledBy ?? attrs["aria-labelledby"] as string | undefined;
-    const describedBy = explicit.describedBy ?? attrs["aria-describedby"] as string | undefined;
-    const required = explicit.required ?? (attrs["aria-required"] === undefined ? field?.value.required : attrs["aria-required"]);
+    const label = explicit.label ?? (attrs["aria-label"] as string | undefined);
+    const labelledBy =
+      explicit.labelledBy ?? (attrs["aria-labelledby"] as string | undefined);
+    const describedBy =
+      explicit.describedBy ?? (attrs["aria-describedby"] as string | undefined);
+    const required =
+      explicit.required ??
+      (attrs["aria-required"] === undefined
+        ? field?.value.required
+        : attrs["aria-required"]);
     return {
       id: explicitId() ?? field?.value.id,
       "aria-label": label,
-      "aria-labelledby": labelledBy ?? (label ? undefined : field?.value.labelId),
-      "aria-describedby": [describedBy, field?.value.messageId].filter(Boolean).join(" ") || undefined,
+      "aria-labelledby":
+        labelledBy ?? (label ? undefined : field?.value.labelId),
+      "aria-describedby":
+        [describedBy, field?.value.messageId].filter(Boolean).join(" ") ||
+        undefined,
       "aria-invalid": invalid() || undefined,
       "aria-required": required as boolean | "true" | "false" | undefined,
     };
   };
-  const rootAttributes = () => Object.fromEntries(Object.entries(attrs).filter(([name]) => !["id", "aria-label", "aria-labelledby", "aria-describedby", "aria-invalid", "aria-required"].includes(name)));
+  const rootAttributes = () =>
+    Object.fromEntries(
+      Object.entries(attrs).filter(
+        ([name]) =>
+          ![
+            "id",
+            "aria-label",
+            "aria-labelledby",
+            "aria-describedby",
+            "aria-invalid",
+            "aria-required",
+          ].includes(name),
+      ),
+    );
   return { attributes, invalid, rootAttributes };
 }

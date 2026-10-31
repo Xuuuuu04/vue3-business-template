@@ -1,8 +1,6 @@
-/**
- * 轻量 Markdown 解析：标题、段落、列表、引用、代码块，以及行内粗体、行内代码、链接。
- * 只产出数据结构，由组件逐项渲染，不使用 v-html，模型输出里的标签不会被当成网页执行。
- */
-export type Inline = { t: "text" | "bold" | "code"; v: string } | { t: "link"; v: string; href: string };
+export type Inline =
+  | { t: "text" | "bold" | "code"; v: string }
+  | { t: "link"; v: string; href: string };
 export type Block =
   | { t: "h"; level: 1 | 2 | 3; inline: Inline[] }
   | { t: "p"; inline: Inline[] }
@@ -17,7 +15,7 @@ export function parseInline(s: string): Inline[] {
   let nextSpace = -1;
   let plainStart = 0;
   let i = 0;
-  // 搜索位置只向前移动；一串未闭合的 [ 不会反复扫描整段剩余文本。
+
   function next(character: string, start: number): number {
     let index = closing.get(character) ?? -1;
     if (index < start) {
@@ -61,10 +59,13 @@ export function parseInline(s: string): Inline[] {
         if (end > hrefStart && end < s.length && space(hrefStart) >= end) {
           const label = s.slice(i + 1, labelEnd);
           const href = s.slice(hrefStart, end);
-          // 只允许 http(s) 与站内链接，其他地址继续作为普通文字显示。
-          append(/^(https?:\/\/|\/)/.test(href)
-            ? { t: "link", v: label, href }
-            : { t: "text", v: label }, end + 1);
+
+          append(
+            /^(https?:\/\/|\/)/.test(href)
+              ? { t: "link", v: label, href }
+              : { t: "text", v: label },
+            end + 1,
+          );
           continue;
         }
       }
@@ -85,24 +86,54 @@ export function parseMarkdown(src: string): Block[] {
     if (fence) {
       const body: string[] = [];
       i++;
-      while (i < lines.length && !lines[i]!.startsWith("```")) body.push(lines[i++]!);
+      while (i < lines.length && !lines[i]!.startsWith("```"))
+        body.push(lines[i++]!);
       i++;
       blocks.push({ t: "code", lang: fence[1] ?? "", v: body.join("\n") });
       continue;
     }
     const h = line.match(/^(#{1,3})\s+(.*)/);
-    if (h) { blocks.push({ t: "h", level: h[1]!.length as 1 | 2 | 3, inline: parseInline(h[2]!) }); i++; continue; }
+    if (h) {
+      blocks.push({
+        t: "h",
+        level: h[1]!.length as 1 | 2 | 3,
+        inline: parseInline(h[2]!),
+      });
+      i++;
+      continue;
+    }
     if (/^\s*[-*]\s+/.test(line) || /^\s*\d+[.)]\s+/.test(line)) {
       const ordered = /^\s*\d/.test(line);
       const items: Inline[][] = [];
-      while (i < lines.length && (ordered ? /^\s*\d+[.)]\s+/ : /^\s*[-*]\s+/).test(lines[i]!)) items.push(parseInline(lines[i++]!.replace(/^\s*([-*]|\d+[.)])\s+/, "")));
+      while (
+        i < lines.length &&
+        (ordered ? /^\s*\d+[.)]\s+/ : /^\s*[-*]\s+/).test(lines[i]!)
+      )
+        items.push(
+          parseInline(lines[i++]!.replace(/^\s*([-*]|\d+[.)])\s+/, "")),
+        );
       blocks.push({ t: ordered ? "ol" : "ul", items });
       continue;
     }
-    if (line.startsWith(">")) { blocks.push({ t: "quote", inline: parseInline(line.replace(/^>\s?/, "")) }); i++; continue; }
-    if (!line.trim()) { i++; continue; }
+    if (line.startsWith(">")) {
+      blocks.push({
+        t: "quote",
+        inline: parseInline(line.replace(/^>\s?/, "")),
+      });
+      i++;
+      continue;
+    }
+    if (!line.trim()) {
+      i++;
+      continue;
+    }
     const para: string[] = [];
-    while (i < lines.length && lines[i]!.trim() && !/^(```|#{1,3}\s|>|\s*[-*]\s|\s*\d+[.)]\s)/.test(lines[i]!)) para.push(lines[i++]!);
+    while (
+      i < lines.length &&
+      lines[i]!.trim() &&
+      !/^(```|#{1,3}\s|>|\s*[-*]\s|\s*\d+[.)]\s)/.test(lines[i]!)
+    )
+      para.push(lines[i++]!);
     blocks.push({ t: "p", inline: parseInline(para.join(" ")) });
   }
   return blocks;

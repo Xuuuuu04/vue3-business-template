@@ -1,9 +1,12 @@
 <script setup lang="ts">
-/**
- * 应用外壳：可收起的侧栏 + 顶栏 + 内容区。窄屏侧栏变成从左滑出的面板。
- * 导航按“分组 → 多级菜单树”传入；当前页由路由决定。收起状态保存在浏览器里。
- */
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from "vue";
 import type { NavGroup } from "../lib/types";
 import { currentNavItem } from "../lib/navigation";
 import SidebarItem from "./SidebarItem.vue";
@@ -36,7 +39,7 @@ watch(collapsed, (v) => {
   try {
     localStorage.setItem(KEY, v ? "1" : "0");
   } catch {
-    /* 不能保存时本次仍生效 */
+    console.warn("浏览器无法保存导航设置，刷新后会恢复默认设置。");
   }
 });
 const mobileOpen = ref(false);
@@ -76,7 +79,7 @@ const current = computed(() =>
     route.path,
   ),
 );
-/** 手机面板保持键盘焦点在导航内，关闭后回到打开按钮。 */
+
 function closeMobile(event: KeyboardEvent) {
   if (!mobileOpen.value) return;
   if (event.key === "Escape") {
@@ -176,7 +179,10 @@ function closeMobile(event: KeyboardEvent) {
       </div>
     </aside>
 
-    <div :inert="!desktop && mobileOpen" class="application-surface flex min-h-0 min-w-0 flex-col">
+    <div
+      :inert="!desktop && mobileOpen"
+      class="application-surface flex min-h-0 min-w-0 flex-col"
+    >
       <header
         class="app-topbar z-30 flex h-14 shrink-0 items-center gap-1 px-3 md:px-4"
       >
@@ -202,9 +208,11 @@ function closeMobile(event: KeyboardEvent) {
           </Button>
         </Tip>
         <div class="ml-3 flex min-w-0 items-center"><slot name="search" /></div>
-        <span v-if="!$slots.search" class="ml-2 min-w-0 truncate text-label text-fg-muted">{{
-          context ?? brand
-        }}</span>
+        <span
+          v-if="!$slots.search"
+          class="ml-2 min-w-0 truncate text-label text-fg-muted"
+          >{{ context ?? brand }}</span
+        >
         <span class="flex-1" />
         <slot name="topbar" />
       </header>

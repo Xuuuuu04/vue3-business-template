@@ -1,14 +1,14 @@
 # 真实后台接入与部署
 
-开发时复制 .env.example，设置 VITE_API_MODE=real、API_PROXY_TARGET 和实际组织代码，然后运行 npm run dev:real。通过登录页面使用后端账号；前端请求同源 /api，由开发服务器代理到后台。不要把密钥或服务端配置放入 VITE_ 变量。
+开发时复制 `.env.example`，设置 `VITE_API_MODE=real`、`API_PROXY_TARGET` 和实际组织代码，然后运行 `npm run dev:real`。通过登录页面使用后端账号；前端请求同源 `/api`，由开发服务器代理到后台。`VITE_` 变量会进入前端，不能放密钥或服务端私密配置。
 
-登录接口约定在产品自己的 `src/app/login.config.ts`（路径、组织代码开关、请求字段、回包整理），业务接口在各包的 `api.ts`，可用 `npm run project -- --module 包名 --json` 查看。当前 FastAPI 模板没有预装登录；选择它作为后端时，需要实际开发、登记接口并逐项验证，不能把这两个模板并放就称为已经集成。响应的 X-Request-ID 和 X-Run-ID 自动进入运行详情。后台仍检查组织、身份和操作权限；前端解码权限仅用于界面提示。
+登录接口约定在产品自己的 `src/app/login.config.ts`，业务接口在各包的 `api.ts`，可用 `npm run project -- --module 包名 --json` 查看。FastAPI 模板默认没有业务包，可用它的账号预设生成登录包，再对照 `doc/api/openapi.json` 接入并验证。响应的 `X-Request-ID` 和 `X-Run-ID` 自动进入运行详情。每个非公开前端动作检查自身权限，后台继续检查身份、组织和对象范围。
 
-访问令牌只放内存，不写浏览器存储，也不自动刷新。刷新页面重新登录。退出当前页面仅清除访问凭据；如产品需要完整后台会话撤销或跨页面会话保持，应明确安全要求后增加统一会话能力。
+访问令牌只放内存，不写浏览器存储，也不自动刷新，刷新页面后重新登录。退出登录清除本页凭据和运行记录，并阻止旧动作继续发请求；会话过期时离开受限页面。后台会话撤销与跨页面会话保持需要产品另行明确要求并统一实现。
 
 生产执行 `VITE_API_MODE=real npm run build`，将 `dist/` 放入静态资源目录。`deploy/nginx.conf` 提供同源部署参考，放在已有 `nginx.conf` 的 `http {}` 内；官方 Nginx 镜像可将它放到 `/etc/nginx/conf.d/default.conf`。它监听 8080，静态目录为 `/usr/share/nginx/html`，不是已经部署的服务。
 
-`/api` 和 `/api/` 保留原始路径代理到 `http://127.0.0.1:8000`。容器内的 127.0.0.1 是该容器自身，独立后端容器需要改成实际服务地址。配置关闭代理自动重试、API 缓冲和 gzip，并请求后台不压缩响应，允许 SSE 数据及时发送；前端仍需要使用适合该接口的流式读取。上传参考限额为 12 MiB，容纳当前 10 MiB 文件样例及 multipart 开销；生产应按后台实际限额、代理层限制和请求格式调整，前端限制不能代替后台检查。[Nginx 代理说明](https://nginx.org/en/docs/http/ngx_http_proxy_module.html)
+`/api` 和 `/api/` 保留原始路径代理到 `http://127.0.0.1:8000`。容器内的 127.0.0.1 是该容器自身，独立后端容器需要改成实际服务地址。配置关闭代理自动重试、API 缓冲和 gzip，并请求后台不压缩响应，允许 SSE 数据及时发送；前端仍需要使用适合该接口的流式读取。上传参考限额为 12 MiB，容纳当前 10 MB（10,000,000 字节）的文件样例及 multipart 开销；生产按后台限额、代理限制和请求格式调整，后台仍要校验上传大小。[Nginx 代理说明](https://nginx.org/en/docs/http/ngx_http_proxy_module.html)
 
 HTML 和 SPA 路径使用 `Cache-Control: no-store`。成功返回且打包后带哈希的 `/assets/` 资源可缓存一年；缺失资源返回 404，不回到首页，也不长期缓存。隐藏静态文件及 `.map` 返回 404。静态 JS/CSS 支持 gzip，API 响应不由此配置压缩。[Nginx 压缩说明](https://nginx.org/en/docs/http/ngx_http_gzip_module.html)
 

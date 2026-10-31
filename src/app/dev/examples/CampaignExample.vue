@@ -1,5 +1,4 @@
 <script setup lang="ts">
-/** 独立活动编辑示例：验证输入，只在当前页面内保存，不向外发送通知。 */
 import { computed, nextTick, ref } from "vue";
 import { useUnsaved } from "@/shared/public";
 import {
@@ -65,7 +64,6 @@ const initial: Campaign = {
   reminder: true,
 };
 
-/** 数组独立复制，修改草稿不会改变已保存的示例。 */
 function copy(campaign: Campaign): Campaign {
   return {
     ...campaign,
@@ -86,7 +84,6 @@ const dirty = computed(
 );
 useUnsaved(dirty, "活动有未保存的修改。确认离开吗？");
 
-/** 日期按自然日比较；合法格式的年月日字符串与先后顺序一致。 */
 function validDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const year = Number(value.slice(0, 4));

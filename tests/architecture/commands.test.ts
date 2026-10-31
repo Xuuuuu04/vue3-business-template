@@ -1,9 +1,10 @@
-/** 日常命令写错参数时直接报错；impact 在仓库子目录和没有 Git 的目录里给出正确结果或中文提示。 */
 import { expect, test } from "vitest";
 import {
   mkdtempSync,
   mkdirSync,
   writeFileSync,
+  readFileSync,
+  existsSync,
   symlinkSync,
   rmSync,
 } from "node:fs";
@@ -17,7 +18,6 @@ interface Outcome {
   stdout: string;
   stderr: string;
 }
-/** 并行启动命令，返回退出码和输出；失败不抛出，由用例判断。 */
 function command(
   tool: string,
   args: string[],
@@ -29,7 +29,6 @@ function command(
       ["--import", "tsx", resolve(tool), ...args],
       {
         cwd: options.cwd ?? process.cwd(),
-        // 在别的目录运行模板工具时，@/ 路径仍按模板的 tsconfig 解析。
         env: {
           ...process.env,
           TSX_TSCONFIG_PATH: resolve("tsconfig.json"),
@@ -53,7 +52,6 @@ test("参数写错、少写 -- 或缺值时报中文错误，不带 Node 堆栈�
     ["tools/project.ts", ["--modul", "orders"], {}, "不认识的参数 --modul"],
     ["tools/project.ts", ["orders"], {}, "多余的参数 orders"],
     ["tools/project.ts", ["--module"], {}, "--module 后面要写值"],
-    // npm run project --module orders：npm 吃掉 --module，只把 orders 传给工具。
     [
       "tools/project.ts",
       [],
@@ -62,6 +60,12 @@ test("参数写错、少写 -- 或缺值时报中文错误，不带 Node 堆栈�
     ],
     ["tools/check.ts", ["--modul", "orders"], {}, "不认识的参数 --modul"],
     ["tools/impact.ts", ["--base"], {}, "--base 后面要写值"],
+    ["tools/update-framework.ts", ["--source"], {}, "--source 后面要写值"],
+    ["tools/update-framework.ts", ["--apply"], {}, "缺少 --source"],
+    ["tools/update-framework.ts", ["--aply"], {}, "不认识的参数 --aply"],
+    ["tools/export-docs.ts", ["--chek"], {}, "不认识的参数 --chek"],
+    ["tools/framework-lock.ts", ["--unknown"], {}, "不认识的参数 --unknown"],
+    ["tools/browser-check.ts", ["--unknown"], {}, "不认识的参数 --unknown"],
     ["tools/runs.ts", ["--run", "x"], {}, "缺少 --file"],
     [
       "tools/api.ts",
@@ -147,7 +151,6 @@ test("project 分开显示整仓和单包记录，单包通过不能代替整仓
     mkdirSync(join(root, "var/checks"), { recursive: true });
     const save = (file: string, record: Record<string, unknown>) =>
       writeFileSync(join(root, "var/checks", file), JSON.stringify(record));
-    // 整仓那一轮失败后代码又改了；之后单包检查通过。
     save("full.json", {
       fingerprint: "旧代码",
       scope: "全部框架和业务包",
@@ -172,3 +175,79 @@ test("project 分开显示整仓和单包记录，单包通过不能代替整仓
     rmSync(root, { recursive: true, force: true });
   }
 }, 60000);
+
+test("impact 把公共配置、依赖和检查的改动列入完整检查", async () => {
+  const root = mkdtempSync(join(tmpdir(), "vue-impact-config-"));
+  const git = (...args: string[]) =>
+    execFileSync("git", args, { cwd: root, stdio: "pipe" });
+  try {
+    writeFileSync(join(root, ".gitignore"), "node_modules\n");
+    symlinkSync(resolve("node_modules"), join(root, "node_modules"), "dir");
+    git("init", "-q");
+    git("add", ".gitignore");
+    git(
+      "-c",
+      "user.name=检查",
+      "-c",
+      "user.email=check@example.com",
+      "commit",
+      "-qm",
+      "初始",
+    );
+    for (const name of [
+      "package.json",
+      "package-lock.json",
+      "tsconfig.json",
+      "vitest.config.ts",
+      "playwright.config.ts",
+      "tests/framework/中文检查.test.ts",
+      ".github/workflows/check.yml",
+      "src/app/login.config.ts",
+    ]) {
+      const file = join(root, name);
+      mkdirSync(join(file, ".."), { recursive: true });
+      writeFileSync(file, "{}");
+      const result = await command("tools/impact.ts", [], { cwd: root });
+      expect(result.status, name).toBe(0);
+      const report = JSON.parse(result.stdout);
+      expect(report.changed, name).toContain(name);
+      expect(report.framework, name).toBe(true);
+      expect(report.commands, name).toEqual(["npm run check"]);
+      rmSync(file);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}, 60000);
+
+test("浏览器预检查失败会替换旧成功记录，并清除旧测试统计", async () => {
+  const root = mkdtempSync(join(tmpdir(), "vue-browser-record-"));
+  try {
+    symlinkSync(resolve("node_modules"), join(root, "node_modules"), "dir");
+    mkdirSync(join(root, "tools"));
+    mkdirSync(join(root, "var/checks"), { recursive: true });
+    writeFileSync(join(root, "tools/check.ts"), "process.exit(1);\n");
+    writeFileSync(
+      join(root, "var/checks/browser.json"),
+      JSON.stringify({
+        fingerprint: fingerprint(root),
+        status: "通过",
+        stats: { expected: 20 },
+      }),
+    );
+    const oldReport = join(root, "var/checks/browser-tests.json");
+    writeFileSync(oldReport, JSON.stringify({ stats: { expected: 20 } }));
+    const result = await command("tools/browser-check.ts", [], { cwd: root });
+    expect(result.status).toBe(1);
+    const record = JSON.parse(
+      readFileSync(join(root, "var/checks/browser.json"), "utf8"),
+    );
+    expect(record.status).toBe("失败");
+    expect(record.fingerprint).toBe(fingerprint(root));
+    expect(record.error).toContain("tools/check.ts --structure");
+    expect(record.stats).toBeUndefined();
+    expect(existsSync(oldReport)).toBe(false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

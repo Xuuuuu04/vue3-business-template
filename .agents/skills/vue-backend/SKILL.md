@@ -7,25 +7,26 @@ description: 前端要对接 FastAPI 后端、核对接口路径与字段、或�
 
 登录接口约定写在产品自己的 `src/app/login.config.ts`（不受框架保护，改了不用 `--accept`）：接口路径、是否填写组织代码、请求字段、回包怎么整理成 `access_token`、`expires_in`、`org_id`。默认值与后端模板的账号包一致：POST `/api/v1/access/login`，请求 `org_code`、`username`、`password`、`otp_code`，回包至少有非空 `access_token`、Bearer `token_type`、正整数 `expires_in` 和非空 `org_id`。后台不分组织时把 `orgCode` 改成 `false`。框架只负责调用、校验回包和把令牌存在页面内存里，不保存或自动使用刷新令牌。实际后台必须验证身份与权限。
 
-接口路径和响应类型写在包的 `api.ts` 与 `data.ts`，现在是手写的，要和后端保持一致。后端导出的 `doc/api/openapi.json`（FastAPI 模板里由 `fastapi-docs` 生成）是对照来源。
+接口路径和响应类型写在包的 `api.ts` 与 `data.ts`，要和后端保持一致。FastAPI 模板在 `server/` 执行 `uv run dev docs` 导出 `doc/api/openapi.json`，作为对照来源。
 
 ## 对照与生成
 
 ```bash
-# 检查所有业务包登记的接口：路径是否存在，返回字段的名称、必填、可空、类型是否一致
 npm run api -- check --openapi ../后端/doc/api/openapi.json [--module 包名]
-# 按路径前缀生成接口登记和 Zod 类型代码（输出到屏幕），作为写 api.ts、data.ts 的起点
 npm run api -- gen --openapi ../后端/doc/api/openapi.json --prefix /api/v1/orders --module orders
 ```
 
-`check` 有问题时退出码为 1，可以放进交付前检查。它只比较文档声明，不能证明后端真的这样返回；真实返回仍以运行时的响应检查和真实后台验证为准。
+`check` 比较接口路径、方法和响应字段的名称、必填、可空与类型，有问题时退出码为 1。`gen` 把接口登记和 Zod 类型输出到屏幕，字段含义保存在 schema 的 `.describe()`，不生成说明注释，也不直接改业务文件。真实回包还要经过运行时响应检查，并按下面的方法连接真实后台验证。
 
 ## 新接一个接口
 
 1. 在后端 `doc/api/openapi.json` 找到这个接口：路径、方法、请求字段、响应字段、错误响应。
 2. 在 `api.ts` 登记：`id`、`method`、`path`、响应的 Zod 类型。路径与后端一字不差；响应类型按 openapi 写，字段含义写进 `data.ts`。
 3. 后端字段改了（名称、可空、枚举），前端响应检查会在运行时报错，不会悄悄显示空值。改完 openapi 要重新对照 `api.ts`，不要放宽 Zod 类型去"让它通过"。
-4. 同源请求：开发时 `VITE_API_MODE=real npm run dev:real` 会把 `/api` 代理到 `API_PROXY_TARGET`（默认 `http://127.0.0.1:8000`）。
+4. 同源请求：开发时 `npm run dev:real` 把 `/api` 代理到 `API_PROXY_TARGET`（默认 `http://127.0.0.1:8000`）。
+5. 每个非公开动作声明自身权限，后台每个操作再检查权限；前端不能代替后台做组织、对象归属和金额校验。金额按接口约定保留精度，数据库金额查询在后端的 PostgreSQL 测试中验证。
+
+登录、退出或会话变化后，旧动作不能用新身份继续发请求；会话过期时离开受限页面，重新登录后重新查询。变化之前已经发出的写请求仍可能生效，不能因为前端停止操作就重新提交。
 
 ## 真实后台验证
 

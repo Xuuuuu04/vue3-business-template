@@ -1,9 +1,8 @@
-/** 共用执行器、主题、工具与检查的版本保护；不是操作系统权限隔离。 */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { relative } from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { filesBelow, direct } from "./lib";
+import { filesBelow, direct, parseArgs } from "./lib";
 import { safeTemplatePath } from "./template-paths";
 const trees = [
   "src/shared",
@@ -24,14 +23,13 @@ const singles = [
   "tsconfig.json",
   ".github/workflows/check.yml",
 ];
-/** 产品自己的文件：不受保护，升级时只在产品里还没有时补一份。 */
+
 export const productFiles = [
   "src/app/catalog.ts",
   "src/app/app.config.ts",
   "src/app/login.config.ts",
 ];
 
-/** 旧版本清单也只能指向框架范围，不能把业务或任意文件交给更新器。 */
 export function isFrameworkPath(name: string) {
   return (
     !productFiles.includes(name) &&
@@ -69,15 +67,12 @@ export function verifyLock(root = process.cwd()) {
     .filter((name) => saved[name] !== current[name])
     .map((name) => `框架文件 ${name} 已改变，需要单独检查并更新保护记录`);
 }
-/** 只测模板工具本身（生成器、建产品、升级）的测试；产品框架没改时沿用模板的验证。 */
+
 export const templateToolTests = [
   "tests/architecture/generators.test.ts",
   "tests/framework/template-paths.test.ts",
 ];
-/**
- * 产品的框架文件和创建或最近一次升级时的模板原文逐个一致时，返回模板来源提交；
- * 模板仓库自己没有 .template/base.json，产品改过框架时也返回 undefined，照常运行全部测试。
- */
+
 export function unchangedTemplateSource(root = process.cwd()) {
   const basePath = safeTemplatePath(root, ".template/base.json");
   if (!existsSync(basePath)) return undefined;
@@ -86,7 +81,7 @@ export function unchangedTemplateSource(root = process.cwd()) {
     string
   >;
   const current = lockData(root);
-  // 登记表由产品自己的生成器维护，不算框架改动。
+
   const names = (record: object) =>
     Object.keys(record)
       .filter((name) => name !== "scaffold.json")
@@ -99,12 +94,19 @@ export function unchangedTemplateSource(root = process.cwd()) {
       return undefined;
   const sourcePath = safeTemplatePath(root, ".template/source.json");
   const source = existsSync(sourcePath)
-    ? (JSON.parse(readFileSync(sourcePath, "utf8")) as { commit?: string })
+    ? (JSON.parse(readFileSync(sourcePath, "utf8")) as {
+        commit?: string;
+        dirty?: boolean;
+      })
     : {};
-  return source.commit ?? "来源未记录";
+  const commit = source.commit ?? "来源未记录";
+  return source.dirty ? `${commit}（含未提交改动）` : commit;
 }
 if (direct(fileURLToPath(import.meta.url))) {
-  if (process.argv[2] !== "--accept")
+  const args = parseArgs("用法：npm run framework -- --accept", {
+    flags: ["--accept"],
+  });
+  if (!args.flags.has("--accept"))
     throw new Error(
       "修改共用文件后，先单独检查差异，再用 npm run framework -- --accept 更新保护记录",
     );

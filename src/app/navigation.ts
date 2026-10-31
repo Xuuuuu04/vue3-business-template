@@ -1,7 +1,6 @@
 import type { Module, ModuleNavigation } from "@/shared/modules/definitions";
 import type { NavItem } from "@/shared/ui/lib/types";
 
-/** 按页面权限裁剪菜单，保留仍有可访问子页面的目录。后台继续检查实际权限。 */
 export function moduleNavigation(
   module: Module,
   can: (permission: string) => boolean,
@@ -24,7 +23,8 @@ export function moduleNavigation(
   }
   const children = build(module.navigation ?? []);
   const only = children.length === 1 ? children[0] : undefined;
-  if (only && only.label === module.title && !only.children?.length) return only;
+  if (only && only.label === module.title && !only.children?.length)
+    return only;
   const first = module.pages.find(
     (p) => !p.path.includes(":") && (!p.permission || can(p.permission)),
   );

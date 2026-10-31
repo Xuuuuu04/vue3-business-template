@@ -26,7 +26,7 @@ const state = upload.state;
 const query = list.state;
 const session = useSession();
 const org = session.state.value.org;
-/** 样板的上传上限（规则 R-03），真实上限以后台为准。 */
+
 const LIMIT = 10 * 1024 * 1024;
 const tooLarge = computed(() => (selected.value?.size ?? 0) > LIMIT);
 async function submit() {

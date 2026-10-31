@@ -1,4 +1,3 @@
-/** 确认样例来自 doc/file_library/rules.md；假服务只验证前端处理。 */
 import { expect, test } from "vitest";
 import { createTask, useBatch } from "@/shared/public";
 import { listFiles, uploadFile, deleteFile } from "../flow";
@@ -85,10 +84,25 @@ test("R-10：批量删除逐个执行，失败继续，结果未知时停止且�
       return replies[id]!();
     });
     const batch = useBatch();
-    return batch.run(task, ids.map((id) => ({ key: id, label: id, input: { org: "demo-team", id } })));
+    return batch.run(
+      task,
+      ids.map((id) => ({
+        key: id,
+        label: id,
+        input: { org: "demo-team", id },
+      })),
+    );
   };
-  expect((await run(["a", "b", "c"])).map((i) => i.status)).toEqual(["ok", "failed", "ok"]);
+  expect((await run(["a", "b", "c"])).map((i) => i.status)).toEqual([
+    "ok",
+    "failed",
+    "ok",
+  ]);
   calls.length = 0;
-  expect((await run(["a", "b", "c"], "b")).map((i) => i.status)).toEqual(["ok", "unknown", "skipped"]);
+  expect((await run(["a", "b", "c"], "b")).map((i) => i.status)).toEqual([
+    "ok",
+    "unknown",
+    "skipped",
+  ]);
   expect(calls).toEqual(["a", "b"]);
 });

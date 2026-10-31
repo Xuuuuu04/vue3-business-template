@@ -1,4 +1,3 @@
-/** 字段错误只作显示：限制数量和路径，清理敏感说明，不合并到业务数据。 */
 export type FieldErrors = Readonly<Record<string, string>>;
 
 export function fieldErrorsFrom(

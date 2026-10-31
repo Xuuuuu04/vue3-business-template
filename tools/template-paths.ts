@@ -1,4 +1,3 @@
-/** 模板工具只读写项目内的普通路径，链接也不参与自动更新。 */
 import { lstatSync } from "node:fs";
 import { isAbsolute, resolve } from "node:path";
 

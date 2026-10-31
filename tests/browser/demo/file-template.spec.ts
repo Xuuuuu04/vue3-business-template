@@ -7,15 +7,15 @@ test("功能地图显示操作的执行过程、接口与代码位置", async ({
   ).toBeVisible();
   await page.getByRole("button", { name: /查看文件列表/ }).click();
   await expect(page.getByText("读取这一页的文件")).toBeVisible();
-  await expect(page.getByText("GET /api/v1/files/:org", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("GET /api/v1/files/:org", { exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByText("src/modules/file_library/steps/read.ts:", { exact: false }),
   ).toHaveCount(2);
   await expect(page.getByText("/files", { exact: true }).first()).toBeVisible();
 });
 
-
-/** 功能地图是静态登记数据；业务实现不应随公共样板一起下载。 */
 test("功能地图可独立查看，进入业务页面才加载计算步骤", async ({ page }) => {
   const stepRequests: string[] = [];
   page.on("request", (request) => {

@@ -10,7 +10,11 @@ initTheme();
 import { setAuthorization } from "./shared/actions/runtime";
 import { useSession } from "./shared/public";
 setAuthorization(useSession().can);
-import { startPerformance, recordSignal, navigationName } from "./shared/records/performance";
+import {
+  startPerformance,
+  recordSignal,
+  navigationName,
+} from "./shared/records/performance";
 const stopPerformance = startPerformance();
 let navigationStarted = performance.now();
 router.beforeEach(() => {

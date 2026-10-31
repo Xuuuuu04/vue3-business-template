@@ -1,4 +1,3 @@
-/** 只有登记页面进入路由，未知页面显示明确入口，返回时恢复滚动位置。 */
 import { createRouter, createWebHistory } from "vue-router";
 import { validateEnabledModules } from "@/shared/modules/definitions";
 import { useSession } from "@/shared/public";
@@ -30,22 +29,74 @@ export const router = createRouter({
     ),
     { path: "/forbidden", component: () => import("./ForbiddenPage.vue") },
     { path: "/welcome", component: () => import("./WelcomePage.vue") },
-    { path: "/settings", component: () => import("./SettingsPage.vue"), meta: { title: "偏好设置" } },
-    { path: "/login", component: () => import("./LoginPage.vue"), meta: { title: "登录" } },
-    { path: "/legal/:kind(terms|privacy)", component: () => import("./LegalPage.vue"), meta: { title: "协议与政策" } },
+    {
+      path: "/settings",
+      component: () => import("./SettingsPage.vue"),
+      meta: { title: "偏好设置" },
+    },
+    {
+      path: "/login",
+      component: () => import("./LoginPage.vue"),
+      meta: { title: "登录" },
+    },
+    {
+      path: "/legal/:kind(terms|privacy)",
+      component: () => import("./LegalPage.vue"),
+      meta: { title: "协议与政策" },
+    },
     ...(consoleEnabled
       ? [
-          { path: "/dev", component: () => import("./dev/DevHome.vue"), meta: { title: "接入与说明" } },
-          { path: "/dev/map", component: () => import("./dev/FeatureMap.vue"), meta: { title: "功能地图" } },
-          { path: "/dev/records", component: () => import("./dev/Records.vue"), meta: { title: "操作记录" } },
-          { path: "/dev/speed", component: () => import("./dev/Speed.vue"), meta: { title: "页面速度" } },
-          { path: "/dev/design", component: () => import("./dev/DesignGuide.vue"), meta: { title: "设计预览" } },
+          {
+            path: "/dev",
+            component: () => import("./dev/DevHome.vue"),
+            meta: { title: "接入与说明" },
+          },
+          {
+            path: "/dev/map",
+            component: () => import("./dev/FeatureMap.vue"),
+            meta: { title: "功能地图" },
+          },
+          {
+            path: "/dev/records",
+            component: () => import("./dev/Records.vue"),
+            meta: { title: "操作记录" },
+          },
+          {
+            path: "/dev/speed",
+            component: () => import("./dev/Speed.vue"),
+            meta: { title: "页面速度" },
+          },
+          {
+            path: "/dev/design",
+            component: () => import("./dev/DesignGuide.vue"),
+            meta: { title: "设计预览" },
+          },
           { path: "/dev/examples", redirect: "/dev/examples/overview" },
-          { path: "/dev/examples/overview", component: () => import("./dev/examples/OverviewExample.vue"), meta: { title: "经营总览" } },
-          { path: "/dev/examples/customers", component: () => import("./dev/examples/CustomersExample.vue"), meta: { title: "客户管理" } },
-          { path: "/dev/examples/campaign", component: () => import("./dev/examples/CampaignExample.vue"), meta: { title: "活动编辑" } },
-          { path: "/dev/examples/approval", component: () => import("./dev/examples/ApprovalExample.vue"), meta: { title: "采购审批" } },
-          { path: "/dev/examples/inbox", component: () => import("./dev/examples/InboxExample.vue"), meta: { title: "客服会话" } },
+          {
+            path: "/dev/examples/overview",
+            component: () => import("./dev/examples/OverviewExample.vue"),
+            meta: { title: "经营总览" },
+          },
+          {
+            path: "/dev/examples/customers",
+            component: () => import("./dev/examples/CustomersExample.vue"),
+            meta: { title: "客户管理" },
+          },
+          {
+            path: "/dev/examples/campaign",
+            component: () => import("./dev/examples/CampaignExample.vue"),
+            meta: { title: "活动编辑" },
+          },
+          {
+            path: "/dev/examples/approval",
+            component: () => import("./dev/examples/ApprovalExample.vue"),
+            meta: { title: "采购审批" },
+          },
+          {
+            path: "/dev/examples/inbox",
+            component: () => import("./dev/examples/InboxExample.vue"),
+            meta: { title: "客服会话" },
+          },
           { path: "/system/console", redirect: "/dev/map" },
           { path: "/system/components", redirect: "/dev/design" },
         ]

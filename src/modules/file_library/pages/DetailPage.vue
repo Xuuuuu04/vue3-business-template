@@ -29,7 +29,7 @@ const id = computed(() => String(route.params.id));
 const state = detail.state;
 const removal = remove.state;
 const downloading = download.state;
-// 列表与同一文件刷新可保留旧数据；详情只能显示属于当前编号的结果。
+
 const file = computed(() =>
   state.value.data?.id === id.value ? state.value.data : undefined,
 );
@@ -45,7 +45,7 @@ const returnTo = computed(() =>
     ? String(route.query.returnTo)
     : "/files",
 );
-/** 预览内容只属于当前文件；换文件时清空，等用户再点“显示预览”。 */
+
 const previewOf = ref("");
 const previewBlob = computed(() =>
   previewOf.value === id.value && preview.state.value.status === "success"
@@ -171,7 +171,7 @@ async function downloadCurrent() {
     <UiDialog
       v-model:open="confirm"
       title="删除这个文件？"
-      :description="`「${confirmedFile?.name}」删除后不能恢复，也无法再从这里下载。`"
+      :description="`“${confirmedFile?.name}”删除后不能恢复，也无法再从这里下载。`"
       ><template #footer
         ><UiButton
           :disabled="removal.status === 'loading'"

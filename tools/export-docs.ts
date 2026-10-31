@@ -1,13 +1,11 @@
-/** 从模块清单和函数位置导出 AI 图入口；规则说明仍由人和主代理维护。 */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { modules } from "../src/app/catalog";
 import { loadBusinessModules } from "../src/shared/modules/definitions";
 import { describe } from "../src/shared/modules/graph";
 import { sourceIndex } from "./inspect";
-import { direct, sourceFingerprint } from "./lib";
-export async function documentation() {
-  const sources = sourceIndex();
+import { direct, sourceFingerprint, parseArgs } from "./lib";
+export async function documentation(sources = sourceIndex()) {
   const graph = describe(
     await loadBusinessModules(modules),
     (id) => sources[id],
@@ -56,15 +54,12 @@ export async function documentation() {
   }
   return docs;
 }
-/** 只由源码指纹算出的派生文件，和登记无关：本机检查、开发守卫和打包自己重新生成。 */
+
 const derived = new Set(["src/generated/version.json"]);
-/**
- * 本机检查用：派生文件不同就直接重写，和登记有关的生成内容只比较，返回需要运行 docs 的文件。
- * docs --check 仍然逐个比较全部文件，留给 CI。
- */
-export async function refreshDerived() {
+
+export async function refreshDerived(sources = sourceIndex()) {
   const stale: string[] = [];
-  for (const [file, content] of Object.entries(await documentation())) {
+  for (const [file, content] of Object.entries(await documentation(sources))) {
     if (existsSync(file) && readFileSync(file, "utf8") === content) continue;
     if (derived.has(file)) {
       mkdirSync(file.slice(0, file.lastIndexOf("/")), { recursive: true });
@@ -89,9 +84,12 @@ export async function exportDocs(check = false) {
   return Object.keys(expected);
 }
 if (direct(fileURLToPath(import.meta.url))) {
-  await exportDocs(process.argv.includes("--check"));
+  const args = parseArgs("用法：npm run docs [-- --check]", {
+    flags: ["--check"],
+  });
+  await exportDocs(args.flags.has("--check"));
   console.log(
-    process.argv.includes("--check")
+    args.flags.has("--check")
       ? "生成内容与代码一致。"
       : "已生成图、函数位置和模块说明。",
   );

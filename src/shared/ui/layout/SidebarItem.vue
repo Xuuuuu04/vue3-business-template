@@ -1,5 +1,4 @@
 <script setup lang="ts">
-/** 可递归的菜单节点：链接与展开按钮分开，目录不产生无效地址。 */
 import { ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 import { ChevronDown, Folder } from "lucide-vue-next";

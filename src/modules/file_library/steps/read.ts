@@ -1,4 +1,3 @@
-/** 读取列表与详情；转换步骤单独登记，使数据来源和后续处理可定位。 */
 import { defineStep, type StepTools } from "@/shared/public";
 import type { FilePage, FileView, ListWork, ItemWork } from "../data";
 async function readPage(data: ListWork, tools: StepTools) {

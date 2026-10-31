@@ -1,6 +1,12 @@
-/** 主题设置：应用到 <html>、保存在浏览器、供界面切换。保存失败时仍可正常显示。 */
 import { reactive, readonly } from "vue";
-import { paletteById, type Density, type Mode, type Radius, type SidebarStyle, type Texture } from "./presets";
+import {
+  paletteById,
+  type Density,
+  type Mode,
+  type Radius,
+  type SidebarStyle,
+  type Texture,
+} from "./presets";
 
 export interface ThemeSettings {
   palette: string;
@@ -9,28 +15,47 @@ export interface ThemeSettings {
   density: Density;
   sidebar: SidebarStyle;
   texture: Texture;
-  /** 自定义品牌色相；为空时使用配色自带的品牌色。 */
+
   brandHue: number | null;
 }
 
 const STORAGE_KEY = "ui-theme";
 
-/** 产品默认主题。换产品时改这里，或在初始化时调用 setDefaultTheme。 */
 let defaults: ThemeSettings = {
-  palette: "graphite", mode: "light", radius: "soft", density: "comfortable", sidebar: "light", texture: "dots", brandHue: null,
+  palette: "graphite",
+  mode: "light",
+  radius: "soft",
+  density: "comfortable",
+  sidebar: "light",
+  texture: "dots",
+  brandHue: null,
 };
 const state = reactive<ThemeSettings>({ ...defaults });
 
-export function applyTheme(settings: ThemeSettings, root: HTMLElement = document.documentElement) {
+export function applyTheme(
+  settings: ThemeSettings,
+  root: HTMLElement = document.documentElement,
+) {
   const p = paletteById(settings.palette);
-  const set = (name: string, value: string) => root.style.setProperty(name, value);
+  const set = (name: string, value: string) =>
+    root.style.setProperty(name, value);
   set("--n-h", String(p.neutralHue));
   set("--n-c", String(p.neutralChroma));
   set("--b-h", String(settings.brandHue ?? p.brandHue));
-  // 墨黑在深色界面改用亮底按钮，主要入口仍能从工作表面中清楚显现。
-  const inverseInk = p.id === "ink" && settings.mode === "dark" && settings.brandHue === null;
+
+  const inverseInk =
+    p.id === "ink" && settings.mode === "dark" && settings.brandHue === null;
   set("--b-l", String(inverseInk ? 0.92 : p.brandLightness));
-  set("--b-c", String(inverseInk ? 0.006 : settings.brandHue === null ? p.brandChroma : Math.max(p.brandChroma, 0.14)));
+  set(
+    "--b-c",
+    String(
+      inverseInk
+        ? 0.006
+        : settings.brandHue === null
+          ? p.brandChroma
+          : Math.max(p.brandChroma, 0.14),
+    ),
+  );
   set("--on-primary", inverseInk ? "oklch(0.2 0.01 265)" : p.onPrimary);
   root.dataset.mode = settings.mode;
   root.dataset.radius = settings.radius;
@@ -52,11 +77,10 @@ function save() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
-    /* 浏览器不允许保存时，本次仍然生效 */
+    console.warn("浏览器无法保存外观设置，刷新后会恢复默认设置。");
   }
 }
 
-/** 应用入口调用一次：读取已保存主题，没有就用产品默认值。 */
 export function initTheme() {
   Object.assign(state, defaults, load());
   applyTheme(state);
@@ -67,10 +91,14 @@ export function setDefaultTheme(next: Partial<ThemeSettings>) {
 }
 
 export function useTheme() {
-  /** 选择配色时，明暗与侧栏风格一起带上该配色的推荐值。 */
   function choosePalette(id: string) {
     const p = paletteById(id);
-    Object.assign(state, { palette: id, mode: p.mode, sidebar: p.sidebar, brandHue: null });
+    Object.assign(state, {
+      palette: id,
+      mode: p.mode,
+      sidebar: p.sidebar,
+      brandHue: null,
+    });
     applyTheme(state);
     save();
   }

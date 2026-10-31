@@ -1,4 +1,3 @@
-/** 模拟廉价代理常见误写，验证检查能指出具体文件。 */
 import { expect, test } from "vitest";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -109,8 +108,38 @@ test("页面和步骤不能导入 demo.ts，演示数据不进生产包", () => 
   const root = fixture("import demo from './demo'; export const x = demo;");
   writeFileSync(join(root, "src/modules/sample/demo.ts"), "export default {};");
   try {
-    const errors = inspectModule(root, { ...base, files: [...base.files, "demo.ts"] });
+    const errors = inspectModule(root, {
+      ...base,
+      files: [...base.files, "demo.ts"],
+    });
     expect(errors.join(" ")).toContain("demo.ts 只给演示服务用");
+  } finally {
+    rmSync(root, { recursive: true });
+  }
+});
+
+test("业务动作必须声明自身权限，公开操作也要明确登记", async () => {
+  const { z } = await import("zod");
+  const root = fixture("export const value = 1;");
+  const action = {
+    id: "sample.read",
+    title: "读取",
+    input: z.object({}),
+    inputFields: [],
+    fields: { result: { title: "结果", schema: z.string().default("") } },
+    result: "result",
+    steps: [],
+  };
+  try {
+    expect(
+      inspectModule(root, { ...base, actions: [action] }).join("\n"),
+    ).toContain("动作必须声明自身权限");
+    expect(
+      inspectModule(root, {
+        ...base,
+        actions: [{ ...action, permission: "public" }],
+      }).join("\n"),
+    ).not.toContain("动作必须声明自身权限");
   } finally {
     rmSync(root, { recursive: true });
   }

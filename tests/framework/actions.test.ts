@@ -1,4 +1,3 @@
-/** 使用故意写错的步骤验证运行限制，不只测试正确路径。 */
 import { expect, test } from "vitest";
 import { z } from "zod";
 import {

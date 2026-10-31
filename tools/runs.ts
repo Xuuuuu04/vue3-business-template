@@ -1,9 +1,8 @@
-/** 读取浏览器导出的实际记录，为接手代理提供限定动作的中文报告。 */
 import { existsSync, readFileSync } from "node:fs";
 import { z } from "zod";
 import { parseArgs, usageError } from "./lib";
 const usage = `用法：npm run runs -- --file 文件路径 [--run 运行编号] [--json]
-  先在「开发者工具 → 操作记录」导出 JSON，再用这条命令读取。`;
+  先在“开发者工具 → 操作记录”导出 JSON，再用这条命令读取。`;
 const args = parseArgs(usage, {
   flags: ["--json"],
   options: ["--file", "--run"],

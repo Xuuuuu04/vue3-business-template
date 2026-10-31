@@ -45,7 +45,8 @@ const module: Module = {
 describe("多级导航", () => {
   it("模块只有一个同名公开入口时直接显示入口，避免重复目录与旧样板入口", () => {
     const single: Module = {
-      ...module, title: "总额计算",
+      ...module,
+      title: "总额计算",
       pages: [page("main", "/calculation"), page("form", "/calculation/form")],
       navigation: [{ label: "总额计算", page: "form" }],
     };

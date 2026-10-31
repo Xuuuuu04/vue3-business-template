@@ -1,7 +1,10 @@
 <script setup lang="ts">
-/** 骨架：读取期间占住最终内容的位置，避免页面跳动。 */
 defineProps<{ width?: string; height?: string }>();
 </script>
 <template>
-  <span class="block rounded-md bg-[linear-gradient(90deg,var(--muted)_25%,var(--line)_37%,var(--muted)_63%)] bg-[length:400%_100%] animate-[shimmer_1.3s_infinite]" :style="{ width: width ?? '100%', height: height ?? '12px' }" aria-hidden="true" />
+  <span
+    class="block rounded-md bg-[linear-gradient(90deg,var(--muted)_25%,var(--line)_37%,var(--muted)_63%)] bg-[length:400%_100%] animate-[shimmer_1.3s_infinite]"
+    :style="{ width: width ?? '100%', height: height ?? '12px' }"
+    aria-hidden="true"
+  />
 </template>

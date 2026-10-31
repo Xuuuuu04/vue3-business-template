@@ -1,4 +1,3 @@
-/** 仅清单登记的文件、页面与动作能够进入产品。 */
 import { defineModule } from "@/shared/public";
 export default defineModule({
   name: "file_library",
@@ -6,9 +5,7 @@ export default defineModule({
   description: "按团队查看、上传、下载与删除文件",
   icon: "folder",
   dependsOn: [],
-  navigation: [
-    { label: "上传文件", page: "file_library.upload_page" },
-  ],
+  navigation: [{ label: "上传文件", page: "file_library.upload_page" }],
   files: [
     "README.md",
     "module.ts",

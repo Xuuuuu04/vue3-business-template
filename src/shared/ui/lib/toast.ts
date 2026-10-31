@@ -1,15 +1,26 @@
-/** 轻提示的共用状态：任何地方调用 useToast，Toaster 负责显示。 */
 import { reactive } from "vue";
-export interface ToastItem { id: number; tone: "ok" | "bad" | "info"; text: string }
+export interface ToastItem {
+  id: number;
+  tone: "ok" | "bad" | "info";
+  text: string;
+}
 const items = reactive<ToastItem[]>([]);
 let next = 1;
+const timers = new Map<number, ReturnType<typeof setTimeout>>();
+export function clearToasts() {
+  for (const timer of timers.values()) clearTimeout(timer);
+  timers.clear();
+  items.splice(0);
+}
 function push(tone: ToastItem["tone"], text: string, ms = 3200) {
   const id = next++;
   items.push({ id, tone, text });
-  setTimeout(() => {
+  const timer = setTimeout(() => {
+    timers.delete(id);
     const at = items.findIndex((t) => t.id === id);
     if (at >= 0) items.splice(at, 1);
   }, ms);
+  timers.set(id, timer);
 }
 export function useToast() {
   return {

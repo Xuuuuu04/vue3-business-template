@@ -1,5 +1,4 @@
 <script setup lang="ts">
-/** 采购审批的交互示例。金额以整数分计算，审批结果仅保留在本页内存中。 */
 import { computed, ref } from "vue";
 import { useUnsaved } from "@/shared/public";
 import {
@@ -27,7 +26,7 @@ interface PurchaseItem {
   name: string;
   specification: string;
   quantity: number;
-  /** 含税单价，单位为分。 */
+
   unitPriceCents: number;
   subtotalCents: number;
 }
@@ -134,7 +133,10 @@ const returnAttempted = ref(false);
 const decisionTime = ref("");
 const decisionReason = ref("");
 const pending = computed(() => status.value === "pending");
-useUnsaved(computed(() => pending.value && Boolean(returnReason.value.trim())), "退回原因尚未提交。确认离开吗？");
+useUnsaved(
+  computed(() => pending.value && Boolean(returnReason.value.trim())),
+  "退回原因尚未提交。确认离开吗？",
+);
 const statusLabel = computed(
   () =>
     ({ pending: "待你审批", approved: "已通过", returned: "已退回" })[
@@ -145,19 +147,42 @@ const tabs = computed(() => [
   { value: "details", label: "申请详情" },
   { value: "history", label: "审批记录", count: history.value.length },
 ]);
-/** 摘要带：本页重点是金额，其次是状态、预算占用和交付时间。 */
+
 const summary = computed(() => [
   { label: "采购总额", value: formatMoney(totalCents) },
-  { label: "审批状态", value: statusLabel.value, tone: status.value === "approved" ? ("ok" as const) : status.value === "returned" ? ("bad" as const) : ("warn" as const) },
-  { label: "占部门预算", value: `${Math.round((totalCents / budgetCents) * 100)}`, unit: "%" },
+  {
+    label: "审批状态",
+    value: statusLabel.value,
+    tone:
+      status.value === "approved"
+        ? ("ok" as const)
+        : status.value === "returned"
+          ? ("bad" as const)
+          : ("warn" as const),
+  },
+  {
+    label: "占部门预算",
+    value: `${Math.round((totalCents / budgetCents) * 100)}`,
+    unit: "%",
+  },
   { label: "期望交付", value: "10 月 16 日" },
 ]);
-/** 右侧审批进度：已完成的环节带时间，当前环节突出显示。 */
+
 const progress = computed(() => [
   { title: "周宁提交申请", time: "10/06 10:24" },
   { title: "部门负责人确认", time: "10/06 11:06" },
-  { title: pending.value ? "等待你审批" : status.value === "approved" ? "你已通过" : "你已退回", time: pending.value ? "进行中" : decisionTime.value },
-  { title: "行政采购执行", time: status.value === "approved" ? "待开始" : "未开始" },
+  {
+    title: pending.value
+      ? "等待你审批"
+      : status.value === "approved"
+        ? "你已通过"
+        : "你已退回",
+    time: pending.value ? "进行中" : decisionTime.value,
+  },
+  {
+    title: "行政采购执行",
+    time: status.value === "approved" ? "待开始" : "未开始",
+  },
 ]);
 const statusItems = computed(() => [
   { text: requestNumber },
@@ -181,7 +206,6 @@ const decisionFields = computed(() => [
     : []),
 ]);
 
-/** 最终结果不能重复处理；确认窗和按钮共用同一状态判断。 */
 function recordDecision(
   nextStatus: "approved" | "returned",
   reason = "",
@@ -225,7 +249,7 @@ function confirmReturn(): void {
   if (!reason) return;
   recordDecision("returned", reason);
 }
-/** 主动重置才清除演示输入；关闭确认窗保留退回原因。 */
+
 function resetExample(): void {
   status.value = "pending";
   history.value = initialEvents();
@@ -267,50 +291,50 @@ function resetExample(): void {
       <Stack v-if="activeTab === 'details'" gap="lg">
         <SummaryBand :items="summary" />
         <Stack gap="none">
-        <FormSection title="申请信息" layout="stacked">
-          <DescriptionList :items="requestFields" :columns="2" />
-        </FormSection>
-        <FormSection title="采购明细" layout="stacked">
-          <DataTable
-            :columns="columns"
-            :rows="items"
-            row-key="id"
-            flat
-            :settings="false"
-            :fullscreenable="false"
-          >
-            <template #cell-name="{ row }"
-              ><CellText :title="row.name">{{
-                row.specification
-              }}</CellText></template
+          <FormSection title="申请信息" layout="stacked">
+            <DescriptionList :items="requestFields" :columns="2" />
+          </FormSection>
+          <FormSection title="采购明细" layout="stacked">
+            <DataTable
+              :columns="columns"
+              :rows="items"
+              row-key="id"
+              flat
+              :settings="false"
+              :fullscreenable="false"
             >
-          </DataTable>
-          <DescriptionList
-            :items="[
-              { label: '采购总额', key: 'total' },
-              { label: '部门预算', value: formatMoney(budgetCents) },
-            ]"
-            :columns="2"
-          >
-            <template #value-total
-              ><strong>{{ formatMoney(totalCents) }}</strong></template
+              <template #cell-name="{ row }"
+                ><CellText :title="row.name">{{
+                  row.specification
+                }}</CellText></template
+              >
+            </DataTable>
+            <DescriptionList
+              :items="[
+                { label: '采购总额', key: 'total' },
+                { label: '部门预算', value: formatMoney(budgetCents) },
+              ]"
+              :columns="2"
             >
-          </DescriptionList>
-        </FormSection>
-        <FormSection title="采购说明" layout="stacked">
-          <p>
-            为新入职的两位产品设计师配置工作站，用于界面设计、原型制作和日常协作。现有设备已全部分配，没有可用的闲置设备。
-          </p>
-          <DescriptionList
-            :items="[
-              { label: '交付地点', value: '上海办公室 · 6 层设计区' },
-              { label: '报价条件', value: '含税、含配送，设备保修 3 年。' },
-            ]"
-          />
-        </FormSection>
-        <FormSection v-if="!pending" title="审批结果" layout="stacked">
-          <DescriptionList :items="decisionFields" :columns="2" />
-        </FormSection>
+              <template #value-total
+                ><strong>{{ formatMoney(totalCents) }}</strong></template
+              >
+            </DescriptionList>
+          </FormSection>
+          <FormSection title="采购说明" layout="stacked">
+            <p>
+              为新入职的两位产品设计师配置工作站，用于界面设计、原型制作和日常协作。现有设备已全部分配，没有可用的闲置设备。
+            </p>
+            <DescriptionList
+              :items="[
+                { label: '交付地点', value: '上海办公室 · 6 层设计区' },
+                { label: '报价条件', value: '含税、含配送，设备保修 3 年。' },
+              ]"
+            />
+          </FormSection>
+          <FormSection v-if="!pending" title="审批结果" layout="stacked">
+            <DescriptionList :items="decisionFields" :columns="2" />
+          </FormSection>
         </Stack>
       </Stack>
       <FormSection v-else title="审批记录" layout="stacked">

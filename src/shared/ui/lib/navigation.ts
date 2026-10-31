@@ -1,6 +1,5 @@
 import type { NavItem } from "./types";
 
-/** 找出最具体的当前页；相同地址优先选子项，父目录只标记所属位置。 */
 export function currentNavItem(
   items: NavItem[],
   path: string,
@@ -20,7 +19,6 @@ export function currentNavItem(
   return best;
 }
 
-/** 当前页的祖先目录随路由打开；不把相邻前缀误当成子页面。 */
 export function containsNavItem(item: NavItem, current?: NavItem): boolean {
   return (
     item === current ||

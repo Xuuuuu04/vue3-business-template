@@ -14,7 +14,6 @@ import {
 } from "@/shared/ui/public";
 import { appConfig } from "./app.config";
 
-/** 偏好设置：外观（配色、明暗、圆角、疏密、侧栏）与账号信息。设置保存在这台浏览器里。 */
 const tab = ref("appearance");
 const session = useSession();
 const identity = session.state;

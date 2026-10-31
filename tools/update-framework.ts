@@ -1,4 +1,3 @@
-/** 比较模板旧版、新版和产品修改；默认预览，有冲突时一项都不写。 */
 import {
   readFileSync,
   existsSync,
@@ -14,16 +13,15 @@ import {
   isFrameworkPath,
   productFiles,
 } from "./framework-lock";
-import { sourceFingerprint } from "./lib";
+import { parseArgs, usageError } from "./lib";
 import { relative } from "node:path";
 import { safeTemplatePath } from "./template-paths";
-const args = process.argv.slice(2);
-const at = args.indexOf("--source");
-const location = at >= 0 ? args[at + 1] : undefined;
-if (!location)
-  throw new Error(
-    "用法：npm run update:framework -- --source /新版模板目录 [--apply]",
-  );
+import { readTemplateSource } from "./template-source";
+const usage =
+  "用法：npm run update:framework -- --source /新版模板目录 [--apply]";
+const args = parseArgs(usage, { options: ["--source"], flags: ["--apply"] });
+const location = args.options.get("--source");
+if (!location) usageError("缺少 --source", usage);
 const source = resolve(location);
 if (source === process.cwd()) throw new Error("新版模板目录不能是当前产品");
 const metadataFiles = [
@@ -69,7 +67,6 @@ for (const file of new Set([...Object.keys(base), ...Object.keys(incoming)])) {
   }
   changes.push({ file, content: next });
 }
-// 新版模板新增的产品文件（例如登录约定）：产品里还没有时补一份，已有的一律不动。
 for (const file of productFiles) {
   const from = safeTemplatePath(source, file);
   if (existsSync(from) && !existsSync(safeTemplatePath(process.cwd(), file)))
@@ -78,7 +75,7 @@ for (const file of productFiles) {
 console.log(
   JSON.stringify(
     {
-      mode: args.includes("--apply") ? "执行" : "预览",
+      mode: args.flags.has("--apply") ? "执行" : "预览",
       changes: changes.map((c) => ({
         file: c.file,
         operation: c.product
@@ -97,7 +94,7 @@ if (conflicts.length)
   throw new Error(
     "产品与模板同时改变了这些文件，请先逐项处理冲突。没有修改任何文件。",
   );
-if (args.includes("--apply")) {
+if (args.flags.has("--apply")) {
   const backup: Record<string, string | undefined> = {};
   for (const file of metadataFiles)
     backup[file] = existsSync(file) ? readFileSync(file, "utf8") : undefined;
@@ -125,7 +122,7 @@ if (args.includes("--apply")) {
         {
           ...metadata,
           updatedAt: new Date().toISOString(),
-          sourceFingerprint: sourceFingerprint(source),
+          ...readTemplateSource(source),
         },
         null,
         2,

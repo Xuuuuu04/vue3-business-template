@@ -1,4 +1,3 @@
-/** 每个页面持有自己的动作实例，离开时取消读取；输出对页面只读。 */
 import { onBeforeUnmount } from "vue";
 import { createTask } from "@/shared/public";
 import { endpoints } from "./api";
@@ -15,7 +14,7 @@ export function useFileLibrary() {
   const upload = createTask(uploadFile, endpoints, "submit");
   const remove = createTask(deleteFile, endpoints, "submit");
   const download = createTask(downloadFile, endpoints, "submit");
-  // 预览只读取内容显示在页面里，换文件时取消上一次读取。
+
   const preview = createTask(downloadFile, endpoints, "latest");
   onBeforeUnmount(() => {
     for (const task of [list, detail, upload, remove, download, preview])
@@ -23,7 +22,7 @@ export function useFileLibrary() {
   });
   return { list, detail, upload, remove, download, preview };
 }
-/** 大小单位只做展示，业务中始终保留字节。 */
+
 export function fileSize(size: number): string {
   return size < 1000
     ? `${size} B`

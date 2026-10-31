@@ -1,4 +1,3 @@
-/** 文件所属团队、字节数与保存时间均由后台返回；不从文件名推断。 */
 import { z } from "@/shared/public";
 export const FileView = z.object({
   id: z.string(),

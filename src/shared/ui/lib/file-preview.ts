@@ -1,4 +1,3 @@
-/** 按实际内容限制预览，并在换文件或组件退出后忽略旧读取。 */
 import { computed, ref, watch } from "vue";
 import { fileKind } from "./format";
 
@@ -9,7 +8,6 @@ export interface PreviewSource {
   blob?: Blob;
 }
 
-/** 文本最多读取 1 MiB，只显示前 200 行。 */
 export const TEXT_PREVIEW_LIMIT = 1024 * 1024;
 const LINE_LIMIT = 200;
 
@@ -17,7 +15,8 @@ export function useFilePreview(source: PreviewSource) {
   const kind = computed(() => fileKind(source.name, source.type));
   const bytes = computed(() => source.blob?.size ?? source.size);
   const unavailable = computed(() => {
-    if (kind.value.preview === "none") return `${kind.value.label}不能在浏览器里预览`;
+    if (kind.value.preview === "none")
+      return `${kind.value.label}不能在浏览器里预览`;
     if (kind.value.preview === "text" && bytes.value > TEXT_PREVIEW_LIMIT)
       return "文本超过 1 MB，无法在浏览器里预览";
     return "";
@@ -57,7 +56,8 @@ export function useFilePreview(source: PreviewSource) {
         lines.value = text.split("\n", LINE_LIMIT);
         ready.value = true;
       } catch {
-        if (current) error.value = "文件内容无法读取，请重新获取预览或下载原文件。";
+        if (current)
+          error.value = "文件内容无法读取，请重新获取预览或下载原文件。";
       } finally {
         if (current) reading.value = false;
       }

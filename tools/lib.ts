@@ -1,4 +1,3 @@
-/** 文件遍历、版本指纹与子进程共用工具，不在业务包中开放。 */
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { resolve, relative } from "node:path";
 import { createHash } from "node:crypto";
@@ -12,7 +11,15 @@ export function filesBelow(root: string): string[] {
   );
 }
 export function projectFiles(root = process.cwd()) {
-  return ["src", "tools", "tests", "doc", "design"]
+  return [
+    "src",
+    "tools",
+    "tests",
+    "doc",
+    "design",
+    ".agents/skills",
+    ".github/workflows",
+  ]
     .flatMap((name) => filesBelow(resolve(root, name)))
     .concat(
       [
@@ -27,6 +34,8 @@ export function projectFiles(root = process.cwd()) {
         "framework.lock",
         "scaffold.json",
         "project-plan.json",
+        ".env.example",
+        "index.html",
       ]
         .map((name) => resolve(root, name))
         .filter(existsSync),
@@ -53,7 +62,6 @@ export function direct(file: string) {
   return process.argv[1] && resolve(process.argv[1]) === resolve(file);
 }
 
-/** 发布与开发运行保存实际源码指纹，不用固定 development 冒充版本。 */
 export function sourceFingerprint(root = process.cwd()) {
   const hash = createHash("sha256");
   for (const file of ["src", "tools"]
@@ -66,7 +74,6 @@ export function sourceFingerprint(root = process.cwd()) {
   return hash.digest("hex");
 }
 
-/** 写错的参数直接报中文错误和用法并退出，不打印 Node 堆栈。 */
 export function usageError(message: string, usage: string): never {
   console.error(`${message}\n\n${usage}`);
   process.exit(1);
@@ -74,10 +81,6 @@ export function usageError(message: string, usage: string): never {
 const npmHint =
   "\n通过 npm 运行时，参数要写在 -- 后面，例如 npm run check -- --module 包名。";
 
-/**
- * 命令参数只认声明过的写法：未知参数、多余位置参数和缺值一律报错，--help 打印用法。
- * npm run 命令不写 -- 时，npm 会吃掉 --xxx，只留下环境变量 npm_config_xxx=true，这里一并拦下。
- */
 export function parseArgs(
   usage: string,
   spec: { flags?: string[]; options?: string[]; positionals?: number },

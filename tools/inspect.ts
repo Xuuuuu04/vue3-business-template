@@ -1,11 +1,9 @@
-import { inspectPageLayout } from "./page-layout";
-/** 源码结构检查使用 TS 和 Vue 语法树，发现违规后拒绝启动与打包。 */
+import { inspectScript } from "./inspect-imports";
+import { inspectVueFile } from "./inspect-vue";
 import ts from "typescript";
 import { endpointProblems } from "../src/shared/http/endpoint";
-import { parse } from "@vue/compiler-sfc";
-import { baseParse, NodeTypes, type ElementNode } from "@vue/compiler-dom";
 import { readFileSync, existsSync } from "node:fs";
-import { resolve, relative, dirname } from "node:path";
+import { resolve, relative } from "node:path";
 import type { BusinessModule } from "../src/shared/modules/definitions";
 import { validateAction } from "../src/shared/actions/definitions";
 import { filesBelow } from "./lib";
@@ -69,172 +67,41 @@ export function sourceIndex(root = process.cwd()): Record<string, Source> {
   }
   return index;
 }
-const forbidden = new Set([
-  "fetch",
-  "XMLHttpRequest",
-  "WebSocket",
-  "EventSource",
-  "localStorage",
-  "sessionStorage",
-  "indexedDB",
-  "axios",
-  "setInterval",
-  "setTimeout",
-  "eval",
-  "Function",
-  "globalThis",
-  "window",
-  "document",
-  "navigator",
-]);
-export function inspectModule(
+function inspectModuleFiles(
   root: string,
   module: BusinessModule,
-  index = sourceIndex(root),
-): string[] {
+): { files: string[]; errors: string[] } {
   const errors: string[] = [];
   const dir = resolve(root, "src/modules", module.name);
-  const actual = filesBelow(dir).map((file) => relative(dir, file));
-  for (const file of actual)
+  const files = filesBelow(dir).map((file) => relative(dir, file));
+  for (const file of files)
     if (!module.files.includes(file))
       errors.push(`${module.name}/${file}：文件没有经过生成器登记`);
   for (const file of module.files)
     if (!existsSync(resolve(dir, file)))
       errors.push(`${module.name}/${file}：登记文件不存在`);
-  for (const name of actual.filter((file) => /\.(ts|vue)$/.test(file))) {
+  for (const name of files.filter((file) => /\.(ts|vue)$/.test(file))) {
     const file = resolve(dir, name);
     const text = readFileSync(file, "utf8");
-    let scripts = [text];
-    if (name.endsWith(".vue")) {
-      const { descriptor, errors: parseErrors } = parse(text, {
-        filename: file,
-      });
-      if (parseErrors.length) errors.push(`${name}：Vue 文件无法解析`);
-      if (descriptor.styles.length)
-        errors.push(`${name}：样式必须使用统一主题与公共布局`);
-      scripts = [
-        descriptor.script?.content || "",
-        descriptor.scriptSetup?.content || "",
-      ];
-      if (descriptor.template) {
-        const tree = baseParse(descriptor.template.content);
-        const used = new Set<string>();
-        function visitTemplate(node: typeof tree | ElementNode) {
-          if (node.type === NodeTypes.ELEMENT) {
-            if (/^[A-Z]/.test(node.tag) && node.tag !== "RouterLink")
-              used.add(node.tag);
-            for (const prop of node.props) {
-              if (
-                (prop.type === NodeTypes.ATTRIBUTE &&
-                  (prop.name === "style" || prop.name === "class")) ||
-                (prop.type === NodeTypes.DIRECTIVE &&
-                  prop.name === "bind" &&
-                  prop.arg?.type === NodeTypes.SIMPLE_EXPRESSION &&
-                  (prop.arg.content === "style" || prop.arg.content === "class"))
-              )
-                errors.push(`${name}：不能在页面内写样式或类名，请使用公共版式组件`);
-            }
-          }
-          for (const child of node.children) {
-            if (child.type === NodeTypes.ELEMENT) visitTemplate(child);
-          }
-        }
-        visitTemplate(tree);
-        const page = module.pages.find((p) => p.file === name);
-        if (page) errors.push(...inspectPageLayout(tree, scripts, page).map((message) => `${name}：${message}`));
-        if (page)
-          for (const component of used)
-            if (!page.components.includes(component))
-              errors.push(`${name}：组件 ${component} 没有登记`);
-      }
-    }
-    for (const script of scripts) {
-      const source = ts.createSourceFile(
-        file,
-        script,
-        ts.ScriptTarget.Latest,
-        true,
-      );
-      function inspect(node: ts.Node) {
-        if (
-          (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
-          node.moduleSpecifier &&
-          ts.isStringLiteral(node.moduleSpecifier)
-        ) {
-          const spec = node.moduleSpecifier.text;
-          if (spec.startsWith("@/shared/")) {
-            if (!["@/shared/public", "@/shared/ui/public"].includes(spec))
-              errors.push(`${name}：不能导入共用内部文件 ${spec}`);
-          } else if (spec.startsWith("@/modules/")) {
-            const other = spec.split("/")[2];
-            if (
-              other !== module.name &&
-              (!module.dependsOn.includes(other || "") ||
-                !spec.endsWith("/public"))
-            )
-              errors.push(`${name}：跨模块只能导入已声明依赖的 public`);
-          } else if (spec.startsWith(".")) {
-            const target = resolve(dirname(file), spec);
-            if (!target.startsWith(dir + "/"))
-              errors.push(`${name}：相对导入越过业务包范围`);
-            else if (target.replace(/\.ts$/, "") === resolve(dir, "demo"))
-              errors.push(
-                `${name}：demo.ts 只给演示服务用，不能导入，否则演示数据会打进生产包`,
-              );
-          } else if (spec.startsWith("@/")) {
-            errors.push(`${name}：业务包不能导入应用内部 ${spec}`);
-          } else if (
-            !spec.startsWith("@/") &&
-            !["vue", "vue-router", "vitest"].includes(spec)
-          )
-            errors.push(`${name}：业务包不能自行引入依赖 ${spec}`);
-          if (
-            spec === "vue" &&
-            !name.startsWith("pages/") &&
-            name !== "state.ts" &&
-            !name.startsWith("tests/")
-          )
-            errors.push(`${name}：Vue 状态只允许在 state.ts 或页面中使用`);
-          if (spec === "@/shared/ui/public" && !name.startsWith("pages/"))
-            errors.push(`${name}：UI 组件只在页面中使用`);
-          if (spec === "vue-router" && !name.startsWith("pages/"))
-            errors.push(`${name}：路由操作只能在页面中`);
-          if (name === "module.ts" && spec !== "@/shared/public")
-            errors.push(
-              `${name}：模块登记只能导入共用入口，业务代码必须按需加载`,
-            );
-        }
-        if (
-          ts.isIdentifier(node) &&
-          forbidden.has(node.text) &&
-          !(
-            ts.isPropertyAccessExpression(node.parent) &&
-            node.parent.name === node
-          ) &&
-          !(
-            ts.isPropertyAssignment(node.parent) && node.parent.name === node
-          ) &&
-          !name.startsWith("tests/")
-        )
-          errors.push(`${name}：效果 ${node.text} 必须经过框架`);
-        if (
-          ts.isCallExpression(node) &&
-          node.expression.kind === ts.SyntaxKind.ImportKeyword &&
-          (name !== "module.ts" ||
-            !node.arguments[0] ||
-            !ts.isStringLiteral(node.arguments[0]) ||
-            !/^\.\/(?:pages\/[a-zA-Z0-9_]+\.vue|flow|api)$/.test(
-              node.arguments[0].text,
-            ))
-        )
-          errors.push(`${name}：动态加载只在模块清单中声明`);
-        ts.forEachChild(node, inspect);
-      }
-      inspect(source);
-    }
+    const inspected = name.endsWith(".vue")
+      ? inspectVueFile(text, file, name, module)
+      : { scripts: [text], errors: [] };
+    errors.push(...inspected.errors);
+    for (const script of inspected.scripts)
+      errors.push(...inspectScript(script, file, name, dir, module));
   }
+  return { files, errors };
+}
+
+function inspectModuleActions(module: BusinessModule): {
+  stepIds: Set<string>;
+  errors: string[];
+} {
+  const errors: string[] = [];
   const stepIds = new Set<string>();
   for (const action of module.actions) {
+    if (!action.permission?.trim())
+      errors.push(`${action.id}：动作必须声明自身权限，公开操作写 public`);
     try {
       validateAction(action);
     } catch (error) {
@@ -246,24 +113,38 @@ export function inspectModule(
         errors.push(`${step.id}：缺少名称或模块前缀`);
       stepIds.add(step.id);
       for (const id of step.uses)
-        if (!module.endpoints.some((e) => e.id === id))
+        if (!module.endpoints.some((entry) => entry.id === id))
           errors.push(`${step.id}：接口 ${id} 未登记`);
     }
   }
-  for (const endpoint of module.endpoints) {
-    errors.push(...endpointProblems(endpoint).map((problem) => `${endpoint.id}：${problem}`));
-  }
+  return { stepIds, errors };
+}
+
+export function inspectModule(
+  root: string,
+  module: BusinessModule,
+  index = sourceIndex(root),
+): string[] {
+  const { files, errors } = inspectModuleFiles(root, module);
+  const actions = inspectModuleActions(module);
+  errors.push(...actions.errors);
+  for (const endpoint of module.endpoints)
+    errors.push(
+      ...endpointProblems(endpoint).map(
+        (problem) => `${endpoint.id}：${problem}`,
+      ),
+    );
   for (const page of module.pages)
     for (const id of page.actions)
-      if (!module.actions.some((a) => a.id === id))
+      if (!module.actions.some((action) => action.id === id))
         errors.push(`${page.id}：动作 ${id} 未登记`);
-  for (const name of actual.filter(
+  for (const name of files.filter(
     (file) => file.startsWith("steps/") && file.endsWith(".ts"),
   )) {
     for (const [id, source] of Object.entries(index))
       if (
         source.file === `src/modules/${module.name}/${name}` &&
-        !stepIds.has(id)
+        !actions.stepIds.has(id)
       )
         errors.push(`${id}：生成的步骤尚未加入动作`);
   }
@@ -272,8 +153,8 @@ export function inspectModule(
 export function inspectProject(
   root: string,
   modules: BusinessModule[],
+  index = sourceIndex(root),
 ): string[] {
-  const index = sourceIndex(root);
   const errors = modules.flatMap((m) => inspectModule(root, m, index));
   const registryPath = resolve(root, "scaffold.json");
   if (!existsSync(registryPath)) errors.push("缺少生成器登记表");

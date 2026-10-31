@@ -1,4 +1,4 @@
-/** 生成器登记表受到框架保护，业务代理不能靠手改清单接纳任意文件。 */
+import { format } from "prettier";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { verifyLock } from "./framework-lock";
@@ -63,15 +63,16 @@ export function nameOf(value: string | undefined) {
     throw new Error("名称不能使用语言保留字");
   return value;
 }
-export function titleOf(args: string[], fallback: string) {
-  const position = args.indexOf("--title");
-  return position >= 0 ? args[position + 1] || fallback : fallback;
-}
-
 export function htmlTitle(value: string) {
   return value.replace(
     /[&"<>]/g,
     (part) =>
       ({ "&": "&amp;", '"': "&quot;", "<": "&lt;", ">": "&gt;" })[part]!,
   );
+}
+
+export async function formatSource(file: string, content: string) {
+  return /\.(ts|vue|json)$/.test(file)
+    ? format(content, { filepath: file })
+    : content;
 }

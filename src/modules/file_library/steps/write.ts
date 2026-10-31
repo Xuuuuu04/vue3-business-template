@@ -1,4 +1,3 @@
-/** 写入结果完全采用后台响应；网络中断不会自行再提交。 */
 import { defineStep, type StepTools } from "@/shared/public";
 import type { UploadWork, FileView, DeleteWork, DownloadWork } from "../data";
 function prepareUpload(data: UploadWork) {

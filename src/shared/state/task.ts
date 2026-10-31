@@ -1,9 +1,9 @@
-/** 页面动作的并发规则：查询以最新一次为准，写入禁止重复与未知结果重发。 */
 import { readonly, shallowRef } from "vue";
 import { execute } from "@/shared/actions/runtime";
 import type { Action } from "@/shared/actions/definitions";
 import {
   ActionError,
+  accessVersion,
   type Endpoint,
   type Transport,
 } from "@/shared/http/client";
@@ -42,14 +42,24 @@ export function createTask<I extends object, O>(
     controller?.abort();
     controller = new AbortController();
     const current = ++version;
+    const session = accessVersion();
     const signal = controller.signal;
-    state.value = { ...state.value, status: "loading", error: undefined, fieldErrors: undefined };
+    state.value = {
+      ...state.value,
+      status: "loading",
+      error: undefined,
+      fieldErrors: undefined,
+    };
     try {
       const data = await execute(action, input, endpoints, signal, transport);
       if (current !== version || signal.aborted) return;
       state.value = { status: "success", data };
       return data;
     } catch (error) {
+      if (session !== accessVersion()) {
+        if (current === version) state.value = { status: "idle" };
+        return;
+      }
       if (
         current !== version ||
         (signal.aborted &&
@@ -63,13 +73,16 @@ export function createTask<I extends object, O>(
             ? "unknown"
             : "error",
         error: error instanceof Error ? error.message : "操作失败",
-        fieldErrors: error instanceof ActionError && !error.unknownResult ? error.fieldErrors : undefined,
+        fieldErrors:
+          error instanceof ActionError && !error.unknownResult
+            ? error.fieldErrors
+            : undefined,
       };
     }
   }
   function dispose() {
     version++;
-    // 已提交的写入继续取得真实结果，只停止向离开的页面更新。
+
     if (!writing) controller?.abort();
   }
   return { state: readonly(state), run, dispose };

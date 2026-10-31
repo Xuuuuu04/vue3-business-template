@@ -1,4 +1,3 @@
-/** 与 FastAPI 文件模块相同的路径和数据；演示服务使用这套 HTTP 约定。 */
 import { z, type Endpoint } from "@/shared/public";
 import { FileView, FilePage } from "./data";
 export const endpoints: Endpoint[] = [

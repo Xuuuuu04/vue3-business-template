@@ -1,7 +1,9 @@
-/** 限制实际读取的响应字节，声明长度只用于提前拒绝，不代替分块检查。 */
 export class ResponseLimitExceeded extends Error {}
 
-export async function readResponse(reply: Response, limit: number): Promise<Blob> {
+export async function readResponse(
+  reply: Response,
+  limit: number,
+): Promise<Blob> {
   const declared = Number(reply.headers.get("Content-Length"));
   if (declared > limit) {
     await reply.body?.cancel();

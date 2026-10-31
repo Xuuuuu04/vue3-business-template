@@ -1,4 +1,3 @@
-/** 登录声明只在提交登录时加载；接口路径、请求字段和回包整理来自产品的 src/app/login.config.ts。 */
 import { z } from "zod";
 import { defineAction, defineStep } from "@/shared/actions/definitions";
 import { execute } from "@/shared/actions/runtime";
@@ -15,7 +14,7 @@ const Input = z
     otp_code: z.string(),
   })
   .strict();
-/** 回包整理后的三项：框架只用这些，步骤写入时按它校验。 */
+
 const Session: z.ZodType<LoginReply> = z.object({
   access_token: z.string().min(1),
   expires_in: z.number().int().positive(),
@@ -68,12 +67,19 @@ const loginAction = defineAction<LoginForm, LoginReply>({
 });
 
 export type LoginInput = LoginForm;
-/** 响应与权限由运行时校验，不能把令牌解码当作签名验证。 */
+
 export async function requestLogin(input: LoginInput) {
-  const reply = await execute(loginAction, input, sessionEndpoints, new AbortController().signal);
+  const reply = await execute(
+    loginAction,
+    input,
+    sessionEndpoints,
+    new AbortController().signal,
+  );
   const payload = reply.access_token.split(".")[1];
   const claims = payload
-    ? (JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/"))) as { permissions?: unknown })
+    ? (JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/"))) as {
+        permissions?: unknown;
+      })
     : {};
   const permissions = z.array(z.string()).parse(claims.permissions || []);
   return { reply, permissions };

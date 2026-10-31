@@ -1,4 +1,3 @@
-/** 有界的开发运行记录。页面关闭后丢失，不能替代后台的业务结果。 */
 import { shallowRef, triggerRef, readonly } from "vue";
 import version from "@/generated/version.json";
 import sources from "@/generated/sources.json";
@@ -13,7 +12,7 @@ export interface RequestRecord {
   method: string;
   status?: number;
   elapsed: number;
-  /** 距离本次操作开始的毫秒数，用于瀑布图定位。 */
+
   at?: number;
   backendRun?: string;
   requestId?: string;
@@ -26,7 +25,7 @@ export interface StepRecord {
   source?: Source;
   status: "running" | "ok" | "failed" | "skipped" | "cancelled";
   elapsed: number;
-  /** 距离本次操作开始的毫秒数。 */
+
   at?: number;
   outputs: string[];
   requests: RequestRecord[];
@@ -43,7 +42,7 @@ export interface RunRecord {
   action: string;
   title: string;
   started: string;
-  /** 本页计时起点（performance.now），步骤与请求的 at 以它为零点。 */
+
   origin?: number;
   elapsed: number;
   status: "running" | "ok" | "failed" | "cancelled" | "unknown";
@@ -56,12 +55,10 @@ const MAX_RUNS = 100;
 const items = shallowRef<RunRecord[]>([]);
 let dropped = 0;
 
-/** 从编译前生成的索引找源码符号，不要求业务手写行号。 */
 export function sourceOf(id: string): Source | undefined {
   return (sources as Record<string, Source>)[id];
 }
 
-/** 创建记录并限制容量；丢失数量始终保留给查看页面。 */
 export function startRecord(action: string, title: string): RunRecord {
   const record: RunRecord = {
     id: crypto.randomUUID(),
@@ -95,15 +92,18 @@ export function startRecord(action: string, title: string): RunRecord {
   return record;
 }
 
-/** 通知查看页面读取更新；记录错误不能改变已经取得的业务结果。 */
 export function changed(): void {
   triggerRef(items);
 }
+export function clearRecords() {
+  items.value = [];
+  dropped = 0;
+}
+
 export function useRecords() {
   return { items: readonly(items), dropped: () => dropped };
 }
 
-/** 默认只保存类型和数量，明确允许的安全字段才显示短值。 */
 export function summary(
   name: string,
   value: unknown,

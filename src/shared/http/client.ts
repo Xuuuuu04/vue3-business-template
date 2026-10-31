@@ -1,4 +1,3 @@
-/** 统一请求入口：校验响应、控制超时、关联后台编号，不自动重发写入。 */
 import type { z } from "zod";
 import type { RequestRecord } from "@/shared/records/store";
 import { readResponse, ResponseLimitExceeded } from "./response";
@@ -12,9 +11,9 @@ export interface Endpoint {
   path: string;
   responseKind?: "blob";
   response: z.ZodType;
-  /** 总期限包含响应读取；默认 15 秒，上传下载可单独声明，最多 5 分钟。 */
+
   timeoutMs?: number;
-  /** 实际响应上限；JSON 默认 2 MiB，文件默认 32 MiB，最多 256 MiB。 */
+
   maxResponseBytes?: number;
 }
 export interface RequestOptions {
@@ -39,13 +38,16 @@ export interface StepTools {
 }
 export type Transport = typeof fetch;
 let accessToken = "";
+let credentialVersion = 0;
+export function accessVersion() {
+  return credentialVersion;
+}
 
-/** 凭据只在当前页面会话内保留，记录器不读取请求头或请求正文。 */
 export function setAccessToken(token: string): void {
+  credentialVersion++;
   accessToken = token;
 }
 
-/** 一次请求的网络持续时间包含服务器等待，不能与后台步骤耗时相加。 */
 export async function sendRequest<T>(
   endpoint: Endpoint,
   options: RequestOptions,
@@ -67,7 +69,10 @@ export async function sendRequest<T>(
   }
   const started = performance.now();
   const timer = new AbortController();
-  const timeout = setTimeout(() => timer.abort(new Error("timeout")), endpoint.timeoutMs ?? 15_000);
+  const timeout = setTimeout(
+    () => timer.abort(new Error("timeout")),
+    endpoint.timeoutMs ?? 15_000,
+  );
   const combined = AbortSignal.any([signal, timer.signal]);
   try {
     const reply = await transport(prepared.url, {
@@ -80,56 +85,22 @@ export async function sendRequest<T>(
     record.status = reply.status;
     const backendRun = reply.headers.get("X-Run-ID");
     record.backendRun = backendRun ? safeText(backendRun) : undefined;
-    record.requestId = safeText(reply.headers.get("X-Request-ID") ?? prepared.requestId);
-    if (!reply.ok) {
-      const uncertain =
-        endpoint.method !== "GET" &&
-        (reply.status >= 500 || [408, 499].includes(reply.status));
-      let body: Record<string, unknown> = {};
-      try {
-        const text = await (await readResponse(reply, 64 * 1024)).text();
-        const value: unknown = JSON.parse(text);
-        if (value && typeof value === "object" && !Array.isArray(value)) body = value as Record<string, unknown>;
-      } catch { /* 错误正文不可读或超限时，仍按已收到的 HTTP 状态判断。 */ }
-      throw new ActionError(
-        typeof body.code === "string" ? body.code : `http_${reply.status}`,
-        typeof body.message === "string"
-          ? safeText(body.message)
-          : `请求失败（${reply.status}）`,
-        uncertain,
-        uncertain ? undefined : fieldErrorsFrom(body.fields, safeText),
-      );
-    }
-    const blob = reply.status === 204 ? undefined : await readResponse(
-      reply, endpoint.maxResponseBytes ?? (endpoint.responseKind === "blob" ? 32 * 1024 * 1024 : 2 * 1024 * 1024),
+    record.requestId = safeText(
+      reply.headers.get("X-Request-ID") ?? prepared.requestId,
     );
-    let body: unknown = null;
-    if (blob && endpoint.responseKind === "blob") body = blob;
-    else if (blob)
-      try {
-        body = JSON.parse(await blob.text());
-      } catch {
-        // 常见于代理错误页或开发服务把未知地址回成网页：收到了回复，不是网络失败。
-        throw new ActionError(
-          "response_invalid",
-          "接口返回的不是约定的 JSON（可能是网页或代理错误页），请检查接口地址，写入请先查询实际结果。",
-          endpoint.method !== "GET",
-        );
-      }
-    const parsed = endpoint.response.safeParse(body);
-    if (!parsed.success)
-      throw new ActionError(
-        "response_invalid",
-        "接口返回的数据格式不符合约定，请查询实际结果。",
-        endpoint.method !== "GET",
-      );
+    if (!reply.ok) throw await httpFailure(reply, endpoint, safeText);
+    const parsed = await parseReply(reply, endpoint);
     record.outcome = "ok";
     return parsed.data as T;
   } catch (error) {
     const writing = endpoint.method !== "GET";
     if (error instanceof ResponseLimitExceeded) {
       record.outcome = writing ? "unknown" : "failed";
-      throw new ActionError("response_too_large", "返回内容超过读取上限，请缩小查询范围或分批下载。", writing);
+      throw new ActionError(
+        "response_too_large",
+        "返回内容超过读取上限，请缩小查询范围或分批下载。",
+        writing,
+      );
     }
     if (error instanceof ActionError) {
       record.outcome = error.unknownResult ? "unknown" : "failed";
@@ -155,17 +126,18 @@ export async function sendRequest<T>(
   }
 }
 
-/** 在进入网络阶段前完成路径和正文准备；此时失败没有后台写入结果。 */
 function prepareRequest(endpoint: Endpoint, options: RequestOptions) {
   const problems = endpointProblems(endpoint);
-  if (problems.length) throw new ActionError("request_invalid", problems.join(" "));
+  if (problems.length)
+    throw new ActionError("request_invalid", problems.join(" "));
   let path = endpoint.path;
   for (const [name, value] of Object.entries(options.params ?? {}))
     path = path.replace(`:${name}`, encodeURIComponent(value));
   if (/:\w+/.test(path))
     throw new ActionError("path_missing", "接口缺少路径参数");
   const resolvedProblems = endpointProblems({ ...endpoint, path });
-  if (resolvedProblems.length) throw new ActionError("path_invalid", resolvedProblems.join(" "));
+  if (resolvedProblems.length)
+    throw new ActionError("path_invalid", resolvedProblems.join(" "));
   const query = new URLSearchParams(
     Object.entries(options.query ?? {}).map(([key, value]) => [
       key,
@@ -178,10 +150,82 @@ function prepareRequest(endpoint: Endpoint, options: RequestOptions) {
   const multipart = options.body instanceof FormData;
   if (options.body !== undefined && !multipart)
     headers["Content-Type"] = "application/json";
-  const body = options.body === undefined
-    ? undefined
-    : multipart ? options.body as FormData : JSON.stringify(options.body);
+  const body =
+    options.body === undefined
+      ? undefined
+      : multipart
+        ? (options.body as FormData)
+        : JSON.stringify(options.body);
   if (options.body !== undefined && body === undefined)
-    throw new ActionError("request_invalid", "请求数据无法发送，请修正输入后再提交。");
-  return { url: path + (query.size ? `?${query}` : ""), headers, body, requestId };
+    throw new ActionError(
+      "request_invalid",
+      "请求数据无法发送，请修正输入后再提交。",
+    );
+  return {
+    url: path + (query.size ? `?${query}` : ""),
+    headers,
+    body,
+    requestId,
+  };
+}
+
+async function httpFailure(
+  reply: Response,
+  endpoint: Endpoint,
+  safeText: (message: string) => string,
+): Promise<ActionError> {
+  const uncertain =
+    endpoint.method !== "GET" &&
+    (reply.status >= 500 || [408, 499].includes(reply.status));
+  let body: Record<string, unknown>;
+  try {
+    const text = await (await readResponse(reply, 64 * 1024)).text();
+    const value: unknown = JSON.parse(text);
+    if (value && typeof value === "object" && !Array.isArray(value))
+      body = value as Record<string, unknown>;
+    else body = {};
+  } catch {
+    body = {};
+  }
+  return new ActionError(
+    typeof body.code === "string" ? body.code : `http_${reply.status}`,
+    typeof body.message === "string"
+      ? safeText(body.message)
+      : `请求失败（${reply.status}）`,
+    uncertain,
+    uncertain ? undefined : fieldErrorsFrom(body.fields, safeText),
+  );
+}
+
+async function parseReply(reply: Response, endpoint: Endpoint) {
+  const blob =
+    reply.status === 204
+      ? undefined
+      : await readResponse(
+          reply,
+          endpoint.maxResponseBytes ??
+            (endpoint.responseKind === "blob"
+              ? 32 * 1024 * 1024
+              : 2 * 1024 * 1024),
+        );
+  let body: unknown = null;
+  if (blob && endpoint.responseKind === "blob") body = blob;
+  else if (blob)
+    try {
+      body = JSON.parse(await blob.text());
+    } catch {
+      throw new ActionError(
+        "response_invalid",
+        "接口返回的不是约定的 JSON（可能是网页或代理错误页），请检查接口地址，写入请先查询实际结果。",
+        endpoint.method !== "GET",
+      );
+    }
+  const parsed = endpoint.response.safeParse(body);
+  if (!parsed.success)
+    throw new ActionError(
+      "response_invalid",
+      "接口返回的数据格式不符合约定，请查询实际结果。",
+      endpoint.method !== "GET",
+    );
+  return parsed;
 }

@@ -1,23 +1,31 @@
 import { test, expect, type Page } from "@playwright/test";
 
-test("Markdown 文件显示文档标题与列表，文件中的 HTML 保持文字", async ({ page }) => {
-  await page.route("**/api/v1/files/demo-team/sample-7/download", (route) => route.fulfill({
-    contentType: "text/markdown",
-    body: '# 接口对接说明\n\n1. 所有接口使用同源 /api。\n2. 写入结果未知时先查询。\n\n<script>window.previewExecuted = true</script>\n<img src="invalid" onerror="window.previewExecuted = true">',
-  }));
+test("Markdown 文件显示文档标题与列表，文件中的 HTML 保持文字", async ({
+  page,
+}) => {
+  await page.route("**/api/v1/files/demo-team/sample-7/download", (route) =>
+    route.fulfill({
+      contentType: "text/markdown",
+      body: '# 接口对接说明\n\n1. 所有接口使用同源 /api。\n2. 写入结果未知时先查询。\n\n<script>window.previewExecuted = true</script>\n<img src="invalid" onerror="window.previewExecuted = true">',
+    }),
+  );
   await page.goto("/files/sample-7");
   await page.getByRole("button", { name: "显示预览", exact: true }).click();
   const document = page.getByRole("article");
-  await expect(document.getByRole("heading", { name: "接口对接说明", exact: true })).toBeVisible();
+  await expect(
+    document.getByRole("heading", { name: "接口对接说明", exact: true }),
+  ).toBeVisible();
   await expect(document.getByRole("listitem")).toHaveText([
-    "所有接口使用同源 /api。", "写入结果未知时先查询。",
+    "所有接口使用同源 /api。",
+    "写入结果未知时先查询。",
   ]);
-  await expect(document).toContainText('<script>window.previewExecuted = true</script>');
+  await expect(document).toContainText(
+    "<script>window.previewExecuted = true</script>",
+  );
   await expect(document.locator("script, img")).toHaveCount(0);
   expect(await page.evaluate(() => "previewExecuted" in window)).toBe(false);
 });
 
-/** 只换 SPA 参数，不重新加载，确保复用原详情组件。 */
 async function switchDetail(page: Page, url: string) {
   await page.evaluate((next) => {
     history.pushState({}, "", next);
@@ -26,7 +34,9 @@ async function switchDetail(page: Page, url: string) {
 }
 async function detailPair(page: Page) {
   await page.goto("/files");
-  await expect(page.locator("tbody td:nth-child(2) button").nth(1)).toBeVisible();
+  await expect(
+    page.locator("tbody td:nth-child(2) button").nth(1),
+  ).toBeVisible();
   const links = page.locator("tbody td:nth-child(2) button");
   const firstName = await links.nth(0).innerText();
   const secondName = await links.nth(1).innerText();
@@ -81,7 +91,7 @@ test("R-02、R-04：SPA切参数时关闭旧确认，慢读取和403不能操作
   await expect(page.getByRole("dialog")).toContainText(first.name);
   await switchDetail(page, second.url);
   await started;
-  // 即使检查失败也释放托管请求，避免测试留下在途处理。
+
   try {
     await expect(page.getByRole("dialog")).not.toBeVisible();
     await expect(
@@ -172,7 +182,10 @@ test("R-05：SPA切换期间下载保持原文件名", async ({ page }) => {
 test("R-01、R-02：分页、筛选、详情刷新与浏览器返回", async ({ page }) => {
   await page.goto("/files?offset=10&q=");
   await expect(page.getByText("共 16 条", { exact: false })).toBeVisible();
-  const name = await page.locator("tbody td:nth-child(2) button").first().innerText();
+  const name = await page
+    .locator("tbody td:nth-child(2) button")
+    .first()
+    .innerText();
   await page.getByLabel("在本页中查找文件名").fill(name);
   await expect(page).toHaveURL(/q=/);
   await page.locator("tbody td:nth-child(2) button").first().click();
@@ -251,16 +264,16 @@ test("失败保留输入，未保存文件离开需要确认", async ({ page }) 
   });
   await page.getByRole("button", { name: "保存文件", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("没有上传权限");
-  await expect(
-    page.getByText("retain.txt", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("retain.txt", { exact: true })).toBeVisible();
   page.once("dialog", (dialog) => dialog.dismiss());
   await page.getByRole("button", { name: "取消", exact: true }).click();
   await expect(page).toHaveURL("/files/upload");
 });
 test("操作记录显示结果摘要和真实请求时间，不伪造后台编号", async ({ page }) => {
   await page.goto("/files");
-  await expect(page.locator("tbody td:nth-child(2) button").first()).toBeVisible();
+  await expect(
+    page.locator("tbody td:nth-child(2) button").first(),
+  ).toBeVisible();
   await page.getByRole("link", { name: "开发者工具", exact: true }).click();
   await page.getByRole("link", { name: "操作记录", exact: true }).click();
   await page.getByRole("button", { name: "查看过程" }).first().click();
@@ -269,4 +282,32 @@ test("操作记录显示结果摘要和真实请求时间，不伪造后台编�
   await expect(drawer).toContainText("读取这一页的文件");
   await expect(drawer).toContainText("页面显示的一页：对象");
   await expect(drawer).toContainText("后台没有返回（演示服务不会编造）");
+});
+
+test("R-11：批量下载保留各自文件名，翻页清除已选文件", async ({ page }) => {
+  await page.goto("/files?size=10");
+  const rows = page.locator("tbody tr");
+  await expect(rows.nth(1)).toBeVisible();
+  const names = [
+    await rows.nth(0).locator("td:nth-child(2) button").innerText(),
+    await rows.nth(1).locator("td:nth-child(2) button").innerText(),
+  ];
+  await rows.nth(0).getByRole("checkbox").click();
+  await rows.nth(1).getByRole("checkbox").click();
+  const downloaded: string[] = [];
+  page.on("download", (download) =>
+    downloaded.push(download.suggestedFilename()),
+  );
+  await page.getByRole("button", { name: "下载", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("下载完成");
+  await expect.poll(() => downloaded).toEqual(names);
+  await page.getByRole("button", { name: "完成", exact: true }).click();
+  await page.getByRole("button", { name: "下一页", exact: true }).click();
+  await expect(page).toHaveURL(/offset=10/);
+  await expect(
+    page.locator('tbody [role="checkbox"][data-state="checked"]'),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "下载", exact: true }),
+  ).toHaveCount(0);
 });

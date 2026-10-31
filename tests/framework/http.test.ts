@@ -106,9 +106,17 @@ test("网关 502 与请求 408 不表示后台一定没有保存", async () => {
 });
 test("成功状态却返回网页或坏 JSON：归为返回格式不对，不说成网络失败", async () => {
   const page = async () =>
-    new Response("<!doctype html><html></html>", { headers: { "Content-Type": "text/html" } });
+    new Response("<!doctype html><html></html>", {
+      headers: { "Content-Type": "text/html" },
+    });
   await expect(
-    sendRequest(endpoint, { params: { id: "x" } }, new AbortController().signal, record(), page),
+    sendRequest(
+      endpoint,
+      { params: { id: "x" } },
+      new AbortController().signal,
+      record(),
+      page,
+    ),
   ).rejects.toMatchObject({ code: "response_invalid", unknownResult: false });
   await expect(
     sendRequest(

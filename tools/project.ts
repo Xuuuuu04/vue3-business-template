@@ -1,4 +1,3 @@
-/** 主代理读总图，局部代理读指定包；明确区分定义、真实检查和过期结果。 */
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import generatedGraph from "../src/generated/graph.json";
 import type { describe } from "../src/shared/modules/graph";
@@ -16,7 +15,7 @@ if (name && !modules.some((m) => m.name === name))
     usage,
   );
 const currentFingerprint = fingerprint();
-/** 记录里存的是那一轮的结果；指纹不同说明代码改过，结果过期。 */
+
 function resultOf(file: string, missing = "未运行") {
   if (!existsSync(file)) return { status: missing };
   const saved = JSON.parse(readFileSync(file, "utf8"));
@@ -53,12 +52,16 @@ function resultOf(file: string, missing = "未运行") {
     scope: saved.scope,
     checkedAt: saved.checkedAt,
     typeCheck: saved.typeCheck,
+    mode: saved.mode,
+    quality: saved.quality,
+    format: saved.format,
+    durations: saved.durations,
     structure: saved.structure,
     skipped: saved.skipped,
     files,
   };
 }
-// 整仓和各包分开存，单包通过不能代替整仓检查。
+
 const full = resultOf("var/checks/full.json");
 const recorded = existsSync("var/checks")
   ? readdirSync("var/checks")
@@ -79,6 +82,12 @@ const check = {
     recorded.map((module) => [
       module,
       resultOf(`var/checks/module-${module}.json`),
+    ]),
+  ),
+  quick: Object.fromEntries(
+    modules.map((module) => [
+      module.name,
+      resultOf(`var/checks/quick-module-${module.name}.json`),
     ]),
   ),
   browser: resultOf("var/checks/browser.json"),

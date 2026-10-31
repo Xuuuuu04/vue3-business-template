@@ -1,6 +1,10 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { effectScope, nextTick, reactive, type EffectScope } from "vue";
-import { TEXT_PREVIEW_LIMIT, useFilePreview, type PreviewSource } from "@/shared/ui/lib/file-preview";
+import {
+  TEXT_PREVIEW_LIMIT,
+  useFilePreview,
+  type PreviewSource,
+} from "@/shared/ui/lib/file-preview";
 
 const scopes: EffectScope[] = [];
 afterEach(() => {
@@ -21,7 +25,12 @@ async function settle() {
 function delayedBlob() {
   const blob = new Blob(["pending"]);
   let resolve!: (text: string) => void;
-  vi.spyOn(blob, "text").mockImplementation(() => new Promise<string>((done) => { resolve = done; }));
+  vi.spyOn(blob, "text").mockImplementation(
+    () =>
+      new Promise<string>((done) => {
+        resolve = done;
+      }),
+  );
   return { blob, finish: (text: string) => resolve(text) };
 }
 
@@ -60,7 +69,11 @@ test("元数据再小也不能读取超过实际 1 MiB 的 Blob", async () => {
 });
 
 test("已经取得的实际小 Blob 按实际大小判断", async () => {
-  const { state } = preview({ name: "small.txt", size: TEXT_PREVIEW_LIMIT + 1, blob: new Blob(["small"]) });
+  const { state } = preview({
+    name: "small.txt",
+    size: TEXT_PREVIEW_LIMIT + 1,
+    blob: new Blob(["small"]),
+  });
   await settle();
   expect(state.canPreview.value).toBe(true);
   expect(state.lines.value).toEqual(["small"]);
@@ -77,7 +90,9 @@ test("不支持的类型即使收到 Blob 也不按文本读取", async () => {
 });
 
 test("正常文本只显示前 200 行", async () => {
-  const blob = new Blob([Array.from({ length: 250 }, (_, i) => `line-${i + 1}`).join("\n")]);
+  const blob = new Blob([
+    Array.from({ length: 250 }, (_, i) => `line-${i + 1}`).join("\n"),
+  ]);
   const { state } = preview({ name: "file.txt", size: blob.size, blob });
   await settle();
   expect(state.lines.value).toHaveLength(200);
@@ -86,9 +101,16 @@ test("正常文本只显示前 200 行", async () => {
 });
 
 test("图片替换与退出时回收每一个临时地址", async () => {
-  const create = vi.spyOn(URL, "createObjectURL").mockReturnValueOnce("blob:one").mockReturnValueOnce("blob:two");
+  const create = vi
+    .spyOn(URL, "createObjectURL")
+    .mockReturnValueOnce("blob:one")
+    .mockReturnValueOnce("blob:two");
   const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
-  const { source, state, scope } = preview({ name: "A.png", size: 3, blob: new Blob(["one"]) });
+  const { source, state, scope } = preview({
+    name: "A.png",
+    size: 3,
+    blob: new Blob(["one"]),
+  });
   expect(state.url.value).toBe("blob:one");
   source.blob = new Blob(["two"]);
   await settle();

@@ -1,22 +1,35 @@
-/** 登录令牌只放内存。页面权限用于提示，后台仍然决定访问是否允许。 */
 import { readonly, shallowRef } from "vue";
 import { ActionError, setAccessToken } from "@/shared/http/client";
+import { clearRecords } from "@/shared/records/store";
 import type { LoginInput } from "./login";
 const state = shallowRef({
   signedIn: false,
-  org: import.meta.env?.VITE_ORG_ID || (import.meta.env?.VITE_API_MODE !== "real" ? "demo-team" : ""),
+  org:
+    import.meta.env?.VITE_ORG_ID ||
+    (import.meta.env?.VITE_API_MODE !== "real" ? "demo-team" : ""),
   username: "",
   permissions: [] as string[],
 });
 const demo = import.meta.env?.VITE_API_MODE !== "real";
 let expiration: ReturnType<typeof setTimeout> | undefined;
 let sessionVersion = 0;
-/** UI 权限仅来自收到的令牌内容；不把解码当作签名验证。 */
+
 export async function login(input: LoginInput) {
   const version = ++sessionVersion;
   const { requestLogin } = await import("./login");
-  const { reply, permissions } = await requestLogin(input);
-  if (version !== sessionVersion) throw new ActionError("login_cancelled", "本次登录已取消，请重新登录。");
+  const { reply, permissions } = await requestLogin(input).catch(
+    (error: unknown) => {
+      if (version !== sessionVersion)
+        throw new ActionError(
+          "login_cancelled",
+          "本次登录已取消，请重新登录。",
+        );
+      throw error;
+    },
+  );
+  if (version !== sessionVersion)
+    throw new ActionError("login_cancelled", "本次登录已取消，请重新登录。");
+  if (state.value.signedIn) clearRecords();
   setAccessToken(reply.access_token);
   state.value = {
     signedIn: true,
@@ -30,10 +43,11 @@ export async function login(input: LoginInput) {
     Math.min(reply.expires_in * 1000, 2_147_483_647),
   );
 }
-/** 清除本机访问凭据。后台刷新令牌未保存，也不会自动刷新或重试写入。 */
+
 export function logoutLocal() {
   sessionVersion++;
   clearTimeout(expiration);
+  clearRecords();
   setAccessToken("");
   state.value = {
     ...state.value,
@@ -50,14 +64,25 @@ export function useSession() {
     logoutLocal,
     can: (permission: string) =>
       demo ||
-      permissionAllowed(permission, state.value.signedIn, state.value.permissions),
+      permissionAllowed(
+        permission,
+        state.value.signedIn,
+        state.value.permissions,
+      ),
   };
 }
 
-/** 与后端公开、已登录和模块通配规则一致；这只决定页面提示。 */
-export function permissionAllowed(permission: string, signedIn: boolean, permissions: readonly string[]) {
+export function permissionAllowed(
+  permission: string,
+  signedIn: boolean,
+  permissions: readonly string[],
+) {
   if (permission === "public") return true;
   if (!signedIn) return false;
-  return permission === "signed_in" || permissions.includes("*") || permissions.includes(permission) ||
-    permissions.includes(`${permission.split(".", 1)[0]}.*`);
+  return (
+    permission === "signed_in" ||
+    permissions.includes("*") ||
+    permissions.includes(permission) ||
+    permissions.includes(`${permission.split(".", 1)[0]}.*`)
+  );
 }

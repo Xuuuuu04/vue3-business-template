@@ -1,18 +1,16 @@
-/** 从实际 Git 差异与模块依赖找需要检查的业务范围。 */
 import { execFileSync } from "node:child_process";
 import { modules } from "../src/app/catalog";
 import { parseArgs, usageError } from "./lib";
+import { isFrameworkPath, productFiles } from "./framework-lock";
 const usage = `用法：npm run impact [-- --base 比较版本]
   不带参数        和最近一次提交（HEAD）比较，包括未提交和未跟踪的文件
   --base 版本     和指定分支或提交比较，例如 --base main`;
 const args = parseArgs(usage, { options: ["--base"] });
 const base = args.options.get("--base") ?? "HEAD";
-/** 产品常放在仓库子目录里，git 输出的路径一律换成相对当前目录，并只看当前目录下的改动。 */
 function git(...gitArgs: string[]) {
   try {
     return execFileSync("git", gitArgs, { encoding: "utf8", stdio: "pipe" })
-      .trim()
-      .split("\n")
+      .split("\u0000")
       .filter(Boolean);
   } catch (error) {
     const detail = String((error as { stderr?: string }).stderr ?? "").trim();
@@ -32,11 +30,18 @@ try {
     usage,
   );
 }
-const diff = git("diff", "--name-only", "--relative", base, "--");
-const untracked = git("ls-files", "--others", "--exclude-standard");
+const diff = git("diff", "--name-only", "--relative", "-z", base, "--");
+const untracked = git("ls-files", "--others", "--exclude-standard", "-z");
 const changed = [...new Set([...diff, ...untracked])];
-const framework = changed.some((file) =>
-  /^(src\/(shared|app)\/|tools\/|vite\.config|framework\.lock)/.test(file),
+const framework = changed.some(
+  (file) =>
+    isFrameworkPath(file) ||
+    productFiles.includes(file) ||
+    /^(?:package(?:-lock)?\.json|framework\.lock|index\.html|\.env\.example|\.gitignore)$/.test(
+      file,
+    ) ||
+    file.startsWith("tests/") ||
+    /^[^/]+\.config\.[^/]+$/.test(file),
 );
 const affected = new Set<string>(
   framework
