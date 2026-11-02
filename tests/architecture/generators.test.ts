@@ -38,6 +38,7 @@ function clone() {
     "vitest.config.ts",
     "vite.config.ts",
     "playwright.config.ts",
+    "build-budget.json",
     ".github",
     "framework.lock",
     "scaffold.json",

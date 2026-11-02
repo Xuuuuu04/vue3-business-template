@@ -30,9 +30,9 @@ npm run api -- gen --openapi ../后端/doc/api/openapi.json --prefix /api/v1/ord
 
 ## 真实后台验证
 
-模板不再带专门的真实后台脚本。接上真实后台后（`.env` 里设 `VITE_API_MODE=real` 和 `API_PROXY_TARGET`，运行 `npm run dev:real`），用业务包自己的浏览器测试走一遍：登录、这个包的一个读取动作，有写入的再加一次写入和查询结果。只在用户明确提供的隔离测试账号和数据上运行，密码从环境变量读，不写进代码。
+使用 `npm run test:acceptance -- --backend 后端目录` 启动本轮专用后端与 real 前端，执行产品的 `tests/acceptance/*.spec.ts`。初始合成数据由后端 `tests/acceptance/seed.py` 准备，需要时显式加 `--seed`。准备、页面操作、重新查询核对、清理和报告见[隔离验收](../../../doc/acceptance.md)。没有场景不能算通过；`--infrastructure` 只检查设施。
 
-演示服务和模拟测试不是真实后台验收。验收结果要写明：后台版本、使用的账号角色、数据来源、通过了哪些操作，没验证的保持"未验证"。
+已有运行环境仍需独立验收：用业务测试账号和隔离数据核对真实权限、接口和保存结果。本地验收使用 SQLite，不验证 PostgreSQL、迁移、后台 worker 和外部系统。演示服务与模拟响应测试不是真实后台验收。
 
 ## 表单字段错误
 

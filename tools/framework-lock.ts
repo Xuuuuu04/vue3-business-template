@@ -11,6 +11,7 @@ const trees = [
   "tools",
   "tests/framework",
   "tests/architecture",
+  "tests/formal",
   ".agents/skills",
 ];
 const singles = [
@@ -25,6 +26,7 @@ const singles = [
 ];
 
 export const productFiles = [
+  "build-budget.json",
   "src/app/catalog.ts",
   "src/app/app.config.ts",
   "src/app/login.config.ts",

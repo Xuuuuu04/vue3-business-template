@@ -52,6 +52,8 @@ npm run new:step -- file_library summarize --action file_library.list --title �
 - [文件规则](doc/file_library/rules.md)和[计算图](doc/file_library/flows.md)。
 - [真实后台接入与部署](doc/deployment.md)。
 - [产品交付](doc/delivery.md)：任务版式、状态接入、视觉检查、安全与资源限制。
+- [隔离业务验收](doc/acceptance.md)：临时前后端、真实操作、后台结果核对与清理。
+- [形式化检查](doc/formal-verification.md)：按需验证关键状态，不加入日常检查。
 - [检查结果说明](doc/verification.md)：本地测试、浏览器、真实后台与远程 CI 分别确认。
 
 ## 检查与发布

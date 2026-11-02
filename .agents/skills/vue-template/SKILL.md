@@ -37,3 +37,5 @@ npm run update:framework -- --source /新版模板目录 --apply
 旧清单中的路径也要检查：只能更新框架范围，绝对路径、越出目录的路径、业务文件和链接均在写入前拒绝。来源框架、目标文件和 `.template` 元数据都不跟随链接。这防止工具误写；不能代替操作系统权限隔离，也不能防止有文件写权限的进程在检查后更换路径。
 
 还没部署的更新用 Git 撤回。已经部署的需要产品自己的备份和恢复办法，脚本不提供。
+
+资源预算和隔离验收升级：升级器只补缺失的 `build-budget.json`，保留产品已有预算。把新版模板的 `test:acceptance`、`verify:state` scripts 合入产品 `package.json`，并在 `format`、`format:check` 加入 `build-budget.json`；不替换产品依赖或其他脚本。按 `doc/acceptance.md` 添加产品自己的场景，空场景必须失败。TLA+ 只在修改对应并发状态时按 `doc/formal-verification.md` 运行。

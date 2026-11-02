@@ -6,6 +6,7 @@ import { execFileSync } from "node:child_process";
 import { demoApi } from "./tools/demo-api.ts";
 import { developmentGuard } from "./tools/dev-guard.ts";
 import { sourceFingerprint } from "./tools/lib.ts";
+import { buildBudget } from "./tools/build-budget-plugin.ts";
 export default defineConfig(({ mode, command }) => {
   const env = { ...loadEnv(mode, process.cwd(), ""), ...process.env };
   if (command === "serve")
@@ -30,6 +31,7 @@ export default defineConfig(({ mode, command }) => {
       vue(),
       tailwindcss(),
       developmentGuard(),
+      buildBudget(),
       ...(demo ? [demoApi()] : []),
     ],
     define: {

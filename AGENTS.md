@@ -46,3 +46,6 @@ VITE_API_MODE=real npm run build
 - 每个非公开动作在自身声明权限，由执行器检查，不能只依赖入口按钮；访问令牌只存页面内存，后台仍检查身份、组织和对象范围。
 - 找代码、生成、检查和排错优先走项目 Skill 的标准命令；产品差异放配置，复用工具按 `vue-project` 扩展，不另写一套脚本绕过框架。
 - 不提交密钥、真实数据、`node_modules`、`var` 和本机 `.agents`（项目 Skill 除外）。
+
+- 隔离业务验收走 `npm run test:acceptance -- --backend 后端目录`，产品场景在 `tests/acceptance`；空场景与设施检查不能算业务验收，见 `doc/acceptance.md`。
+- 改查询并发与结果采纳逻辑时按 `vue-check` 运行可选 TLA+ 检查；普通开发不运行 Java，见 `doc/formal-verification.md`。

@@ -1,0 +1,28 @@
+{
+  "tool": {
+    "version": "tla2tools 1.7.4 / TLC 2.19",
+    "sha256": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88",
+    "download": "https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar"
+  },
+  "reviewedAt": "2026-11-02",
+  "scope": "同一 createTask latest 生命周期，最多三次查询、任意成功或错误完成顺序；旧完成不能改写当前页面状态。",
+  "sources": [
+    {
+      "file": "src/shared/state/task.ts",
+      "symbol": "createTask",
+      "actions": [
+        "Start: run 在 await 前更新 version 与 loading",
+        "Finish: run 在 await 后检查 current/version 与 abort，再更新 state"
+      ],
+      "sha256": "c82dc65901fc3e9bdc12641a0ecdc8ccb0946f73076aece3e06307ab7b166e3e"
+    },
+    {
+      "file": "src/shared/actions/runtime.ts",
+      "symbol": "execute",
+      "actions": [
+        "Finish: execute 在步骤前后检查 AbortSignal；动作可异步完成或抛错"
+      ],
+      "sha256": "aa40a6905310cd7b91782cec3f613a75340439a8b8e2dd6556440d73585876fe"
+    }
+  ]
+}

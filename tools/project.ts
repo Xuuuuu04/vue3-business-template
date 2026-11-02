@@ -1,4 +1,5 @@
 import { readFileSync, existsSync, readdirSync } from "node:fs";
+import { backendFingerprint } from "./acceptance/context";
 import generatedGraph from "../src/generated/graph.json";
 import type { describe } from "../src/shared/modules/graph";
 import { fingerprint, parseArgs, usageError } from "./lib";
@@ -19,7 +20,11 @@ const currentFingerprint = fingerprint();
 function resultOf(file: string, missing = "未运行") {
   if (!existsSync(file)) return { status: missing };
   const saved = JSON.parse(readFileSync(file, "utf8"));
-  const current = saved.fingerprint === currentFingerprint;
+  const backendCurrent =
+    !saved.backend ||
+    (existsSync(saved.backend.root) &&
+      backendFingerprint(saved.backend.root) === saved.backend.fingerprint);
+  const current = saved.fingerprint === currentFingerprint && backendCurrent;
   const status = current
     ? saved.status
     : `代码已改变，旧检查过期（当时${saved.status}）`;
@@ -91,6 +96,10 @@ const check = {
     ]),
   ),
   browser: resultOf("var/checks/browser.json"),
+  acceptance: resultOf("var/checks/acceptance.json"),
+  acceptanceInfrastructure: resultOf(
+    "var/checks/acceptance-infrastructure.json",
+  ),
 };
 const graph = name ? modules.filter((m) => m.name === name) : modules;
 const plan = existsSync("project-plan.json")
@@ -116,6 +125,8 @@ else {
     }`,
   );
   console.log(`浏览器检查：${check.browser.status}`);
+  console.log(`隔离业务验收：${check.acceptance.status}`);
+  console.log(`隔离设施检查：${check.acceptanceInfrastructure.status}`);
   for (const module of graph) {
     console.log(`\n${module.title} (${module.name})：${module.description}`);
     for (const page of module.pages)

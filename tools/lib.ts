@@ -29,6 +29,7 @@ export function projectFiles(root = process.cwd()) {
         "vite.config.ts",
         "vitest.config.ts",
         "playwright.config.ts",
+        "build-budget.json",
         "AGENTS.md",
         "README.md",
         "framework.lock",
