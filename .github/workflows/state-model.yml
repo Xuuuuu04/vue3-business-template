@@ -1,0 +1,52 @@
+name: 关键状态模型
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "src/shared/state/**"
+      - "src/shared/actions/**"
+      - "src/shared/http/**"
+      - "tests/formal/**"
+      - "tools/verify-state*"
+      - "tools/state-model*"
+      - "tests/framework/concurrency.test.ts"
+      - "tests/framework/execution-lifecycle.test.ts"
+      - "tests/framework/http-limits.test.ts"
+      - "tests/framework/field-errors.test.ts"
+      - ".github/workflows/state-model.yml"
+  push:
+    paths:
+      - "src/shared/state/**"
+      - "src/shared/actions/**"
+      - "src/shared/http/**"
+      - "tests/formal/**"
+      - "tools/verify-state*"
+      - "tools/state-model*"
+      - "tests/framework/concurrency.test.ts"
+      - "tests/framework/execution-lifecycle.test.ts"
+      - "tests/framework/http-limits.test.ts"
+      - "tests/framework/field-errors.test.ts"
+      - ".github/workflows/state-model.yml"
+permissions:
+  contents: read
+concurrency:
+  group: state-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  model:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+      - run: npm ci
+      - name: 准备固定版本的 TLC
+        run: |
+          java -version
+          curl --fail --location --retry 2 --max-time 120 --proto '=https' --tlsv1.2 https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar --output "$RUNNER_TEMP/tla2tools.jar"
+          echo "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88  $RUNNER_TEMP/tla2tools.jar" | sha256sum --check
+      - run: npm run verify:state -- --jar "$RUNNER_TEMP/tla2tools.jar"

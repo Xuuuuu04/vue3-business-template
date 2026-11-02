@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
-import { direct, parseArgs } from "./lib";
+import { direct, fingerprint, parseArgs } from "./lib";
 
 export interface SourceMapping {
   file: string;
@@ -12,11 +12,18 @@ export interface SourceMapping {
   sha256: string;
   actions: string[];
 }
+export interface ModelDefinition {
+  id: string;
+  scope: string;
+  invariant: string;
+  witnessInvariant?: string;
+}
 export interface ModelManifest {
   tool: { version: string; sha256: string; download: string };
   reviewedAt: string;
   scope: string;
   sources: SourceMapping[];
+  models: ModelDefinition[];
 }
 
 export function symbolHash(source: string, symbol: string) {
@@ -38,6 +45,13 @@ export function checkModelSources(root: string, manifest: ModelManifest) {
   }
 }
 
+export function checkModelInputs(root: string, initial: string) {
+  if (fingerprint(root) !== initial)
+    throw new Error(
+      "状态模型检查期间输入发生变化，包括源码、模型、配置或测试，请重新运行。",
+    );
+}
+
 export function checkModelTool(jar: string, manifest: ModelManifest) {
   const actual = createHash("sha256").update(readFileSync(jar)).digest("hex");
   if (actual !== manifest.tool.sha256)
@@ -49,19 +63,20 @@ export function checkModelTool(jar: string, manifest: ModelManifest) {
 export function checkedModelOutput(
   result: SpawnSyncReturns<string>,
   mutation: boolean,
+  invariant = "NoStaleCompletion",
 ) {
   const text = (result.stdout ?? "") + (result.stderr ?? "");
   if (result.error) throw result.error;
   const passed = mutation
     ? result.status === 12 &&
-      text.includes("Invariant NoStaleCompletion is violated.")
+      text.includes(`Invariant ${invariant} is violated.`)
     : result.status === 0 &&
       text.includes("Model checking completed. No error has been found.");
   if (!passed)
     throw new Error(
       mutation
-        ? "错误模型没有产生预期的旧结果覆盖反例；查看 mutation.log。"
-        : "状态模型未通过；查看 model.log。",
+        ? `未得到预期的 ${invariant} 轨迹；查看本模型对应日志。`
+        : "状态模型未通过；查看本模型对应日志。",
     );
   return text.match(/(\d+) distinct states found/)?.[1];
 }
@@ -70,9 +85,12 @@ function runModel(
   root: string,
   jar: string,
   output: string,
-  mutation: boolean,
+  model: ModelDefinition,
+  kind: "model" | "mutation" | "witness",
 ) {
-  const name = mutation ? "mutation" : "model";
+  const name = `${model.id}-${kind}`;
+  const suffix =
+    kind === "mutation" ? "Broken" : kind === "witness" ? "Partial" : "";
   const result = spawnSync(
     "java",
     [
@@ -86,8 +104,8 @@ function runModel(
       "-metadir",
       resolve(output, `${name}-states`),
       "-config",
-      `tests/formal/LatestQuery${mutation ? "Broken" : ""}.cfg`,
-      "tests/formal/LatestQuery.tla",
+      `tests/formal/${model.id}${suffix}.cfg`,
+      `tests/formal/${model.id}.tla`,
     ],
     { cwd: root, encoding: "utf8", timeout: 60000, maxBuffer: 4 * 1024 * 1024 },
   );
@@ -95,7 +113,11 @@ function runModel(
     resolve(output, `${name}.log`),
     (result.stdout ?? "") + (result.stderr ?? ""),
   );
-  return checkedModelOutput(result, mutation);
+  return checkedModelOutput(
+    result,
+    kind !== "model",
+    kind === "witness" ? model.witnessInvariant : model.invariant,
+  );
 }
 
 function runImplementation(root: string, output: string) {
@@ -105,6 +127,8 @@ function runImplementation(root: string, output: string) {
       "node_modules/vitest/vitest.mjs",
       "run",
       "tests/framework/concurrency.test.ts",
+      "tests/framework/execution-lifecycle.test.ts",
+      "tests/framework/http-limits.test.ts",
       "tests/framework/field-errors.test.ts",
     ],
     { cwd: root, encoding: "utf8", timeout: 60000, maxBuffer: 4 * 1024 * 1024 },
@@ -118,6 +142,23 @@ function runImplementation(root: string, output: string) {
     throw new Error("真实实现回归未通过，查看 implementation.log。");
 }
 
+function modelSummary(manifest: ModelManifest) {
+  return {
+    scope: manifest.scope,
+    tool: manifest.tool.version,
+    status: "本轮尚未通过",
+    checkedAt: new Date().toISOString(),
+    models: [] as Array<{
+      id: string;
+      states?: string;
+      mutationStates?: string;
+      witnessStates?: string;
+    }>,
+    implementation: "未执行",
+    error: undefined as string | undefined,
+  };
+}
+
 export function verifyStateModel(root: string, jar: string) {
   const output = resolve(
     root,
@@ -125,30 +166,55 @@ export function verifyStateModel(root: string, jar: string) {
     new Date().toISOString().replaceAll(":", "-"),
   );
   mkdirSync(output, { recursive: true });
+  const initialInputs = fingerprint(root);
   const manifest = JSON.parse(
     readFileSync(resolve(root, "tests/formal/manifest.json"), "utf8"),
   ) as ModelManifest;
-  const summary = {
-    scope: manifest.scope,
-    tool: manifest.tool.version,
-    status: "本轮尚未通过",
-    checkedAt: new Date().toISOString(),
-    states: undefined as string | undefined,
-    mutationStates: undefined as string | undefined,
-    implementation: "未执行",
-    error: undefined as string | undefined,
-  };
+  const summary = modelSummary(manifest);
   try {
+    if (
+      manifest.models
+        .map((model) => model.id)
+        .sort()
+        .join(",") !== "LatestQuery,SubmitWrite"
+    )
+      throw new Error(
+        "状态模型清单必须同时包含 LatestQuery 与 SubmitWrite，不能跳过已声明的检查。",
+      );
     checkModelSources(root, manifest);
     checkModelTool(resolve(jar), manifest);
-    summary.states = runModel(root, resolve(jar), output, false);
-    summary.mutationStates = runModel(root, resolve(jar), output, true);
+    for (const model of manifest.models) {
+      const result = {
+        id: model.id,
+        states: runModel(root, resolve(jar), output, model, "model"),
+        mutationStates: undefined as string | undefined,
+        witnessStates: undefined as string | undefined,
+      };
+      summary.models.push(result);
+      result.mutationStates = runModel(
+        root,
+        resolve(jar),
+        output,
+        model,
+        "mutation",
+      );
+      if (model.witnessInvariant)
+        result.witnessStates = runModel(
+          root,
+          resolve(jar),
+          output,
+          model,
+          "witness",
+        );
+    }
     runImplementation(root, output);
     summary.implementation = "通过";
     checkModelSources(root, manifest);
+    checkModelTool(resolve(jar), manifest);
+    checkModelInputs(root, initialInputs);
     summary.status = "通过";
     console.log(
-      `限定状态模型通过：${summary.states} 个状态，故意错误模型产生反例，真实实现回归通过。`,
+      `限定状态模型通过：${summary.models.map((model) => `${model.id} ${model.states} 个状态`).join("、")}；错误模型产生指定反例，真实实现回归通过。`,
     );
     console.log(`范围：${manifest.scope}；结果保存在 ${output}`);
   } catch (error) {

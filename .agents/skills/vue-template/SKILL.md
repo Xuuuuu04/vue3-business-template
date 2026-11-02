@@ -39,3 +39,5 @@ npm run update:framework -- --source /新版模板目录 --apply
 还没部署的更新用 Git 撤回。已经部署的需要产品自己的备份和恢复办法，脚本不提供。
 
 资源预算和隔离验收升级：升级器只补缺失的 `build-budget.json`，保留产品已有预算。把新版模板的 `test:acceptance`、`verify:state` scripts 合入产品 `package.json`，并在 `format`、`format:check` 加入 `build-budget.json`；不替换产品依赖或其他脚本。按 `doc/acceptance.md` 添加产品自己的场景，空场景必须失败。TLA+ 只在修改对应并发状态时按 `doc/formal-verification.md` 运行。
+
+3.0.0 收紧规则引用检查；`new:step` 必须传 `--rule 已声明编号`，旧调用需要补参。升级前把 `doc/包/rules.md` 的验证位置改成每条规则一行的完整测试路径，删除编号范围与缩写路径；补齐被步骤引用的规则。框架更新会纳入 PR 模板和按路径执行的状态工作流，产品改过同一路径时应保留审批和环境约定并解决冲突；AGENTS、README、doc 与 package scripts 仍需手动核对。不会代替产品迁移或上线。

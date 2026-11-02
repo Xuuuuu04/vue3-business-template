@@ -5,14 +5,14 @@
     "download": "https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar"
   },
   "reviewedAt": "2026-11-02",
-  "scope": "同一 createTask latest 生命周期，最多三次查询、任意成功或错误完成顺序；旧完成不能改写当前页面状态。",
+  "scope": "限定范围的latest查询乱序与submit写入未知结果保护；只检查有界抽象，不证明实现等价。",
   "sources": [
     {
       "file": "src/shared/state/task.ts",
       "symbol": "createTask",
       "actions": [
-        "Start: run 在 await 前更新 version 与 loading",
-        "Finish: run 在 await 后检查 current/version 与 abort，再更新 state"
+        "LatestQuery.Start/Finish：递增版本、拒绝过时完成",
+        "SubmitWrite.Start/Finish：loading或unknown禁止重入，异常映射unknown"
       ],
       "sha256": "c82dc65901fc3e9bdc12641a0ecdc8ccb0946f73076aece3e06307ab7b166e3e"
     },
@@ -20,9 +20,71 @@
       "file": "src/shared/actions/runtime.ts",
       "symbol": "execute",
       "actions": [
-        "Finish: execute 在步骤前后检查 AbortSignal；动作可异步完成或抛错"
+        "SubmitWrite.Finish：步骤异常经writeFailure分类再抛出"
       ],
       "sha256": "aa40a6905310cd7b91782cec3f613a75340439a8b8e2dd6556440d73585876fe"
+    },
+    {
+      "file": "src/shared/actions/runtime.ts",
+      "symbol": "writeFailure",
+      "actions": [
+        "SubmitWrite.Finish：存在ok、unknown或running写请求时，后续失败按unknown处理"
+      ],
+      "sha256": "db28da0467107bff15dd5fdd7f97c7c6c8f969e4d3240250b0143067aad9cedf"
+    },
+    {
+      "file": "src/shared/actions/requests.ts",
+      "symbol": "createRequests",
+      "actions": [
+        "SubmitWrite.Send/Resolve：记录已发请求结果；只有步骤收尾才关闭发送并等待全部Promise settled",
+        "普通4xx可以由步骤捕获后继续；未知请求即使捕获仍在finish传播unknown"
+      ],
+      "sha256": "b37702824afca6974b72c9c76c12e64ed4d942916a69e73ff8ad3cc5ef7da71b"
+    },
+    {
+      "file": "src/shared/actions/step.ts",
+      "symbol": "runStep",
+      "actions": [
+        "SubmitWrite.Close/Finish：步骤可正常结束或传播失败，随后等待requests.finish；请求返回失败不等于步骤立即结束"
+      ],
+      "sha256": "46e8bddbe6787fb5af753f99505fe27d47a96daf0d6a2a323cead5430eb53bef"
+    },
+    {
+      "file": "src/shared/http/client.ts",
+      "symbol": "sendRequest",
+      "actions": [
+        "SubmitWrite.Resolve：网络阶段中断或解析失败的写入记unknown，成功记ok"
+      ],
+      "sha256": "0f40eed21c12f347ae8f9dc997589bca3a01bc62dc87335f74f739cb2a7e8420"
+    },
+    {
+      "file": "src/shared/http/client.ts",
+      "symbol": "httpFailure",
+      "actions": [
+        "SubmitWrite.Resolve：写入的5xx、408、499记unknown；普通4xx按明确拒绝建模"
+      ],
+      "sha256": "050a05a6c6448d148fdbf8207b8c355cbd5bb3fd6ae86e4559bc0bc900ff39f1"
+    },
+    {
+      "file": "src/shared/http/client.ts",
+      "symbol": "parseReply",
+      "actions": [
+        "SubmitWrite.Resolve：写入成功响应不是约定JSON或类型不符时记unknown"
+      ],
+      "sha256": "532fc97e1ec98c4975035755868c13c753a5edf4f30b88d6257b49b0098cba80"
+    }
+  ],
+  "models": [
+    {
+      "id": "LatestQuery",
+      "scope": "同一latest实例，最多3次查询，成功或错误完成顺序任意交错",
+      "invariant": "NoStaleCompletion"
+    },
+    {
+      "id": "SubmitWrite",
+      "scope": "同一submit实例与账号，最多2次尝试，每次最多2个写请求；请求结果与步骤结束分开，等待全部已发请求收尾后分类，整体unknown后禁止新尝试",
+      "invariant": "NoUnknownResend",
+      "witnessInvariant": "PartialFailureWitnessAbsent"
     }
   ]
 }

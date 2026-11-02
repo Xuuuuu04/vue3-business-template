@@ -9,6 +9,7 @@ import {
   nameOf,
 } from "./scaffold";
 import { parseArgs } from "./lib";
+import { inspectRuleLinks } from "./inspect-rules";
 const args = process.argv.slice(2);
 const kind = args[0];
 if (kind !== "page" && kind !== "step") throw new Error("只支持 page 或 step");
@@ -16,12 +17,12 @@ const pageLayouts = ["blank", "list", "form", "detail", "overview"] as const;
 type PageLayout = (typeof pageLayouts)[number];
 
 const parsed = parseArgs(
-  `用法：npm run new:${kind} -- 包名 名称 [--title 中文名]${kind === "step" ? " --action 动作编号" : " [--layout 布局 --task 页面任务]"}`,
+  `用法：npm run new:${kind} -- 包名 名称 [--title 中文名]${kind === "step" ? " --action 动作编号 --rule 规则编号" : " [--layout 布局 --task 页面任务]"}`,
   {
     options:
       kind === "page"
         ? ["--title", "--layout", "--task"]
-        : ["--title", "--action"],
+        : ["--title", "--action", "--rule"],
     positionals: 2,
   },
   args.slice(1),
@@ -30,6 +31,11 @@ const module = nameOf(parsed.positionals[0]);
 const name = nameOf(parsed.positionals[1]);
 const options = parsed.options;
 const title = options.get("--title") ?? name;
+const rule = options.get("--rule");
+if (kind === "step" && !rule)
+  throw new Error(
+    "新增步骤必须指定 --rule 规则编号，先在业务规则中声明并填写测试路径",
+  );
 const layoutOption = options?.get("--layout") ?? "blank";
 if (!pageLayouts.includes(layoutOption as PageLayout))
   throw new Error(
@@ -131,6 +137,13 @@ assertFramework();
 const data = registry();
 const entry = data.modules[module];
 if (!entry) throw new Error("开发包未由生成器登记");
+if (kind === "step") {
+  const problems = inspectRuleLinks(process.cwd(), {
+    name: module,
+    actions: [{ steps: [{ id: `${module}.${name}`, rule: rule! }] }],
+  });
+  if (problems.length) throw new Error(problems.join("\n"));
+}
 const file = kind === "page" ? `pages/${name}.vue` : `steps/${name}.ts`;
 const target = `src/modules/${module}/${file}`;
 if (existsSync(target)) throw new Error("目标文件已存在");
@@ -257,7 +270,7 @@ definition = updateObject(
 const content =
   kind === "page"
     ? page!.content
-    : `import { defineStep } from '@/shared/public';\nfunction execute${name}(){throw new Error('步骤 ${name} 尚未实现');}\nexport const ${name}Step=defineStep({id:'${module}.${name}',title:${JSON.stringify(title)},rule:'R-待确认',reads:[],writes:[],uses:[],run:execute${name}});\n`;
+    : `import { defineStep } from '@/shared/public';\nfunction execute${name}(){throw new Error('步骤 ${name} 尚未实现');}\nexport const ${name}Step=defineStep({id:'${module}.${name}',title:${JSON.stringify(title)},rule:${JSON.stringify(rule)},reads:[],writes:[],uses:[],run:execute${name}});\n`;
 mkdirSync(target.slice(0, target.lastIndexOf("/")), { recursive: true });
 writeFileSync(target, await formatSource(target, content));
 writeFileSync(

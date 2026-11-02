@@ -7,10 +7,13 @@ import type { SpawnSyncReturns } from "node:child_process";
 import {
   checkedModelOutput,
   checkModelSources,
+  checkModelInputs,
   checkModelTool,
   symbolHash,
   type ModelManifest,
 } from "../../tools/verify-state-model";
+
+import { fingerprint } from "../../tools/lib";
 
 const folders: string[] = [];
 afterEach(() => {
@@ -30,6 +33,9 @@ function fixture() {
     },
     reviewedAt: "2026-11-02",
     scope: "fixture",
+    models: [
+      { id: "LatestQuery", scope: "fixture", invariant: "NoStaleCompletion" },
+    ],
     sources: [
       {
         file: "src/task.ts",
@@ -113,3 +119,41 @@ test("正常模型既需要成功退出也需要检查完成，启动失败明�
     ),
   ).toThrow("java missing");
 });
+
+test("新增提交模型只接受自身不变量，不能拿查询反例冒充提交验证", () => {
+  expect(() =>
+    checkedModelOutput(
+      result(12, "Invariant NoUnknownResend is violated."),
+      true,
+      "NoUnknownResend",
+    ),
+  ).not.toThrow();
+  expect(() =>
+    checkedModelOutput(
+      result(12, "Invariant NoStaleCompletion is violated."),
+      true,
+      "NoUnknownResend",
+    ),
+  ).toThrow();
+  expect(() =>
+    checkedModelOutput(
+      result(12, "Invariant PartialFailureWitnessAbsent is violated."),
+      true,
+      "PartialFailureWitnessAbsent",
+    ),
+  ).not.toThrow();
+});
+
+test.each(["manifest.json", "LatestQuery.tla", "LatestQuery.cfg"])(
+  "检查期间 %s 变化不能仍宣称通过",
+  (file) => {
+    const { root } = fixture();
+    mkdirSync(resolve(root, "tests/formal"), { recursive: true });
+    const path = resolve(root, "tests/formal", file);
+    writeFileSync(path, "original");
+    const initial = fingerprint(root);
+    expect(() => checkModelInputs(root, initial)).not.toThrow();
+    writeFileSync(path, "changed");
+    expect(() => checkModelInputs(root, initial)).toThrow("输入发生变化");
+  },
+);

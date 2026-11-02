@@ -23,6 +23,8 @@ const singles = [
   "playwright.config.ts",
   "tsconfig.json",
   ".github/workflows/check.yml",
+  ".github/workflows/state-model.yml",
+  ".github/pull_request_template.md",
 ];
 
 export const productFiles = [

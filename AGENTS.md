@@ -49,3 +49,5 @@ VITE_API_MODE=real npm run build
 
 - 隔离业务验收走 `npm run test:acceptance -- --backend 后端目录`，产品场景在 `tests/acceptance`；空场景与设施检查不能算业务验收，见 `doc/acceptance.md`。
 - 改查询并发与结果采纳逻辑时按 `vue-check` 运行可选 TLA+ 检查；普通开发不运行 Java，见 `doc/formal-verification.md`。
+
+- AI 完成开发后提交任务分支并创建 PR，按 `.github/pull_request_template.md` 连接规则、步骤、测试和实际结果；独立审查通过后按仓库约定合并，发布框架不等于部署产品。

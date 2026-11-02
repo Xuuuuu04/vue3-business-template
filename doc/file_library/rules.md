@@ -19,11 +19,18 @@
 
 ## 验证位置
 
-| 规则 | 现有测试 |
+| 规则 | 测试路径 |
 | --- | --- |
-| R-01、R-03、R-04、R-06、R-10 | `src/modules/file_library/tests/files.test.ts` |
-| R-01 至 R-06 | `tests/browser/demo/files.spec.ts`；上传未知状态另见 `file-upload.spec.ts` |
+| R-01 | `src/modules/file_library/tests/files.test.ts`、`tests/browser/demo/files.spec.ts` |
+| R-02 | `tests/browser/demo/files.spec.ts` |
+| R-03 | `src/modules/file_library/tests/files.test.ts`、`tests/browser/demo/files.spec.ts`、`tests/browser/demo/file-upload.spec.ts` |
+| R-04 | `src/modules/file_library/tests/files.test.ts`、`tests/browser/demo/files.spec.ts` |
+| R-05 | `tests/browser/demo/files.spec.ts` |
+| R-06 | `src/modules/file_library/tests/files.test.ts`、`tests/browser/demo/files.spec.ts`、`tests/framework/concurrency.test.ts` |
 | R-07 | `tests/framework/concurrency.test.ts` |
-| R-08 | `tests/browser/demo/page-layout.spec.ts`、`file-components.spec.ts` |
-| R-09 | `tests/framework/permissions.test.ts`；真实后台另行验证 |
-| R-11 | `tests/browser/demo/files.spec.ts` 验证批量下载各自文件名与翻页清除勾选 |
+| R-08 | `tests/browser/demo/page-layout.spec.ts`、`tests/browser/demo/file-components.spec.ts` |
+| R-09 | `tests/framework/permissions.test.ts` |
+| R-10 | `src/modules/file_library/tests/files.test.ts`、`tests/browser/demo/files.spec.ts` |
+| R-11 | `tests/browser/demo/files.spec.ts` |
+
+测试路径从项目根目录写起。结构检查只核对规则声明、映射与文件是否存在，不表示测试已通过；真实后台权限仍须独立验证。

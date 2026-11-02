@@ -1,4 +1,5 @@
 import { inspectScript } from "./inspect-imports";
+import { inspectRuleLinks } from "./inspect-rules";
 import { inspectVueFile } from "./inspect-vue";
 import ts from "typescript";
 import { endpointProblems } from "../src/shared/http/endpoint";
@@ -127,7 +128,7 @@ export function inspectModule(
 ): string[] {
   const { files, errors } = inspectModuleFiles(root, module);
   const actions = inspectModuleActions(module);
-  errors.push(...actions.errors);
+  errors.push(...actions.errors, ...inspectRuleLinks(root, module));
   for (const endpoint of module.endpoints)
     errors.push(
       ...endpointProblems(endpoint).map(

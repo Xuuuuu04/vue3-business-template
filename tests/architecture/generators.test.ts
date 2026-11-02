@@ -295,6 +295,31 @@ test("未知布局与不完整页面参数在写入前失败，隔离副本所�
     rmSync(root, { recursive: true, force: true });
   }
 }, 60000);
+test("new:step 缺少或引用未知规则时不写入任何文件", () => {
+  const root = clone();
+  try {
+    command(root, "tools/new-module.ts", "orders", "--title", "订单");
+    const before = filesSnapshot(root);
+    for (const ruleArgs of [[], ["--rule", "R-99"], ["--rule", "R-000"]]) {
+      expect(() =>
+        command(
+          root,
+          "tools/new-part.ts",
+          "step",
+          "orders",
+          "normalize",
+          "--action",
+          "orders.prepare",
+          ...ruleArgs,
+        ),
+      ).toThrow(ruleArgs.length ? /业务规则.*未在/ : /必须指定 --rule/);
+      expect(filesSnapshot(root)).toEqual(before);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}, 60000);
+
 test("new:step 往空步骤数组和已有步骤后追加，import 保持集中且不插入数组中", () => {
   const root = clone();
   try {
@@ -317,6 +342,8 @@ test("new:step 往空步骤数组和已有步骤后追加，import 保持集中�
       "read_page",
       "--action",
       "orders.list",
+      "--rule",
+      "R-00",
     );
     command(
       root,
@@ -326,6 +353,8 @@ test("new:step 往空步骤数组和已有步骤后追加，import 保持集中�
       "present_page",
       "--action",
       "orders.list",
+      "--rule",
+      "R-00",
     );
     const flow = readFileSync(flowFile, "utf8");
     expect(flow).toMatch(

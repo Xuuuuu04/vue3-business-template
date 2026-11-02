@@ -47,7 +47,7 @@ const affected = new Set<string>(
   framework
     ? modules.map((m) => m.name)
     : changed
-        .map((file) => /^src\/modules\/([^/]+)\//.exec(file)?.[1])
+        .map((file) => /^(?:src\/modules|doc)\/([^/]+)\//.exec(file)?.[1])
         .filter((name): name is string => !!name),
 );
 let added = true;

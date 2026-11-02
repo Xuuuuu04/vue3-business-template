@@ -41,7 +41,7 @@ npm run project -- --module file_library --json
 npm run impact -- --base main
 npm run runs -- --file frontend-runs.json --run 运行编号
 npm run new:page -- file_library history --title 文件历史
-npm run new:step -- file_library summarize --action file_library.list --title 整理结果
+npm run new:step -- file_library summarize --action file_library.list --rule R-01 --title 整理结果
 ```
 
 新增步骤在业务实现之前会明确失败。新增页面与步骤使用脚本登记，字段与执行顺序仍由开发者按业务决定。模块测试写在模块的 `tests/` 固定位置。

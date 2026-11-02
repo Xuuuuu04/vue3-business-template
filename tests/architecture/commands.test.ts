@@ -127,6 +127,13 @@ test("impact 在仓库子目录里按当前目录换算路径，不在 Git 仓�
     expect(report.framework).toBe(false);
     expect(report.modules).toContain("orders");
     expect(report.commands).toContain("npm run check -- --module orders");
+    git("checkout", "--", "web/src/modules/orders/data.ts");
+    write("web/doc/orders/rules.md", "R-01：修改确认规则\n");
+    const rules = JSON.parse(
+      (await command("tools/impact.ts", [], { cwd: join(root, "web") })).stdout,
+    );
+    expect(rules.modules).toContain("orders");
+    expect(rules.commands).toContain("npm run check -- --module orders");
     write("web/src/shared/ui/README.md", "# 界面说明\n");
     const shared = JSON.parse(
       (await command("tools/impact.ts", [], { cwd: join(root, "web") })).stdout,
