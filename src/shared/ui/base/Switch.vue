@@ -13,7 +13,7 @@ defineProps<{ label?: string; hint?: string; disabled?: boolean }>();
       v-model="model"
       :disabled="disabled"
       :aria-label="label"
-      class="relative mt-0.5 inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-line-strong transition-colors duration-(--motion-normal) data-[state=checked]:bg-primary"
+      class="relative mt-0.5 inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-control-line transition-colors duration-(--motion-normal) data-[state=checked]:bg-primary"
     >
       <SwitchThumb
         class="block size-4 translate-x-0.5 rounded-full bg-switch-thumb shadow-card transition-transform duration-(--motion-normal) ease-(--ease) data-[state=checked]:translate-x-[18px]"

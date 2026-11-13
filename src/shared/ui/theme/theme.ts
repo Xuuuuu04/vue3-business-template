@@ -1,4 +1,5 @@
 import { reactive, readonly } from "vue";
+import { readStorage, writeStorage } from "../lib/storage";
 import {
   paletteById,
   type Density,
@@ -27,7 +28,7 @@ let defaults: ThemeSettings = {
   radius: "soft",
   density: "comfortable",
   sidebar: "light",
-  texture: "dots",
+  texture: "plain",
   brandHue: null,
 };
 const state = reactive<ThemeSettings>({ ...defaults });
@@ -61,24 +62,26 @@ export function applyTheme(
   root.dataset.radius = settings.radius;
   root.dataset.density = settings.density;
   root.dataset.sidebar = settings.sidebar;
-  root.dataset.texture = settings.texture ?? "dots";
+  root.dataset.texture = settings.texture ?? "plain";
 }
 
 function load(): Partial<ThemeSettings> {
+  const raw = readStorage(STORAGE_KEY);
+  if (!raw) return {};
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Partial<ThemeSettings>) : {};
-  } catch {
+    return JSON.parse(raw) as Partial<ThemeSettings>;
+  } catch (error) {
+    console.warn("外观设置格式异常，已使用默认外观。", error);
     return {};
   }
 }
 
 function save() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    console.warn("浏览器无法保存外观设置，刷新后会恢复默认设置。");
-  }
+  writeStorage(
+    STORAGE_KEY,
+    JSON.stringify(state),
+    "浏览器无法保存外观设置，刷新后会恢复默认设置。",
+  );
 }
 
 export function initTheme() {

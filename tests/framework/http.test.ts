@@ -34,6 +34,38 @@ test("路径编码、响应类型与后台编号都来自真实 HTTP 返回", as
   expect(item.backendRun).toBe("backend-42");
   expect(item.requestId).toBe("request-42");
 });
+
+test("多路径参数一次替换，且不读取原型属性", async () => {
+  const multi: Endpoint = {
+    id: "nested.read",
+    title: "读取子项",
+    method: "GET",
+    path: "/api/orgs/:org/items/:item",
+    response: z.object({ ok: z.boolean() }),
+  };
+  await sendRequest(
+    multi,
+    { params: { org: ":item", item: "real-item" } },
+    new AbortController().signal,
+    record(),
+    async (url) => {
+      expect(url).toBe("/api/orgs/%3Aitem/items/real-item");
+      return Response.json({ ok: true });
+    },
+  );
+  const proto: Endpoint = {
+    id: "proto.read",
+    title: "读取原型属性检查",
+    method: "GET",
+    path: "/api/items/:toString",
+    response: z.null(),
+  };
+  await expect(
+    sendRequest(proto, {}, new AbortController().signal, record(), async () =>
+      Response.json(null),
+    ),
+  ).rejects.toThrow("缺少路径参数");
+});
 test("不能把错误响应当成功，读取格式错误可重新读取", async () => {
   await expect(
     sendRequest(

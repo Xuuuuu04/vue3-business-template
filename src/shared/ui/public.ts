@@ -38,6 +38,7 @@ export { default as UiAccordion } from "./base/Accordion.vue";
 export { default as UiKbd } from "./base/Kbd.vue";
 export { default as Toaster } from "./base/Toaster.vue";
 export { useToast } from "./lib/toast";
+export { readStorage, writeStorage, removeStorage } from "./lib/storage";
 export { notify, useNotices } from "./lib/notifications";
 export { syncFavicon } from "./lib/favicon";
 export { moduleIcon, moduleIcons } from "./lib/icons";

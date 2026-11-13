@@ -16,6 +16,9 @@ import {
   UiButton,
   UiDialog,
   UiTip,
+  readStorage,
+  writeStorage,
+  removeStorage,
   useTheme,
 } from "@/shared/ui/public";
 import { appConfig } from "./app.config";
@@ -42,8 +45,10 @@ const forgot = ref(false);
 const hasSaved = ref(false);
 
 onMounted(() => {
+  const raw = readStorage(REMEMBER_KEY);
+  if (!raw) return;
   try {
-    const saved = JSON.parse(localStorage.getItem(REMEMBER_KEY) || "null") as {
+    const saved = JSON.parse(raw) as {
       org?: string;
       username?: string;
     } | null;
@@ -52,22 +57,23 @@ onMounted(() => {
       draft.username = saved.username;
       hasSaved.value = true;
     }
-  } catch {
+  } catch (error) {
     hasSaved.value = false;
-    console.warn("浏览器无法读取记住的账号，请手动填写。");
+    console.warn("浏览器无法读取记住的账号，请手动填写。", error);
   }
 });
 function persist() {
-  try {
-    if (remember.value)
-      localStorage.setItem(
-        REMEMBER_KEY,
-        JSON.stringify({ org: draft.org_code, username: draft.username }),
-      );
-    else localStorage.removeItem(REMEMBER_KEY);
-  } catch {
-    console.warn("浏览器无法保存账号偏好，本次登录仍然有效。");
-  }
+  if (remember.value)
+    writeStorage(
+      REMEMBER_KEY,
+      JSON.stringify({ org: draft.org_code, username: draft.username }),
+      "浏览器无法保存账号偏好，本次登录仍然有效。",
+    );
+  else
+    removeStorage(
+      REMEMBER_KEY,
+      "浏览器无法清除记住的账号偏好，本次登录仍然有效。",
+    );
 }
 const links = computed(() => [
   { label: "用户协议", to: "/legal/terms" },

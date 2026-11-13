@@ -15,6 +15,7 @@ import { PanelLeftClose, PanelLeftOpen, Menu } from "lucide-vue-next";
 import Tip from "../base/Tip.vue";
 import BrandMark from "./BrandMark.vue";
 import Button from "../base/Button.vue";
+import { readStorage, writeStorage } from "../lib/storage";
 
 const props = defineProps<{
   brand: string;
@@ -27,20 +28,13 @@ const props = defineProps<{
 }>();
 
 const KEY = "ui-sidebar-collapsed";
-function read(): boolean {
-  try {
-    return localStorage.getItem(KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-const collapsed = ref(read());
+const collapsed = ref(readStorage(KEY) === "1");
 watch(collapsed, (v) => {
-  try {
-    localStorage.setItem(KEY, v ? "1" : "0");
-  } catch {
-    console.warn("浏览器无法保存导航设置，刷新后会恢复默认设置。");
-  }
+  writeStorage(
+    KEY,
+    v ? "1" : "0",
+    "浏览器无法保存导航设置，刷新后会恢复默认设置。",
+  );
 });
 const mobileOpen = ref(false);
 const desktop = ref(false);

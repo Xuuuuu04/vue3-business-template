@@ -7,7 +7,6 @@
   --b-c: 0.19;
   --b-l: 0.54;
   --on-primary: oklch(0.99 0 0);
-  --fs: 16px;
   --file-icon: oklch(0.48 0.12 var(--file-hue));
 
   --font-sans:
@@ -21,6 +20,7 @@
   --muted: oklch(0.945 calc(var(--n-c) * 0.7) var(--n-h));
   --line: oklch(0.915 calc(var(--n-c) * 0.8) var(--n-h));
   --line-strong: oklch(0.85 calc(var(--n-c) * 0.9) var(--n-h));
+  --control-line: oklch(0.54 calc(var(--n-c) * 0.9) var(--n-h));
   --fg: oklch(0.22 calc(var(--n-c) * 0.6) var(--n-h));
   --fg-muted: oklch(0.47 calc(var(--n-c) * 0.7) var(--n-h));
   --fg-faint: oklch(0.52 calc(var(--n-c) * 0.7) var(--n-h));
@@ -141,6 +141,7 @@
   --muted: oklch(0.275 calc(var(--n-c) * 0.8) var(--n-h));
   --line: oklch(0.3 calc(var(--n-c) * 0.8) var(--n-h));
   --line-strong: oklch(0.38 calc(var(--n-c) * 0.8) var(--n-h));
+  --control-line: oklch(0.58 calc(var(--n-c) * 0.8) var(--n-h));
   --fg: oklch(0.95 calc(var(--n-c) * 0.3) var(--n-h));
   --fg-muted: oklch(0.74 calc(var(--n-c) * 0.5) var(--n-h));
   --fg-faint: oklch(0.66 calc(var(--n-c) * 0.5) var(--n-h));
@@ -183,6 +184,7 @@
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
+  --color-control-line: var(--control-line);
   --color-fg: var(--fg);
   --color-fg-muted: var(--fg-muted);
   --color-fg-faint: var(--fg-faint);
@@ -227,7 +229,6 @@
 
 @layer base {
   html {
-    font-size: var(--fs);
     color-scheme: light;
   }
   [data-mode="dark"] {
@@ -238,6 +239,7 @@
     background: var(--canvas);
     color: var(--fg);
     font-family: var(--font-sans);
+    font-size: 0.875rem;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -405,13 +407,11 @@
   margin: 10px 10px 10px 0;
   overflow: hidden;
   background: var(--surface);
-  border: 1px solid oklch(from var(--line) l c h / 0.9);
-  border-radius: calc(var(--r-lg) + 4px);
+  border: 1px solid var(--line);
+  border-radius: calc(var(--r-lg) + 2px);
   box-shadow:
-    0 0 0 1px oklch(from var(--shadow-color) l c h / 0.02),
-    0 1px 2px oklch(from var(--shadow-color) l c h / 0.05),
-    0 8px 24px -6px oklch(from var(--shadow-color) l c h / 0.08),
-    0 24px 48px -24px oklch(from var(--shadow-color) l c h / 0.1);
+    0 1px 3px oklch(from var(--shadow-color) l c h / 0.05),
+    0 6px 16px -8px oklch(from var(--shadow-color) l c h / 0.06);
 }
 .workspace-canvas {
   background: var(--surface);
@@ -738,17 +738,15 @@
 }
 
 .btn-primary {
-  background-image: linear-gradient(to bottom, oklch(1 0 0 / 0.1), transparent);
+  background-image: none;
   box-shadow:
-    inset 0 1px 0 oklch(1 0 0 / 0.16),
-    0 1px 2px oklch(from var(--primary) calc(l * 0.6) c h / 0.3),
-    0 4px 10px -4px oklch(from var(--primary) l c h / 0.45);
+    inset 0 1px 0 oklch(1 0 0 / 0.14),
+    0 1px 2px oklch(from var(--shadow-color) l c h / 0.12);
 }
 .btn-primary:hover {
   box-shadow:
-    inset 0 1px 0 oklch(1 0 0 / 0.18),
-    0 1px 2px oklch(from var(--primary) calc(l * 0.6) c h / 0.35),
-    0 6px 14px -4px oklch(from var(--primary) l c h / 0.5);
+    inset 0 1px 0 oklch(1 0 0 / 0.16),
+    0 2px 4px oklch(from var(--shadow-color) l c h / 0.14);
 }
 .btn-press:active:not(:disabled) {
   transform: translateY(0.5px) scale(0.985);
@@ -758,59 +756,26 @@
   position: relative;
   overflow: hidden;
   color: var(--primary-ink);
-  background: linear-gradient(
-    140deg,
-    oklch(from var(--primary) calc(l + 0.08) c calc(h - 18)),
-    var(--primary) 55%,
-    oklch(from var(--primary) calc(l - 0.06) c calc(h + 22))
-  );
+  background: var(--primary);
   box-shadow:
-    inset 0 1px 0 oklch(1 0 0 / 0.28),
-    inset 0 0 0 1px oklch(0 0 0 / 0.08),
-    0 2px 6px -1px oklch(from var(--primary) calc(l * 0.7) c h / 0.45);
-}
-.brand-tile::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    120% 70% at 20% 0%,
-    oklch(1 0 0 / 0.32),
-    transparent 55%
-  );
+    inset 0 0 0 1px oklch(1 0 0 / 0.14),
+    0 1px 2px oklch(from var(--shadow-color) l c h / 0.1);
 }
 .brand-tile > span {
   position: relative;
   z-index: 1;
-  text-shadow: 0 1px 1px oklch(0 0 0 / 0.15);
 }
 .brand-tile.is-inverse {
   color: var(--auth-bg);
-  background: linear-gradient(140deg, oklch(1 0 0), oklch(0.9 0.02 var(--b-h)));
-  box-shadow:
-    inset 0 -1px 0 oklch(0 0 0 / 0.1),
-    0 4px 14px -2px oklch(0 0 0 / 0.4);
+  background: var(--auth-fg);
+  box-shadow: 0 1px 3px oklch(0 0 0 / 0.25);
 }
 
-@keyframes page-in {
-  from {
-    opacity: 0;
-  }
-}
 @keyframes bar-in {
   from {
     transform: scaleY(0.3);
     opacity: 0;
   }
-}
-@keyframes rise-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-}
-.page-frame {
-  animation: page-in 220ms var(--ease-enter) both;
 }
 
 .page-icon {
@@ -833,14 +798,11 @@
   background: var(--surface);
 }
 .data-table thead th {
-  background: color-mix(in oklch, var(--subtle) 70%, var(--muted));
+  background: var(--subtle);
+  border-bottom-color: var(--line-strong);
 }
 .data-table tbody tr:hover > td {
-  background: color-mix(
-    in oklch,
-    var(--surface) 92%,
-    var(--primary)
-  ) !important;
+  background: var(--subtle) !important;
 }
 .data-table tbody tr.is-selected > td {
   background: var(--primary-soft) !important;
@@ -888,9 +850,8 @@
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  background: linear-gradient(to bottom, var(--subtle), var(--surface));
+  background: var(--surface);
   box-shadow: var(--shadow-card);
-  animation: rise-in 320ms 80ms var(--ease-enter) both;
 }
 .form-outline-progress {
   display: flex;
@@ -962,7 +923,7 @@
   border-radius: 999px;
   border: 1px solid var(--line-strong);
   background: var(--surface);
-  font-size: 11px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   transition:
     background var(--motion-normal),
@@ -1004,22 +965,6 @@
   border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: var(--shadow-card);
-  animation: rise-in 360ms var(--ease-enter) both;
-}
-.overview-board > .panel:nth-child(2) {
-  animation-delay: 40ms;
-}
-.overview-board > .panel:nth-child(3) {
-  animation-delay: 80ms;
-}
-.overview-board > .panel:nth-child(4) {
-  animation-delay: 120ms;
-}
-.overview-board > .panel:nth-child(5) {
-  animation-delay: 160ms;
-}
-.overview-board > .panel:nth-child(6) {
-  animation-delay: 200ms;
 }
 @media (min-width: 900px) {
   .panel-focus {
@@ -1027,11 +972,7 @@
   }
 }
 .panel-focus {
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklch, var(--surface) 94%, var(--primary)) 0,
-    var(--surface) 140px
-  );
+  background: linear-gradient(180deg, var(--subtle) 0, var(--surface) 96px);
 }
 .panel-head {
   display: flex;
@@ -1108,17 +1049,11 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background:
-    radial-gradient(
-      70% 55% at 0% 100%,
-      oklch(from var(--primary) 0.55 c h / 0.55),
-      transparent 70%
-    ),
-    radial-gradient(
-      50% 40% at 100% 0%,
-      oklch(from var(--primary) 0.6 calc(c * 0.8) calc(h + 40) / 0.28),
-      transparent 70%
-    );
+  background: radial-gradient(
+    80% 60% at 0% 0%,
+    oklch(from var(--primary) 0.42 calc(c * 0.45) h / 0.2),
+    transparent 70%
+  );
 }
 .auth-panel::after {
   content: "";
@@ -1129,37 +1064,13 @@
     linear-gradient(var(--auth-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--auth-line) 1px, transparent 1px);
   background-size: 48px 48px;
-  opacity: 0.5;
+  opacity: 0.28;
   -webkit-mask-image: radial-gradient(
     90% 70% at 30% 40%,
     #000,
     transparent 75%
   );
   mask-image: radial-gradient(90% 70% at 30% 40%, #000, transparent 75%);
-}
-.auth-watermark {
-  position: absolute;
-  right: -0.12em;
-  bottom: -0.28em;
-  z-index: -1;
-  font-size: 420px;
-  line-height: 1;
-  font-weight: 700;
-  color: oklch(1 0 0 / 0.045);
-  pointer-events: none;
-  user-select: none;
-}
-.auth-panel > *:not(.auth-watermark) {
-  animation: rise-in 520ms var(--ease-enter) both;
-}
-.auth-panel > *:nth-child(3) {
-  animation-delay: 80ms;
-}
-.auth-panel > *:nth-child(4) {
-  animation-delay: 160ms;
-}
-.auth-shell main > div {
-  animation: rise-in 420ms 60ms var(--ease-enter) both;
 }
 
 .trace {
@@ -1177,7 +1088,6 @@
   padding: 0 8px;
   border-radius: var(--r-md);
   text-align: left;
-  animation: rise-in 280ms var(--ease-enter) both;
 }
 button.trace-row:hover {
   background: var(--subtle);
@@ -1206,7 +1116,7 @@ button.trace-row:hover {
   border-radius: 999px;
   background: var(--muted);
   color: var(--fg-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 .trace-row.is-child .trace-label {
@@ -1322,7 +1232,6 @@ button.trace-row:hover {
   grid-template-columns: 28px minmax(0, 1fr);
   gap: 14px;
   align-items: start;
-  animation: rise-in 320ms var(--ease-enter) both;
 }
 .flow-dot {
   position: relative;
@@ -1428,13 +1337,8 @@ button.trace-row:hover {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  background: linear-gradient(
-    110deg,
-    color-mix(in oklch, var(--surface) 90%, var(--primary)),
-    var(--surface) 60%
-  );
+  background: var(--surface);
   box-shadow: var(--shadow-card);
-  animation: rise-in 320ms var(--ease-enter) both;
 }
 .summary-item {
   display: flex;
@@ -1443,6 +1347,9 @@ button.trace-row:hover {
   justify-content: flex-end;
   gap: 4px;
   padding: 14px 20px;
+}
+.summary-item.is-lead {
+  background: var(--subtle);
 }
 .summary-item + .summary-item {
   box-shadow: inset 1px 0 0 var(--line);
@@ -1578,7 +1485,7 @@ button.trace-row:hover {
   border-radius: 999px;
   background: var(--primary);
   color: var(--primary-ink);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }

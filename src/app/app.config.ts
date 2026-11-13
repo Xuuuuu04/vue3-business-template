@@ -28,7 +28,7 @@ export const appConfig = {
     mode: "light",
     sidebar: "light",
     density: "comfortable",
-    texture: "dots",
+    texture: "plain",
   } as Partial<ThemeSettings>,
   version: pkg.version as string,
 };
