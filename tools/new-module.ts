@@ -57,7 +57,7 @@ writeFileSync(
 mkdirSync(`doc/${name}`, { recursive: true });
 writeFileSync(
   `doc/${name}/rules.md`,
-  `# ${title}规则\n\nR-00：生成器结构样板，输入文本原样成为输出。此项只用于验证框架，不代表真实业务。\n\n真实业务：待确认。\n\n## 验证位置\n\n| 规则 | 测试路径 |\n| --- | --- |\n| R-00 | \`src/modules/${name}/tests/behavior.test.ts\` |\n`,
+  `# ${title}规则\n\nR-00：生成器结构样板，输入文本原样成为输出。此项只用于验证框架，需按真实业务改写。\n\n真实业务：待确认。\n\n## 验证位置\n\n| 规则 | 测试路径 |\n| --- | --- |\n| R-00 | \`src/modules/${name}/tests/behavior.test.ts\` |\n`,
 );
 writeFileSync(
   `doc/${name}/needs.md`,

@@ -1,43 +1,30 @@
 ---
 name: vue-template
-description: 从本模板创建新产品，或把模板的框架更新合并进已有产品时使用。更新脚本不会处理业务包和产品自己的依赖。
+description: 从本模板创建独立新产品，或将新版模板框架更新合并进已有产品时使用。日常开发产品业务包时不读。
 ---
 
 # 模板管理
 
-新产品支持 `--name 产品名称`，省略时采用目录名。副本会写入产品名、HTML 标题和计划，清空样板宣传、公司与联系方式，法律审核重置为未确认；环境样例使用 real 模式且不携带 demo-team。README 会说明登录接口最少需要哪些字段、还需要接通什么，未使用的用户信息与刷新令牌字段不要求后台提供。
+把干净模板复制成新产品或安全合并框架更新，同时保留产品业务包与本地配置，对齐一处只装一件事。
 
 ```bash
-npm run start:project -- /绝对路径/新产品
+npm run start:project -- /绝对路径/新产品 [--name 产品名称]
 npm run update:framework -- --source /新版模板目录
 npm run update:framework -- --source /新版模板目录 --apply
 ```
 
 ## 创建新产品
 
-- 目标必须是本项目之外的空目录。
-- 目标先按真实目录位置判断，不能通过目录别名建回模板内部；复制前逐项检查来源路径，拒绝链接，包含环境样例和产品素材。
-- 干净产品去掉样板业务和历史，保留模板来源记录和框架内容，复制项目 Skill，不复制本机记录、检查结果和 Git 历史。
-- 样例业务的本地及浏览器用例分别放在 `tests/demo`、`tests/browser/demo`，创建产品时整体删除；公共组件、登录与安全用例及 `tests/framework/fixtures` 中的已知输入继续保留。模板运行全部检查，新产品仍执行 `npm run check`、`npm run test:browser` 和现有 CI，并为真实业务补充自己的用例。不要用逐个文件黑名单或跳过公共检查处理样例依赖。
-- 创建后在新目录运行 `npm ci`、`npm run docs`，再用 `npm run new:module` 生成业务包。新产品的保护记录已经写好，不需要 `framework -- --accept`。
-- 新产品的 AGENTS 开头、README、CHANGELOG（从 0.1.0 开始）、`package.json` 的名称和版本都换成产品自己的；模板的 `design/` 和旧变更说明不复制。
-- 登录接口约定在 `src/app/login.config.ts`（路径、组织代码开关、请求字段、回包整理），和 `app.config.ts`、`catalog.ts` 一样是产品自己的文件，不受框架保护；升级时产品里没有才补一份，已有的不动。
-- 改 `src/app/app.config.ts`：产品名称、logo、标语与亮点、公司名、备案号、联系方式、默认配色，已有视觉要求直接沿用，先做出可检查的实际页面，不把默认配置当作成品质感。用户协议和隐私政策（`src/app/legal.ts`）是文本骨架，必须由法务改写后再把 `legal.reviewed` 改为 true。
+1. **确认目标路径安全**。目标目录需在模板目录之外且为空，按真实路径校验并拒绝目录内或符号链接来源，环境变量样例与素材同理检查。支持 `--name 产品名称`（缺省取目录名）。
+2. **自动裁剪样板并保留保护基线**。脚本会移除 `src/modules/file_library`、样板测试 `tests/demo` 与 `tests/browser/demo`、`doc/changes.md`、`design/`、`var/` 及 Git 历史，并把产品名写入 HTML 标题、`package.json`、`CHANGELOG.md`（从 `0.1.0` 起步）及 `app.config.ts`，同时清空样板宣传、公司和联系方式、把 `.env.example` 切为 `real` 模式、保留 `.agents/skills/`、生成干净 `framework.lock`（与 `.template/` 来源记录），并继续保留公共组件、安全用例与 `tests/framework/fixtures/`。
+3. **在新目录初始化配置**。按提示进入新目录依次运行 `npm ci && npm run docs`，使用 `npm run new:module` 新建业务包；新产品的保护记录已写入，无需执行 `--accept`。接着补充 `src/app/app.config.ts` 的品牌信息、`src/app/login.config.ts` 的登录约定，以及交由法务改写 `src/app/legal.ts` 后再将 `legal.reviewed` 设为 `true`。
 
-## 更新已有产品
+## 更新已有产品与回退
 
-升级器保留产品的 `package.json`。这次升级需要把新版模板里的 `format`、`format:check` 两个 scripts 合入产品配置，保留产品已有脚本和依赖；这两个命令使用模板已有的 Prettier，不需要增加依赖。每个已登记业务动作需要明确写出自身 `permission`，公开操作使用 `public`。先核对配置和权限声明，再更新框架和运行检查。
+1. **先核对产品差异与权限字段**。更新脚本不会改动 `src/modules/`、`catalog.ts`、`login.config.ts`、`app.config.ts` 和已有 `build-budget.json`，只补齐新增脚手架配置与可用 `package.json` 脚本（如 `format`、`format:check`、`test:acceptance`、`verify:state`）。先检查产品各业务动作是否已声明独立 `permission`（公开动作标 `public`），并将规则验证位置表统一为每行一条完整测试路径。
+2. **先预览再应用三方合并**。不带 `--apply` 只输出变更预览；脚本对比旧模板、产品当前与新版模板三份内容，发现任意冲突或涉及越界路径、链接与业务文件时会拒绝写入。确认差异并清理格式化/注释冲突后，在授权下运行 `--apply`，如涉及 UI 变化再按 [界面系统](../vue-ui/SKILL.md) 对照画面，合并完成并验证通过后再执行 `npm run framework -- --accept`。
+3. **利用 Git 撤回未上线更新**。尚未发布的框架更新直接通过 Git 回退；已发布环境依据产品自身的备份与发布流程恢复。
 
-不加 `--apply` 时只预览。先看清会改哪些文件，比较旧模板、产品当前、新模板三份内容；只要有一处冲突，就不写入任何文件。业务包和 `catalog.ts` 不被覆盖，产品对共用主题文件的修改也参与冲突判断。预览没问题并在授权范围内，再加 `--apply`，之后运行检查。更新涉及 UI 时，按 vue-ui 比较产品当前、模板新版与更新后页面，保留产品已经确认的视觉要求。
+## 验收
 
-清理注释、统一格式也会改变框架文件，产品改过同一文件时仍可能冲突。逐项核对产品保留了什么行为，人工合并并验证后再更新框架记录；不要忽略冲突、覆盖产品改动，或单独复制新版 `framework.lock` 来让检查通过。
-
-## 恢复
-
-旧清单中的路径也要检查：只能更新框架范围，绝对路径、越出目录的路径、业务文件和链接均在写入前拒绝。来源框架、目标文件和 `.template` 元数据都不跟随链接。这防止工具误写；不能代替操作系统权限隔离，也不能防止有文件写权限的进程在检查后更换路径。
-
-还没部署的更新用 Git 撤回。已经部署的需要产品自己的备份和恢复办法，脚本不提供。
-
-资源预算和隔离验收升级：升级器只补缺失的 `build-budget.json`，保留产品已有预算。把新版模板的 `test:acceptance`、`verify:state` scripts 合入产品 `package.json`，并在 `format`、`format:check` 加入 `build-budget.json`；不替换产品依赖或其他脚本。按 `doc/acceptance.md` 添加产品自己的场景，空场景必须失败。TLA+ 只在修改对应并发状态时按 `doc/formal-verification.md` 运行。
-
-3.0.0 收紧规则引用检查；`new:step` 必须传 `--rule 已声明编号`，旧调用需要补参。升级前把 `doc/包/rules.md` 的验证位置改成每条规则一行的完整测试路径，删除编号范围与缩写路径；补齐被步骤引用的规则。框架更新会纳入 PR 模板和按路径执行的状态工作流，产品改过同一路径时应保留审批和环境约定并解决冲突；AGENTS、README、doc 与 package scripts 仍需手动核对。不会代替产品迁移或上线。
+创建新产品后在目标目录执行 `npm ci && npm run docs && npm run check && npm run test:browser && VITE_API_MODE=real npm run build` 全部通过；更新框架后冲突清零、`framework.lock` 一致且全量检查与浏览器检查通过。
