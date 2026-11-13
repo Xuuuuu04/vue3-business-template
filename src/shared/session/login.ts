@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { defineAction, defineStep } from "@/shared/actions/definitions";
 import { execute } from "@/shared/actions/runtime";
-import type { Endpoint, StepTools } from "@/shared/http/client";
+import {
+  ActionError,
+  type Endpoint,
+  type StepTools,
+} from "@/shared/http/client";
 import { loginConfig } from "@/app/login.config";
 import type { LoginForm, LoginReply } from "./config";
 const Input = z
@@ -91,6 +95,8 @@ export async function requestLogin(input: LoginInput) {
     new AbortController().signal,
   );
   const claims = decodeJwtPayload(reply.access_token);
-  const permissions = z.array(z.string()).parse(claims.permissions || []);
-  return { reply, permissions };
+  const parsed = z.array(z.string()).safeParse(claims.permissions ?? []);
+  if (!parsed.success)
+    throw new ActionError("response_invalid", "登录令牌中的权限格式不正确");
+  return { reply, permissions: parsed.data };
 }

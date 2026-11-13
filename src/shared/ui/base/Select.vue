@@ -45,7 +45,7 @@ const { attributes, invalid: fieldInvalid } = useFieldControl(() => ({
         attributes()['aria-labelledby'] ? undefined : (ariaLabel ?? placeholder)
       "
       :data-invalid="fieldInvalid() || undefined"
-      class="flex w-full items-center justify-between gap-2 control-surface rounded-md border border-line bg-surface px-2.5 text-left text-fg transition-[border-color,box-shadow] duration-(--motion-fast) hover:border-line-strong focus-visible:border-primary data-[state=open]:border-primary data-[state=open]:shadow-[0_0_0_2px_var(--ring)] disabled:opacity-50"
+      class="flex w-full items-center justify-between gap-2 control-surface rounded-md border border-control-line bg-surface px-2.5 text-left text-fg transition-[border-color,box-shadow] duration-(--motion-fast) hover:border-fg-muted focus-visible:border-primary data-[state=open]:border-primary data-[state=open]:shadow-[0_0_0_2px_var(--ring)] disabled:opacity-50"
       :class="size === 'lg' ? 'h-(--control-h-lg)' : 'h-(--control-h)'"
     >
       <SelectValue

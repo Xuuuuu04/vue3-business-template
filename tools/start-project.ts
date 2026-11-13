@@ -84,7 +84,6 @@ const { rmSync } = await import("node:fs");
 rmSync(resolve(target, "src/modules"), { recursive: true, force: true });
 mkdirSync(resolve(target, "src/modules"), { recursive: true });
 rmSync(resolve(target, "doc/file_library"), { recursive: true, force: true });
-rmSync(resolve(target, "doc/changes.md"), { force: true });
 
 rmSync(resolve(target, "tests/demo"), { recursive: true, force: true });
 rmSync(resolve(target, "tests/browser/demo"), { recursive: true, force: true });

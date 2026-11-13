@@ -32,11 +32,13 @@ const { attributes, invalid: fieldInvalid } = useFieldControl(() => ({
 </script>
 <template>
   <div
-    class="group flex w-full items-center overflow-hidden control-surface rounded-md border bg-surface transition-[border-color,box-shadow] duration-(--motion-fast) focus-within:border-primary focus-within:shadow-[0_0_0_2px_var(--ring)] hover:border-line-strong"
+    class="group flex w-full items-center overflow-hidden control-surface rounded-md border bg-surface transition-[border-color,box-shadow] duration-(--motion-fast) focus-within:border-primary focus-within:shadow-[0_0_0_2px_var(--ring)] hover:border-fg-muted"
     :data-invalid="fieldInvalid() || undefined"
     :class="[
       size === 'lg' ? 'h-(--control-h-lg)' : 'h-(--control-h)',
-      fieldInvalid() ? 'border-bad focus-within:border-bad' : 'border-line',
+      fieldInvalid()
+        ? 'border-bad focus-within:border-bad'
+        : 'border-control-line',
       disabled && 'pointer-events-none opacity-50',
     ]"
   >

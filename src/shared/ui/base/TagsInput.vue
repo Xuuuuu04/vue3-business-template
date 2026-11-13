@@ -31,7 +31,7 @@ const {
     :max="max"
     add-on-paste
     :delimiter="/[,，]/"
-    class="flex min-h-(--control-h) w-full flex-wrap items-center gap-1.5 control-surface rounded-md border border-line bg-surface px-2 py-1 transition-[border-color,box-shadow] focus-within:border-primary focus-within:shadow-[0_0_0_2px_var(--ring)] hover:border-line-strong"
+    class="flex min-h-(--control-h) w-full flex-wrap items-center gap-1.5 control-surface rounded-md border border-control-line bg-surface px-2 py-1 transition-[border-color,box-shadow] focus-within:border-primary focus-within:shadow-[0_0_0_2px_var(--ring)] hover:border-fg-muted"
   >
     <TagsInputItem
       v-for="t in model"

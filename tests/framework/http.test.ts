@@ -65,6 +65,15 @@ test("多路径参数一次替换，且不读取原型属性", async () => {
       Response.json(null),
     ),
   ).rejects.toThrow("缺少路径参数");
+  await expect(
+    sendRequest(
+      endpoint,
+      { params: { id: "" } },
+      new AbortController().signal,
+      record(),
+      async () => Response.json({ name: "空参数" }),
+    ),
+  ).rejects.toThrow("缺少路径参数");
 });
 test("不能把错误响应当成功，读取格式错误可重新读取", async () => {
   await expect(

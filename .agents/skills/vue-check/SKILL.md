@@ -19,10 +19,14 @@ description: 运行前端检查、编写测试、更新框架保护记录或核�
 | 页面、样式或交互改动 | `npm run test:browser` | 执行全部 Playwright 浏览器与主题对比度用例 |
 | 生产打包与体积检查 | `VITE_API_MODE=real npm run build` | 检查 `build-budget.json` 启动 JS/CSS 预算（默认 200 KiB / 单文件 100 KiB） |
 
-1. **区分检查范围与有效期**。检查结果分别存于 `var/checks/` 下的 `full.json`、`module-包名.json`、`quick-module-包名.json` 并附源码指纹；源码修改后旧结果标为过期，用 `npm run project -- --json` 查看。快速单包检查留作开发自测，提交前运行对应完整检查。在全新产品未改动框架代码时，整仓检查跳过生成器工具测试并打印"沿用模板验证"。
+1. **区分检查范围与有效期**：
+   - 检查结果保存在 `var/checks/` 下的 `full.json`、`module-包名.json`、`quick-module-包名.json` 并带源码指纹，源码改动后自动过期，可用 `npm run project -- --json` 查看。
+   - 快速单包检查用于开发自测，提交前运行对应完整检查；全新产品未改动框架代码时，整仓检查跳过生成器工具测试并打印"沿用模板验证"。
 2. **逐条满足四层验证和代码规则**。纯计算放模块测试；生命周期、并发和组件行为放框架或浏览器测试；真实接口鉴权和写库另做前后端隔离或真实环境验收。代码规则检查拒绝普通注释与文档字符串（保留编译指令和第三方许可）、显式 `any`、空 `catch`，以及超过 500 行的 TS/Vue 文件或超过 80 行的函数；超限时按职责拆清，不放宽配置。
 3. **写可追溯且可重复的测试**。断言依据 `doc/包名/rules.md` 确认的样例编写，测试名标注 `R-XX` 编号，优先用元素角色与可见文字定位。针对真实缺陷、权限、并发顺序与 `unknown` 恢复保留回归用例；使用可控时钟或受控延迟请求验证时序。
-4. **审慎更新框架保护与状态检查**。`framework.lock` 保护 `src/shared`、`src/app`、`tools` 与框架测试；业务开发不改受保护文件，确需修改公共能力时写明用途与影响，看清差异后运行 `npm run framework -- --accept`，并重跑检查。修改 `src/shared/state/task.ts` 并发与采纳逻辑后，按 [形式化检查](../../../doc/formal-verification.md) 运行 `npm run verify:state -- --jar 工具路径`。
+4. **审慎更新框架保护与状态检查**：
+   - `framework.lock` 保护 `src/shared`、`src/app`、`tools` 与框架测试；确需修改公共能力时写明用途与影响，看清差异后运行 `npm run framework -- --accept` 并重跑检查。
+   - 修改 `src/shared/state/task.ts` 并发与采纳逻辑后，按 [形式化检查](../../../doc/formal-verification.md) 运行 `npm run verify:state -- --jar 工具路径`。
 5. **不放宽断言或包预算**。遇到超限的体积或失败用例先查原因并修正代码；调整 `build-budget.json` 时写明业务理由与实测字节数，不直接把失败产物设为新基线。
 
 ## 验收

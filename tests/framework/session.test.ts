@@ -225,3 +225,19 @@ test("登录约定来自产品文件：可以关掉组织代码、换路径、�
   fresh.useSession().logoutLocal();
   vi.doUnmock("@/app/login.config");
 });
+
+test("登录令牌权限声明格式异常时返回 response_invalid 且保持未登录", async () => {
+  const malformedToken = `h.${btoa(JSON.stringify({ permissions: "orders.read" }))}.s`;
+  vi.stubGlobal("fetch", async () =>
+    Response.json({
+      access_token: malformedToken,
+      token_type: "Bearer",
+      expires_in: 60,
+      org_id: "synthetic",
+    }),
+  );
+  await expect(useSession().login(input)).rejects.toMatchObject({
+    code: "response_invalid",
+  });
+  expect(useSession().state.value.signedIn).toBe(false);
+});

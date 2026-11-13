@@ -134,7 +134,11 @@ function prepareRequest(endpoint: Endpoint, options: RequestOptions) {
   const path = endpoint.path.replace(
     /:([A-Za-z0-9_]+)/g,
     (token, name: string) =>
-      Object.hasOwn(params, name) ? encodeURIComponent(params[name]!) : token,
+      Object.hasOwn(params, name) &&
+      typeof params[name] === "string" &&
+      params[name] !== ""
+        ? encodeURIComponent(params[name])
+        : token,
   );
   if (/:\w+/.test(path))
     throw new ActionError("path_missing", "接口缺少路径参数");

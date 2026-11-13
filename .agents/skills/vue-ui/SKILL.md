@@ -19,7 +19,9 @@ description: 新建、调整或评审前端页面、公共组件与样式系统�
 
 1. **遵守语义变量与默认主题**。业务页只从 `@/shared/ui/public` 取组件，不写颜色、字号、`class` 和 `style`。模板默认石墨浅色、浅侧栏、纯色画布质感与宽松间距（行高 48px，切换紧凑后为 44px），品牌色和质感只在 `app.config.ts` 调整；正文字号 14px，辅助说明 13px，标注最小 12px，数字统一等宽。
 2. **保障无障碍与键盘可达**。每个控件用独立 `Field` 自动关联名称、提示和错误；拖拽上传和色相条提供点击和方向键入口。复选框、开关等小图标保证足够点击面积，窄屏浮层两侧保留至少 12px 间距。长表与代码区只在自身区域滚动；表格行点击支持 Enter 和空格，行内按钮各自独立。
-3. **按需扩展公共组件**。确有现有组件无法覆盖的通用需求时，放到 `base/`、`layout/` 或 `data/`，只使用语义色变量，导出到 `public.ts`，并在 `src/shared/ui/README.md` 与 `/dev/design` 补全说明和示例。Reka 触发器不互相嵌套。新增配色需通过 `tests/browser/theme-contrast.spec.ts` 全组合 4.5:1 对比度检查。改完公共文件先检查实际差异再执行 `npm run framework -- --accept`。
+3. **按需扩展公共组件**：
+   - 确有通用空白需求时放到 `base/`、`layout/` 或 `data/`，只使用语义色变量，导出到 `public.ts` 并在 `src/shared/ui/README.md` 与 `/dev/design` 补全说明和示例。
+   - Reka 触发器不互相嵌套；新增配色需通过 `tests/browser/theme-contrast.spec.ts` 全组合对比度检查，改完检查差异再运行 `npm run framework -- --accept`。
 
 ## 画面比较与验收
 
