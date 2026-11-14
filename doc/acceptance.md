@@ -13,10 +13,10 @@
 3. 核对：预期来自确认过的业务样例。写入后重新查询，核对后台结果、页面状态和权限。直接查询用 `process.env.ACCEPTANCE_BACKEND_URL`，编号为 `process.env.ACCEPTANCE_RUN_ID`，身份走实际认证流程。
 4. 清理：框架停止自己的进程并清理临时数据，场景额外资源用 fixture 的 `try/finally` 清理。
 
-`test.only`、零测试、跳过场景都不能通过。后台响应头 `X-Acceptance-Run` 必须属于本轮。
+`test.only`、零测试或跳过场景均视为未通过。后台响应头 `X-Acceptance-Run` 需匹配本轮运行编号。
 
 ## 结果
 
 摘要在 `var/acceptance/<编号>/result.json`，场景在 `cases.json`；最新业务结果是 `var/checks/acceptance.json`，设施结果是 `acceptance-infrastructure.json`。前后端指纹、场景和退出状态分别记录，运行期间源码变化也使本轮失败。
 
-默认不记录 trace、视频、HTML网络报告、错误正文或自动截图。需要画面验证时在登录后主动截图，只使用合成数据。结果保留在 `var/`，不复制到新产品或提交。SQLite结果不能替代PostgreSQL或真实部署验收。
+默认不记录 trace、视频、HTML网络报告、错误正文或自动截图。需要画面验证时在登录后主动截图，只使用合成数据。结果保留在 `var/`，不复制到新产品或提交。本地 SQLite 验收用于隔离流程核对，PostgreSQL 与真实部署仍需独立验证。

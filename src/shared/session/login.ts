@@ -1,16 +1,18 @@
 import { z } from "zod";
 import { defineAction, defineStep } from "@/shared/actions/definitions";
 import { execute } from "@/shared/actions/runtime";
-import type { Endpoint, StepTools } from "@/shared/http/client";
+import {
+  ActionError,
+  type Endpoint,
+  type StepTools,
+} from "@/shared/http/client";
 import { loginConfig } from "@/app/login.config";
 import type { LoginForm, LoginReply } from "./config";
 const Input = z
   .object({
-    org_code: loginConfig.orgCode
-      ? z.string().min(1, "请填写组织代码")
-      : z.string(),
-    username: z.string().min(1, "请填写账号"),
-    password: z.string().min(1, "请填写密码"),
+    org_code: loginConfig.orgCode ? z.string().min(1) : z.string(),
+    username: z.string().min(1),
+    password: z.string().min(1),
     otp_code: z.string(),
   })
   .strict();
@@ -68,6 +70,23 @@ const loginAction = defineAction<LoginForm, LoginReply>({
 
 export type LoginInput = LoginForm;
 
+function decodeJwtPayload(token: string): Record<string, unknown> {
+  const segment = token.split(".")[1];
+  if (!segment) return {};
+  try {
+    const normalized = segment.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const bytes = Uint8Array.from(atob(padded), (ch) => ch.charCodeAt(0));
+    const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch (error) {
+    console.warn("无法解析登录令牌中的权限声明。", error);
+    return {};
+  }
+}
+
 export async function requestLogin(input: LoginInput) {
   const reply = await execute(
     loginAction,
@@ -75,12 +94,9 @@ export async function requestLogin(input: LoginInput) {
     sessionEndpoints,
     new AbortController().signal,
   );
-  const payload = reply.access_token.split(".")[1];
-  const claims = payload
-    ? (JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/"))) as {
-        permissions?: unknown;
-      })
-    : {};
-  const permissions = z.array(z.string()).parse(claims.permissions || []);
-  return { reply, permissions };
+  const claims = decodeJwtPayload(reply.access_token);
+  const parsed = z.array(z.string()).safeParse(claims.permissions ?? []);
+  if (!parsed.success)
+    throw new ActionError("response_invalid", "登录令牌中的权限格式不正确");
+  return { reply, permissions: parsed.data };
 }

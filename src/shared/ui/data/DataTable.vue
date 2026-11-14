@@ -176,8 +176,9 @@ const showFooter = computed(() => props.total !== undefined);
     <div
       ref="scrollport"
       data-table-scroll
+      tabindex="0"
       @scroll="saveScroll"
-      class="min-h-0 flex-1 overflow-auto border border-line rounded-md"
+      class="min-h-0 flex-1 overflow-auto rounded-md border border-line focus-visible:outline-offset-[-2px]"
       :style="{
         maxHeight: fullscreen || fill ? 'none' : (maxHeight ?? 'none'),
       }"

@@ -53,6 +53,16 @@ const groups = [
       ["brand", "品牌色"],
     ],
   },
+  {
+    key: "texture",
+    title: "背景质感",
+    options: [
+      ["plain", "纯色"],
+      ["soft", "微光"],
+      ["dots", "点阵"],
+      ["grain", "颗粒"],
+    ],
+  },
 ] as const;
 function swatch(p: (typeof palettes)[number]) {
   return `oklch(${p.brandLightness} ${Math.max(p.brandChroma, 0.04)} ${p.brandHue})`;

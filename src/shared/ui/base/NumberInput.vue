@@ -41,7 +41,7 @@ const {
     "
     locale="zh-CN"
     :data-invalid="fieldInvalid() || undefined"
-    class="flex h-(--control-h) w-full items-center overflow-hidden control-surface rounded-md border border-line bg-surface transition-[border-color,box-shadow] focus-within:border-primary focus-within:shadow-[0_0_0_2px_var(--ring)] hover:border-line-strong data-[disabled]:opacity-50"
+    class="flex h-(--control-h) w-full items-center overflow-hidden control-surface rounded-md border border-control-line bg-surface transition-[border-color,box-shadow] focus-within:border-primary focus-within:shadow-[0_0_0_2px_var(--ring)] hover:border-fg-muted data-[disabled]:opacity-50"
   >
     <NumberFieldDecrement
       class="grid h-full w-8 place-items-center text-fg-muted hover:bg-muted disabled:opacity-30"

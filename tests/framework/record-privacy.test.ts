@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import { z } from "zod";
 import { defineAction, defineStep } from "@/shared/actions/definitions";
 import { execute } from "@/shared/actions/runtime";
+import { RecordPrivacy } from "@/shared/records/privacy";
 import { createTask } from "@/shared/state/task";
 import { useRecords } from "@/shared/records/store";
 import {
@@ -471,3 +472,11 @@ test.each(["default", "transform"] as const)(
     expect(JSON.stringify(useRecords().items.value[0])).not.toContain(marker);
   },
 );
+
+test("布尔值和短数字不误伤正常错误文案，四位及以上数字秘密仍被隐藏", () => {
+  const privacy = new RecordPrivacy();
+  privacy.add({ flag: true, ttl: 60, pin: 928451 });
+  expect(privacy.text("状态 true（401） ttl=60 pin=928451")).toBe(
+    "状态 true（401） ttl=60 pin=已隐藏",
+  );
+});

@@ -32,6 +32,6 @@ RUN_NGINX_CHECKS=1 npx vitest run tests/framework/deployment.test.ts
 
 可用 `NGINX_TEST_IMAGE` 和 `NGINX_TEST_BACKEND_IMAGE` 指定已准备的镜像，按生产采用的版本复测。容器检查覆盖 `nginx -t`、SPA 直接访问、缓存/CSP/错误响应安全头、资源和 map 的 404、gzip、API 路径、一次写请求与 SSE。
 
-开发工具默认在生产关闭。VITE_SHOW_CONSOLE=true 会注册运行和组件查看页，若开放生产页面，服务器必须另外限制访问。源码映射默认不公开。没有服务端权限控制的前端路由不能保护秘密。
+开发工具默认在生产关闭。`VITE_SHOW_CONSOLE=true` 会注册运行和组件查看页，开放生产页面时在服务器端另外限制访问。源码映射默认不公开。前端路由仅控视图可见性，敏感资源由服务端鉴权保护。
 
 上线之前分别确认：实际账号权限、组织隔离、上传限制、真实存储、下载内容、删除结果、后台运行编号、直接访问和浏览器返回。浏览器样板测试不证明这些真实服务行为。模板仓库 CI 不执行生产部署。

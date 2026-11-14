@@ -37,7 +37,7 @@ defineProps<{
       <RadioGroupItem
         :value="o.value"
         :disabled="o.disabled"
-        class="relative after:absolute after:-inset-1 mt-1 grid size-4 shrink-0 place-items-center rounded-full border border-line-strong bg-surface transition-colors hover:border-primary data-[state=checked]:border-primary"
+        class="relative after:absolute after:-inset-1 mt-1 grid size-4 shrink-0 place-items-center rounded-full border border-control-line bg-surface transition-colors hover:border-primary data-[state=checked]:border-primary"
       >
         <RadioGroupIndicator class="size-2 rounded-full bg-primary" />
       </RadioGroupItem>

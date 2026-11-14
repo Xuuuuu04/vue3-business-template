@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 安全漏洞私密报告
+    url: https://github.com/mumuxsy/vue3-business-template/security/advisories/new
+    about: 涉及 XSS、凭据泄露或模板路径安全的问题请通过私密通道提交，不要发公开 Issue
+  - name: 配套后端模板（fastapi-business-template）
+    url: https://github.com/mumuxsy/fastapi-business-template
+    about: 查看与本前端模板配套的 FastAPI 模块化单体后端模板

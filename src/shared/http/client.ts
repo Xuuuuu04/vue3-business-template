@@ -130,9 +130,16 @@ function prepareRequest(endpoint: Endpoint, options: RequestOptions) {
   const problems = endpointProblems(endpoint);
   if (problems.length)
     throw new ActionError("request_invalid", problems.join(" "));
-  let path = endpoint.path;
-  for (const [name, value] of Object.entries(options.params ?? {}))
-    path = path.replace(`:${name}`, encodeURIComponent(value));
+  const params = options.params ?? {};
+  const path = endpoint.path.replace(
+    /:([A-Za-z0-9_]+)/g,
+    (token, name: string) =>
+      Object.hasOwn(params, name) &&
+      typeof params[name] === "string" &&
+      params[name] !== ""
+        ? encodeURIComponent(params[name])
+        : token,
+  );
   if (/:\w+/.test(path))
     throw new ActionError("path_missing", "接口缺少路径参数");
   const resolvedProblems = endpointProblems({ ...endpoint, path });

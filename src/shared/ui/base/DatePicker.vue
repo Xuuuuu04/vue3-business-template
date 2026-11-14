@@ -78,9 +78,9 @@ const {
     <div
       v-bind="rootAttributes()"
       :data-invalid="fieldInvalid() || undefined"
-      class="control-surface flex h-(--control-h) w-full items-center rounded-md border bg-surface transition-[border-color,box-shadow] hover:border-line-strong focus-within:shadow-[0_0_0_2px_var(--ring)]"
+      class="control-surface flex h-(--control-h) w-full items-center rounded-md border bg-surface transition-[border-color,box-shadow] hover:border-fg-muted focus-within:shadow-[0_0_0_2px_var(--ring)]"
       :class="[
-        open ? 'border-primary' : 'border-line',
+        open ? 'border-primary' : 'border-control-line',
         disabled && 'opacity-50',
       ]"
     >

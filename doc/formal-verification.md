@@ -24,7 +24,7 @@ npm run verify:state -- --jar /绝对路径/tla2tools-1.7.4.jar
 
 `LatestQuery.tla` 枚举同一 `latest` 实例最多三次查询的发起与成功或错误完成顺序。过时的完成不能改写当前页面结果或状态。模型把取消与执行器、页面两层保护合并为“只接受当前版本”。旧数据显示在新查询的 loading 阶段是允许的，禁止的是旧完成再次写入。
 
-`LatestQuery.cfg` 要求规则通过；`LatestQueryBroken.cfg` 故意取消写回限制，必须触发 `NoStaleCompletion`：开始查询 1，开始查询 2，查询 1 完成并错误地写回页面。
+`LatestQuery.cfg` 要求规则通过；`LatestQueryBroken.cfg` 故意取消写回限制，应触发 `NoStaleCompletion`：开始查询 1，开始查询 2，查询 1 完成并错误地写回页面。
 
 ## 写入提交模型
 
@@ -42,11 +42,11 @@ npm run verify:state -- --jar /绝对路径/tla2tools-1.7.4.jar
 
 模型把请求结果与步骤结束分开：Resolve 只记录请求结果，Close 才表示步骤正常结束或向外传播失败。普通 4xx 可以被步骤捕获后继续发送请求，未传播的明确拒绝不自动算整个动作失败；未知请求即使被捕获，收尾仍判为 unknown。模型的 closed 表示步骤已结束，不等同于每个请求一失败就关闭 createRequests。步骤停止发送后仍等待全部已发请求结束，再判断整体状态。禁止重发指实例最终进入 unknown 后禁止新的尝试，不把仍在 loading 的同一次步骤内继续请求说成已被框架禁止。接口与 JSON 具体格式由源码映射和真实测试验证。
 
-`SubmitWrite.cfg` 检查安全规则。`SubmitWriteBroken.cfg` 只放开 unknown 后重试，必须触发 `NoUnknownResend`：第一次写入结果未知，第二次尝试又发送写请求。
+`SubmitWrite.cfg` 检查安全规则。`SubmitWriteBroken.cfg` 只放开 unknown 后重试，应触发 `NoUnknownResend`：第一次写入结果未知，第二次尝试又发送写请求。
 
-`SubmitWritePartial.cfg` 使用正确的重试限制，额外要求找到“第一个请求先成功，第二个随后明确拒绝，最终 unknown”的可达样例。该配置违反 `PartialFailureWitnessAbsent` 是预期结果，表明场景确实到达，不是产品缺陷；这样避免部分成功规则因路径没有出现而空通过。
+`SubmitWritePartial.cfg` 使用正确的重试限制，额外要求找到“第一个请求先成功，第二个随后明确拒绝，最终 unknown”的可达样例。该配置违反 `PartialFailureWitnessAbsent` 是预期结果，表明场景确实到达，避免部分成功规则因路径没有出现而空通过。
 
-语法错误、Java 启动失败、其他不变量失败，均不能代替指定反例或可达样例。
+只有指定的反例或可达样例才作为状态逻辑验证依据；语法错误、Java 启动失败或其他不变量失败属于执行异常。
 
 ## 真实实现与维护
 

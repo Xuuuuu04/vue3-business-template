@@ -109,6 +109,30 @@ test("登录只要求实际使用的四个响应字段，额外用户与刷新�
   expect(useSession().state.value.org).toBe("synthetic");
 });
 
+test("令牌载荷包含无填充 Base64URL 和中文字符时也能正常解析权限", async () => {
+  const utf8Payload = Buffer.from(
+    JSON.stringify({
+      display_name: "林晓",
+      permissions: ["orders.read", "files.write"],
+    }),
+    "utf8",
+  ).toString("base64url");
+  vi.stubGlobal("fetch", async () =>
+    Response.json({
+      access_token: `h.${utf8Payload}.s`,
+      token_type: "bearer",
+      expires_in: 60,
+      org_id: "synthetic",
+    }),
+  );
+  await useSession().login(input);
+  expect(useSession().state.value.signedIn).toBe(true);
+  expect(useSession().state.value.permissions).toEqual([
+    "orders.read",
+    "files.write",
+  ]);
+});
+
 test("退出会话后，较晚的登录回复不能重新保存令牌", async () => {
   let release!: (reply: Response) => void;
   const started = new Promise<void>((resolve) => {
@@ -200,4 +224,20 @@ test("登录约定来自产品文件：可以关掉组织代码、换路径、�
   expect(fresh.useSession().state.value.permissions).toEqual(["orders.read"]);
   fresh.useSession().logoutLocal();
   vi.doUnmock("@/app/login.config");
+});
+
+test("登录令牌权限声明格式异常时返回 response_invalid 且保持未登录", async () => {
+  const malformedToken = `h.${btoa(JSON.stringify({ permissions: "orders.read" }))}.s`;
+  vi.stubGlobal("fetch", async () =>
+    Response.json({
+      access_token: malformedToken,
+      token_type: "Bearer",
+      expires_in: 60,
+      org_id: "synthetic",
+    }),
+  );
+  await expect(useSession().login(input)).rejects.toMatchObject({
+    code: "response_invalid",
+  });
+  expect(useSession().state.value.signedIn).toBe(false);
 });

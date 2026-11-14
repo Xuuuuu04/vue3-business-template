@@ -41,7 +41,7 @@
   },
   "session.sign_in": {
     "file": "src/shared/session/login.ts",
-    "line": 24,
+    "line": 26,
     "symbol": "signIn"
   }
 }

@@ -31,13 +31,10 @@ defineProps<{
         wordmark
         inverse
       />
-      <span class="auth-watermark" aria-hidden="true">{{
-        mark ?? brand.slice(0, 1)
-      }}</span>
       <div class="my-auto py-16">
         <p
           v-if="tagline"
-          class="max-w-sm text-balance text-[40px] leading-[1.3] font-medium tracking-tight"
+          class="max-w-sm text-balance text-[34px] leading-[1.3] font-semibold tracking-tight"
         >
           <slot name="tagline">{{ tagline }}</slot>
         </p>

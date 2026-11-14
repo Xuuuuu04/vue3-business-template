@@ -1,47 +1,39 @@
 ---
 name: vue-backend
-description: 前端要对接 FastAPI 后端、核对接口路径与字段、或需要在真实后台验证时使用。
+description: 前端对接 FastAPI 后端、核对 OpenAPI 接口与响应字段、处理字段级校验错误或运行隔离联调验收时使用。纯静态演示页面时不读。
 ---
 
 # 对接后端
 
-登录接口约定写在产品自己的 `src/app/login.config.ts`（不受框架保护，改了不用 `--accept`）：接口路径、是否填写组织代码、请求字段、回包怎么整理成 `access_token`、`expires_in`、`org_id`。默认值与后端模板的账号包一致：POST `/api/v1/access/login`，请求 `org_code`、`username`、`password`、`otp_code`，回包至少有非空 `access_token`、Bearer `token_type`、正整数 `expires_in` 和非空 `org_id`。后台不分组织时把 `orgCode` 改成 `false`。框架只负责调用、校验回包和把令牌存在页面内存里，不保存或自动使用刷新令牌。实际后台必须验证身份与权限。
+让接口路径、响应类型、登录会话和字段报错严格对齐后端契约，对齐先对齐再动手与状态看得见。
 
-接口路径和响应类型写在包的 `api.ts` 与 `data.ts`，要和后端保持一致。FastAPI 模板在 `server/` 执行 `uv run dev docs` 导出 `doc/api/openapi.json`，作为对照来源。
-
-## 对照与生成
+## 接口与登录配置
 
 ```bash
 npm run api -- check --openapi ../后端/doc/api/openapi.json [--module 包名]
 npm run api -- gen --openapi ../后端/doc/api/openapi.json --prefix /api/v1/orders --module orders
 ```
 
-`check` 比较接口路径、方法和响应字段的名称、必填、可空与类型，有问题时退出码为 1。`gen` 把接口登记和 Zod 类型输出到屏幕，字段含义保存在 schema 的 `.describe()`，不生成说明注释，也不直接改业务文件。真实回包还要经过运行时响应检查，并按下面的方法连接真实后台验证。
+1. **在 `login.config.ts` 适配登录接口**：
+   - `src/app/login.config.ts` 不受框架锁定，可调整路径、组织代码开关、请求字段及响应映射。
+   - 默认对齐后端 `POST /api/v1/access/login`：入参含 `org_code`、`username`、`password`、`otp_code`，回包提供非空 `access_token`、`Bearer` `token_type`、正整数 `expires_in` 与非空 `org_id`。
+   - 未使用的用户信息和刷新令牌不要求后台返回；令牌仅保存在页面内存，不写入本地存储，刷新后需重新登录。
+2. **用 OpenAPI 对照并登记接口**：
+   - 先在后端运行 `uv run dev docs` 生成 `doc/api/openapi.json`，再运行 `npm run api -- gen` 产出接口与 Zod 类型草稿（字段说明存于 `.describe()`）。
+   - 补齐中文业务含义、敏感标记 `secret` 与严格校验后放入 `api.ts` 和 `data.ts`；路径与方法需与 OpenAPI 一字不差，改完运行 `npm run api -- check` 核对。
+   - 本地联调运行 `npm run dev:real`，把 `/api` 代理到 `API_PROXY_TARGET`（默认 `http://127.0.0.1:8000`）。
+3. **在动作和后端双侧守住权限与会话**。非公开动作在前端声明自身 `permission`，后台同时校验身份、组织隔离与对象归属；金额等敏感数据在后端做最终校对。退出、重登或会话过期后，旧动作停止后续步骤并引导重新认证再查；此前已发出的写请求仍先查询实际后台状态。
 
-## 新接一个接口
+## 表单字段错误链路
 
-1. 在后端 `doc/api/openapi.json` 找到这个接口：路径、方法、请求字段、响应字段、错误响应。
-2. 在 `api.ts` 登记：`id`、`method`、`path`、响应的 Zod 类型。路径与后端一字不差；响应类型按 openapi 写，字段含义写进 `data.ts`。
-3. 后端字段改了（名称、可空、枚举），前端响应检查会在运行时报错，不会悄悄显示空值。改完 openapi 要重新对照 `api.ts`，不要放宽 Zod 类型去"让它通过"。
-4. 同源请求：开发时 `npm run dev:real` 把 `/api` 代理到 `API_PROXY_TARGET`（默认 `http://127.0.0.1:8000`）。
-5. 每个非公开动作声明自身权限，后台每个操作再检查权限；前端不能代替后台做组织、对象归属和金额校验。金额按接口约定保留精度，数据库金额查询在后端的 PostgreSQL 测试中验证。
+1. **统一绑定请求路径错误**：
+   - 本地 Zod 校验与后端错误 `fields: [{field, problem}]` 均经安全过滤写入只读 `task.state.fieldErrors`，页面按路径绑定（如 `lines.0.quantity`）。
+   - 无法落到具体控件的整单或通用错误继续由整页 `StatusMessage` 展示。
+2. **区分敏感字段的错误展示**。包含 `secret` 字段的动作触发本地校验时，过滤所有路径且不回显输入值：保留不泄露原值的自定义中文业务提示，其余收敛到已声明顶层键与安全提示；非敏感动作完整保留嵌套路径与中文业务提示，后端字段错误按原始请求路径显式对应。提交中锁定输入与列表重排，失败保留草稿，下次提交清空旧错误，结果 `unknown` 仍引导先查询结果。
 
-登录、退出或会话变化后，旧动作不能用新身份继续发请求；会话过期时离开受限页面，重新登录后重新查询。变化之前已经发出的写请求仍可能生效，不能因为前端停止操作就重新提交。
+## 隔离验收与核对
 
-## 真实后台验证
-
-使用 `npm run test:acceptance -- --backend 后端目录` 启动本轮专用后端与 real 前端，执行产品的 `tests/acceptance/*.spec.ts`。初始合成数据由后端 `tests/acceptance/seed.py` 准备，需要时显式加 `--seed`。准备、页面操作、重新查询核对、清理和报告见[隔离验收](../../../doc/acceptance.md)。没有场景不能算通过；`--infrastructure` 只检查设施。
-
-已有运行环境仍需独立验收：用业务测试账号和隔离数据核对真实权限、接口和保存结果。本地验收使用 SQLite，不验证 PostgreSQL、迁移、后台 worker 和外部系统。演示服务与模拟响应测试不是真实后台验收。
-
-## 表单字段错误
-
-后台错误正文的 `fields: [{field, problem}]` 会经过数量、路径和敏感信息检查，传到 `task.state.fieldErrors`。页面按准确的请求字段路径绑定，例如 `<Field :error="state.fieldErrors?.['lines.0.quantity']">`。动作输入的 Zod 校验也进入这条链路；中文业务约束写进 schema 的错误说明。
-
-字段路径不会自动改名、不会写入草稿，也不作为 HTML 显示。提交期间停用字段与明细重排；再次提交会清除旧字段错误。明确失败后保留草稿；`unknown` 仍先查询结果，不能因修改字段而重复提交。
-
-本地校验遇到声明了 `secret` 的动作时，使用固定中文错误，并将嵌套问题归到已声明的顶层输入，避免默认值、转换结果或自定义校验泄漏敏感数据。没有敏感字段的动作保留业务自定义说明与准确嵌套路径；后台字段错误仍按请求路径显式对应。
-
-## 接入边界
-
-生成的代码要人工核对后再放进 `api.ts`、`data.ts`（字段中文含义、敏感字段、业务上更严格的约束由人补）。字段名与后台路径不一致时由页面显式对应；没有对应控件的错误继续查看整页提示。
+1. **编写并运行隔离业务场景**：
+   - 运行 `npm run test:acceptance -- --backend ../后端目录` 启动本轮专用 FastAPI 与 Vite real 环境执行 `tests/acceptance/*.spec.ts`，说明见 [隔离验收](../../../doc/acceptance.md)。
+   - 测试通过页面完成登录、查询与写入并重查核对真实结果，禁用 `page.route` 伪造响应；空场景会报错，`--infrastructure` 只核对连通与退出，用于基础设施检查。
+2. **分别记录真实环境局限**。隔离验收基于本地 SQLite 运行，PostgreSQL 事务隔离、异步 worker、迁移与外部服务需在独立真实测试环境使用测试账号另行核对；演示服务与模拟响应只验证前端流程，真实后台结果需独立验证。

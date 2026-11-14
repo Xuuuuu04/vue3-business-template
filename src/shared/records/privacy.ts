@@ -12,10 +12,9 @@ export class RecordPrivacy {
     const visit = (item: unknown): void => {
       if (item == null) return;
       if (typeof item !== "object") {
-        if (!["string", "number", "bigint", "boolean"].includes(typeof item))
-          return;
+        if (!["string", "number", "bigint"].includes(typeof item)) return;
         const text = String(item);
-        if (!text) return;
+        if (!text || (typeof item !== "string" && text.length < 4)) return;
         this.secrets.add(text);
         if (typeof item === "string")
           this.secrets.add(JSON.stringify(item).slice(1, -1));

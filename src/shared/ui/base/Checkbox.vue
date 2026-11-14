@@ -14,7 +14,7 @@ defineProps<{ label?: string; disabled?: boolean; ariaLabel?: string }>();
       v-model="model"
       :disabled="disabled"
       :aria-label="ariaLabel ?? label"
-      class="relative after:absolute after:-inset-1 grid size-4 shrink-0 place-content-center rounded-[calc(var(--r-sm)-2px)] border border-line-strong bg-surface transition-colors duration-(--motion-fast) hover:border-primary data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary"
+      class="relative after:absolute after:-inset-1 grid size-4 shrink-0 place-content-center rounded-[calc(var(--r-sm)-2px)] border border-control-line bg-surface transition-colors duration-(--motion-fast) hover:border-primary data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary"
     >
       <CheckboxIndicator class="text-primary-ink">
         <Minus

@@ -28,6 +28,9 @@ const PAIRS: [string, string, number][] = [
   ["side-active", "side-selected", 4.5],
   ["side-active", "side-selected-hover", 4.5],
   ["side-fg", "side-hover", 4.5],
+  ["control-line", "surface", 3],
+  ["control-line", "canvas", 3],
+  ["control-line", "subtle", 3],
 ];
 const PALETTES = ["graphite", "sand", "sea", "pine", "rose", "ink", "night"];
 
