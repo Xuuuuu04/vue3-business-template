@@ -58,8 +58,12 @@ const entries = readdirSync(source).filter(
         "playwright-report",
         "test-results",
         ".env",
-
         "design",
+        "LICENSE",
+        "README.en.md",
+        "CONTRIBUTING.md",
+        "SECURITY.md",
+        "CODE_OF_CONDUCT.md",
       ].includes(entry) ||
       (entry.startsWith(".env.") && entry !== ".env.example")
     ),
@@ -87,6 +91,10 @@ rmSync(resolve(target, "doc/file_library"), { recursive: true, force: true });
 
 rmSync(resolve(target, "tests/demo"), { recursive: true, force: true });
 rmSync(resolve(target, "tests/browser/demo"), { recursive: true, force: true });
+rmSync(resolve(target, ".github/ISSUE_TEMPLATE"), {
+  recursive: true,
+  force: true,
+});
 writeFileSync(
   resolve(target, "src/app/catalog.ts"),
   await formatSource(
@@ -221,7 +229,7 @@ writeFileSync(
   resolve(target, ".template/source.json"),
   JSON.stringify(
     {
-      repository: "https://github.com/Xuuuuu04/vue3-business-template",
+      repository: "https://github.com/mumuxsy/vue3-business-template",
       ...readTemplateSource(source),
       createdAt: new Date().toISOString(),
     },

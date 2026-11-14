@@ -1,0 +1,48 @@
+name: 缺陷报告（Bug Report）
+description: 反馈动作执行器、公共界面组件、主题对比度、脚手架工具或浏览器验收中的问题
+title: "[缺陷] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈问题。请不要在表单中粘贴真实后台令牌、内部接口地址或客户隐私数据。
+  - type: input
+    id: version
+    attributes:
+      label: 模板版本与运行环境
+      description: 填写模板版本或 Git 提交号、Node.js 版本、操作系统与浏览器版本
+      placeholder: "例如：3.0.0，Node.js 22.22.2，macOS 15，Chrome 135"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: 涉及模块范围
+      options:
+        - 动作执行器、并发与会话管理（src/shared/actions、session、http）
+        - 公共界面组件与七套主题系统（src/shared/ui）
+        - 开发者工具与示例页面（src/app/dev）
+        - 脚手架生成、结构检查与框架升级（tools/）
+        - 浏览器检查与前后端隔离验收（tests/browser、tools/acceptance）
+        - 部署配置或项目文档（deploy、doc、.agents/skills）
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 最小复现步骤
+      description: 写出触发该问题的命令、页面路径或交互步骤
+      placeholder: |
+        1. 运行 npm run dev 打开 /dev/design
+        2. 切换为深色与紧凑间距
+        3. 点击 ...
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 预期表现与实际结果
+      description: 说明预期应该看到什么，以及实际的界面异常、控制台报错或运行记录编号
+    validations:
+      required: true

@@ -1,0 +1,25 @@
+name: 特性建议（Feature Request）
+description: 提议公共组件、页面配方、状态执行器、脚手架命令或检查规则方面的改进
+title: "[建议] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 要解决的实际问题
+      description: 说明在企业后台开发或旧系统迁移中遇到了什么具体场景，现有组件或页面配方哪里不够用
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议的组件、命令或规则设计
+      description: 说明期望的组件属性、命令参数或交互方式，并确认是否符合单一主工作区的页面原则
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: 对下游产品升级的影响
+      description: 说明该改动是否涉及 framework.lock 受保护文件、构建体积限制或已有组件属性变更
+      placeholder: "例如：新增可选属性，不影响已有下游页面与构建体积限制"

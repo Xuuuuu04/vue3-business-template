@@ -32,6 +32,11 @@ function clone() {
     "CLAUDE.md",
     "CHANGELOG.md",
     "README.md",
+    "README.en.md",
+    "LICENSE",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "CODE_OF_CONDUCT.md",
     "index.html",
     ".env.example",
     "tsconfig.json",
@@ -524,6 +529,19 @@ test("产品初始化清理样板业务，框架三份比较遇到冲突不写�
       /^# 客户联系工作台：版本记录\n\n## 0\.1\.0\n/,
     );
     expect(existsSync(join(product, "design"))).toBe(false);
+    for (const excluded of [
+      "LICENSE",
+      "README.en.md",
+      "CONTRIBUTING.md",
+      "SECURITY.md",
+      "CODE_OF_CONDUCT.md",
+      ".github/ISSUE_TEMPLATE",
+    ])
+      expect(existsSync(join(product, excluded))).toBe(false);
+    expect(existsSync(join(product, ".github/workflows/check.yml"))).toBe(true);
+    expect(existsSync(join(product, ".github/pull_request_template.md"))).toBe(
+      true,
+    );
     expect(existsSync(join(product, "doc/changes.md"))).toBe(false);
     for (const file of ["package.json", "package-lock.json"]) {
       const data = JSON.parse(readFileSync(join(product, file), "utf8"));
